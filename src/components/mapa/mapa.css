@@ -482,3 +482,25 @@
     min-height: 380px;
   }
 }
+
+/* Mensaje cuando el mapa no carga: dice qué pasó y qué se puede hacer,
+   en vez de dejar un spinner infinito. */
+.mp-cargando.mp-fallo {
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.mp-cargando.mp-fallo strong {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--ink);
+}
+.mp-cargando.mp-fallo span {
+  max-width: 320px;
+}

@@ -41,6 +41,7 @@ export function MapaSedes({
   const mapa = useRef<MapaLibre | null>(null);
   const marcadores = useRef<Marker[]>([]);
   const [listo, setListo] = useState(false);
+  const [falloMapa, setFalloMapa] = useState(false);
 
   /** Selección fijada con clic. Arranca en la vista consolidada. */
   const [fijada, setFijada] = useState<string>(TODAS);
@@ -102,6 +103,18 @@ export function MapaSedes({
       setListo(true);
     });
 
+    // Red de seguridad: si el evento `load` no llega (red corporativa que
+    // bloquea las teselas de OpenStreetMap, proxy que las traga, WebGL
+    // deshabilitado), sin esto el usuario se queda mirando "Cargando mapa…"
+    // para siempre y no tiene forma de saber qué pasó. A los 8 segundos se
+    // asume que falló y se muestra el motivo con qué hacer al respecto.
+    const plazo = setTimeout(() => {
+      setListo((ya) => {
+        if (!ya) setFalloMapa(true);
+        return ya;
+      });
+    }, 8000);
+
     // MapLibre mide su contenedor UNA vez al construirse. Si en ese instante el
     // layout de grid todavía no resolvió el ancho (pasa siempre en el primer
     // render), el canvas queda con un tamaño equivocado y se ve un mapa
@@ -112,8 +125,22 @@ export function MapaSedes({
 
     mapa.current = m;
     return () => {
+      clearTimeout(plazo);
       observador.disconnect();
+
+      // Liberar el contexto WebGL explícitamente, no solo confiar en `remove()`.
+      //
+      // El navegador limita cuántos contextos WebGL vivos puede haber (~16 en
+      // Chrome) y los recolecta con pereza. En desarrollo, entre StrictMode
+      // (que monta, desmonta y vuelve a montar) y el hot reload, se crean
+      // muchos mapas en la misma pestaña; al pasarse del límite, el mapa nuevo
+      // se queda en negro y el evento `load` nunca llega — sin ningún error en
+      // consola, que es lo que lo hace difícil de diagnosticar.
+      const lienzo = m.getCanvas();
       m.remove();
+      const gl = lienzo?.getContext("webgl2") ?? lienzo?.getContext("webgl");
+      (gl?.getExtension("WEBGL_lose_context") as { loseContext?: () => void } | null)?.loseContext?.();
+
       mapa.current = null;
     };
     // Intencionalmente sin `tema`: el mapa no se re-crea al cambiar de tema.
@@ -269,7 +296,19 @@ export function MapaSedes({
             no se podría elegir nada mientras el mapa arranca. */}
         <div className="mp-lienzo-caja">
           <div className={`mp-lienzo${usaMapTiler() ? " vectorial" : ""}`} ref={contenedor} />
-          {!listo && <div className="mp-cargando">Cargando mapa…</div>}
+          {!listo &&
+            (falloMapa ? (
+              <div className="mp-cargando mp-fallo">
+                <strong>No se pudo cargar el mapa</strong>
+                <span>
+                  Revisa la conexión: las teselas vienen de tile.openstreetmap.org y algunas
+                  redes corporativas lo bloquean. Los datos de las sedes siguen disponibles en
+                  los botones de arriba y en el panel de la derecha.
+                </span>
+              </div>
+            ) : (
+              <div className="mp-cargando">Cargando mapa…</div>
+            ))}
         </div>
 
         <div className="mp-pie">
