@@ -54,6 +54,7 @@ export async function POST(req: Request) {
     nombre: encontrado.nombre,
     rol: encontrado.rol,
     permisos: encontrado.permisos,
+    verPersonas: encontrado.verPersonas,
   });
 
   await registrarAuditoria({

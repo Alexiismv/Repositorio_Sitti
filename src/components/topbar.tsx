@@ -5,16 +5,18 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { ROL_LABEL, iniciales, type Sesion } from "@/lib/auth/tipos";
+import { ROL_LABEL, iniciales, puedeVerPersonas, type Sesion } from "@/lib/auth/tipos";
 import { BotonTema } from "@/components/tema";
 import { BotonRefrescar } from "@/components/boton-refrescar";
 
-const ENLACES = [
+const ENLACES_BASE = [
   { href: "/", label: "Panel General" },
   { href: "/gerencias", label: "Gerencias" },
-  { href: "/personas", label: "Personas" },
-  { href: "/reportes", label: "Reportes" },
 ];
+
+const ENLACE_PERSONAS = { href: "/personas", label: "Personas" };
+
+const ENLACE_REPORTES = { href: "/reportes", label: "Reportes" };
 
 export function Topbar({
   sesion,
@@ -45,10 +47,12 @@ export function Topbar({
     };
   }, [abierto]);
 
-  const enlaces =
-    sesion.rol === "administrador"
-      ? [...ENLACES, { href: "/admin/usuarios", label: "Usuarios" }]
-      : ENLACES;
+  const enlaces = [
+    ...ENLACES_BASE,
+    ...(puedeVerPersonas(sesion) ? [ENLACE_PERSONAS] : []),
+    ENLACE_REPORTES,
+    ...(sesion.rol === "administrador" ? [{ href: "/admin/usuarios", label: "Usuarios" }] : []),
+  ];
 
   async function salir() {
     await fetch("/api/auth/logout", { method: "POST" });

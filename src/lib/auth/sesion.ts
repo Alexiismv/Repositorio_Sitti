@@ -64,6 +64,7 @@ export async function leerSesion(): Promise<Sesion | null> {
       nombre: String(payload.nombre),
       rol: payload.rol as Sesion["rol"],
       permisos: (payload.permisos as Sesion["permisos"]) ?? [],
+      verPersonas: Boolean(payload.verPersonas),
     };
   } catch {
     // Token vencido, alterado o firmado con otro secreto -> no hay sesión.

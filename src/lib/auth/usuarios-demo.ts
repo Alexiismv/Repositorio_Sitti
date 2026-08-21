@@ -26,6 +26,9 @@ export const USUARIOS_DEMO: UsuarioDemo[] = [
     rol: "gerente",
     activo: true,
     permisos: [{ sede: "*", area: "*" }],
+    // Placeholder de demo: no representa a la gerente de Conexión de Soluciones.
+    // Cámbialo a `true` en este archivo si querés probar Personas con esta cuenta.
+    verPersonas: false,
   },
   {
     id: "u-002",
@@ -40,6 +43,11 @@ export const USUARIOS_DEMO: UsuarioDemo[] = [
       { sede: "caribe", area: "financiera" },
       { sede: "centro-de-servicios", area: "cartera" },
     ],
+    // Placeholder de demo: se deja en `true` para poder probar el acceso a
+    // Personas end-to-end. No representa al coordinador real de Conexión de
+    // Soluciones — cuando existan las cuentas reales, este permiso se asigna
+    // por usuario desde Gestión de usuarios (hoy de solo lectura en demo).
+    verPersonas: true,
   },
   {
     id: "u-003",
@@ -49,6 +57,7 @@ export const USUARIOS_DEMO: UsuarioDemo[] = [
     rol: "administrador",
     activo: true,
     permisos: [{ sede: "*", area: "*" }],
+    verPersonas: true,
   },
 ];
 
