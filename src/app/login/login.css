@@ -176,7 +176,7 @@
   white-space: nowrap;
   animation: lg-ticker-scroll 26s linear infinite;
   font-family: var(--font-mono);
-  font-size: 14.4px; /* 12px + 20% */
+  font-size: 25.3px; /* mismo tamaño que "SOMOS SITTI" (.lg-mark) */
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.03em;
 }
