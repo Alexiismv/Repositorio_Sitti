@@ -35,6 +35,13 @@ export interface Usuario {
   rol: Rol;
   activo: boolean;
   permisos: Permiso[];
+  /**
+   * Acceso a la pestaña Personas. Es un permiso explícito por usuario, no
+   * derivado del rol ni del área: un gerente o coordinador no la ve por
+   * defecto, solo quien Alexis marque acá. El administrador la ve siempre
+   * (ver `puedeVerPersonas`).
+   */
+  verPersonas: boolean;
 }
 
 /** Lo que viaja firmado dentro de la cookie de sesión. Nada sensible acá. */
@@ -44,6 +51,7 @@ export interface Sesion {
   nombre: string;
   rol: Rol;
   permisos: Permiso[];
+  verPersonas: boolean;
 }
 
 /** Iniciales para el avatar del topbar. */
@@ -60,6 +68,14 @@ export function iniciales(nombre: string): string {
 export function veTodo(sesion: Pick<Sesion, "rol" | "permisos">): boolean {
   if (sesion.rol === "gerente" || sesion.rol === "administrador") return true;
   return sesion.permisos.some((p) => p.sede === "*" && p.area === "*");
+}
+
+/**
+ * ¿Puede ver la pestaña Personas? El administrador siempre; cualquier otro
+ * rol solo si tiene el permiso `verPersonas` asignado explícitamente.
+ */
+export function puedeVerPersonas(sesion: Pick<Sesion, "rol" | "verPersonas">): boolean {
+  return sesion.rol === "administrador" || sesion.verPersonas === true;
 }
 
 /**

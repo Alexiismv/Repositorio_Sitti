@@ -73,6 +73,7 @@ export default async function UsuariosPage() {
                 <th>Nombre</th>
                 <th>Rol</th>
                 <th>Alcance de visibilidad</th>
+                <th>Ve Personas</th>
                 <th>Estado</th>
               </tr>
             </thead>
@@ -86,6 +87,10 @@ export default async function UsuariosPage() {
                   <td>{ROL_LABEL[u.rol]}</td>
                   <td style={{ fontSize: 12, color: "var(--ink-soft)" }}>
                     {describePermisos(u.permisos)}
+                  </td>
+                  <td>
+                    <span className={`semaforo ${u.rol === "administrador" || u.verPersonas ? "verde" : "rojo"}`} style={{ marginRight: 6 }} />
+                    {u.rol === "administrador" || u.verPersonas ? "Sí" : "No"}
                   </td>
                   <td>
                     <span className={`semaforo ${u.activo ? "verde" : "rojo"}`} style={{ marginRight: 6 }} />

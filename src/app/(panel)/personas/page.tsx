@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { GraficaComparativa } from "@/components/charts";
 import { KpiStrip, SectionLabel } from "@/components/ui";
 import { leerSesion } from "@/lib/auth/sesion";
+import { puedeVerPersonas } from "@/lib/auth/tipos";
 import { DIAS_ESTANCADO_DEFAULT } from "@/lib/catalogo";
 import { obtenerTickets } from "@/lib/data/provider";
 import { numero, porcentaje } from "@/lib/formato";
@@ -23,6 +24,17 @@ export const metadata = { title: "Personas · SITTI" };
 export default async function PersonasPage() {
   const sesion = await leerSesion();
   if (!sesion) redirect("/login");
+
+  // Doble barrera: el enlace solo aparece en el topbar si hay permiso, pero la
+  // página también se defiende sola por si alguien escribe la URL a mano.
+  if (!puedeVerPersonas(sesion)) {
+    return (
+      <div className="sh-page-head">
+        <h1>Sin acceso</h1>
+        <p>Esta pestaña requiere un permiso que no tenés asignado. Pedile acceso a un administrador.</p>
+      </div>
+    );
+  }
 
   const tickets = await obtenerTickets(sesion);
   const personas = porPersona(tickets);
