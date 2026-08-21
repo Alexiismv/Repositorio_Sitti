@@ -1,0 +1,79 @@
+/**
+ * Modelo de usuarios y permisos.
+ *
+ * Del doc de requisitos (sección 2), confirmado:
+ * - Gerente ve TODO.
+ * - Coordinador ve solo lo asignado, y la visibilidad de área está ANIDADA
+ *   dentro de la sede: puede ver "Cartera" en Caribe y "Multas" en Poblado.
+ *   Por eso el permiso es una tupla (sede, área), no dos listas independientes.
+ * - Administrador gestiona usuarios (no hay autoregistro).
+ */
+
+export type Rol = "gerente" | "coordinador" | "administrador";
+
+export const ROL_LABEL: Record<Rol, string> = {
+  gerente: "Gerente",
+  coordinador: "Coordinador",
+  administrador: "Administrador",
+};
+
+/**
+ * Una fila = "este usuario puede ver esta área dentro de esta sede".
+ * `"*"` significa "todas". Espeja la tabla `auth.usuario_permiso`.
+ */
+export interface Permiso {
+  /** slug de sede, o `"*"` para todas. */
+  sede: string;
+  /** slug de área, o `"*"` para todas las de esa sede. */
+  area: string;
+}
+
+export interface Usuario {
+  id: string;
+  email: string;
+  nombre: string;
+  rol: Rol;
+  activo: boolean;
+  permisos: Permiso[];
+}
+
+/** Lo que viaja firmado dentro de la cookie de sesión. Nada sensible acá. */
+export interface Sesion {
+  sub: string;
+  email: string;
+  nombre: string;
+  rol: Rol;
+  permisos: Permiso[];
+}
+
+/** Iniciales para el avatar del topbar. */
+export function iniciales(nombre: string): string {
+  return nombre
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+/** El gerente y el administrador ven todo; el coordinador, solo lo asignado. */
+export function veTodo(sesion: Pick<Sesion, "rol" | "permisos">): boolean {
+  if (sesion.rol === "gerente" || sesion.rol === "administrador") return true;
+  return sesion.permisos.some((p) => p.sede === "*" && p.area === "*");
+}
+
+/**
+ * ¿Este usuario puede ver esta combinación sede+área?
+ * Se usa como filtro de datos (defense-in-depth: además del filtro de la UI,
+ * el proveedor de datos vuelve a aplicarlo antes de devolver tickets).
+ */
+export function puedeVer(
+  sesion: Pick<Sesion, "rol" | "permisos">,
+  sedeSlug: string,
+  areaSlug: string,
+): boolean {
+  if (veTodo(sesion)) return true;
+  return sesion.permisos.some(
+    (p) => (p.sede === "*" || p.sede === sedeSlug) && (p.area === "*" || p.area === areaSlug),
+  );
+}

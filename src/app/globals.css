@@ -1,0 +1,903 @@
+@import "tailwindcss";
+
+/*
+ * Sistema visual de SITTI.
+ *
+ * La paleta y la tipografía vienen del prototipo de login APROBADO
+ * (sección 9 del doc de requisitos). No se cambian sin hablarlo con Alexis:
+ * el login aprobado es la referencia de todo el resto de la app.
+ */
+
+@theme {
+  --color-navy: #242868;
+  --color-navy-deep: #181b4a;
+  --color-orange: #f1592a;
+  --color-gold: #f6a623;
+  --color-teal: #2fafa0;
+  --color-bg: #f7f8fb;
+  --color-ink: #1b1d3a;
+  --color-ink-soft: #6b6e8c;
+  --color-line: #e4e5f0;
+  --color-danger: #d64545;
+
+  --font-display: var(--fuente-display), "Space Grotesk", sans-serif;
+  --font-sans: var(--fuente-cuerpo), Inter, sans-serif;
+  --font-mono: var(--fuente-mono), "IBM Plex Mono", monospace;
+}
+
+:root {
+  --navy: #242868;
+  --navy-deep: #181b4a;
+  --orange: #f1592a;
+  --gold: #f6a623;
+  --teal: #2fafa0;
+  --bg: #f7f8fb;
+  --ink: #1b1d3a;
+  --ink-soft: #6b6e8c;
+  --line: #e4e5f0;
+  --card: #ffffff;
+  --red: #d64545;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─────────────── Tipografía compartida ─────────────── */
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.eyebrow .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--orange);
+}
+
+.h-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 40px 0 16px;
+}
+.section-label .line {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* ─────────────── Superficies ─────────────── */
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+}
+.panel h4 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.panel .panel-sub {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+}
+
+.kpi {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--accent, var(--navy));
+}
+.kpi .label {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.kpi .val {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.kpi .val.sm {
+  font-size: 16px;
+}
+.kpi .cap {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+
+/* ─────────────── Controles ─────────────── */
+
+.chip {
+  padding: 8px 16px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.chip:hover {
+  border-color: var(--navy);
+  color: var(--ink);
+}
+.chip.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+.text-input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  color: var(--ink);
+  background: var(--card);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.text-input::placeholder {
+  color: #b7b9cc;
+}
+.text-input:hover {
+  border-color: #c7c9dc;
+}
+.text-input:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(36, 40, 104, 0.1);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 14px 20px;
+  background: var(--navy);
+  border: none;
+  border-radius: 9px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 14.5px;
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+.submit-btn:hover:not(:disabled) {
+  background: var(--navy-deep);
+}
+.submit-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.submit-btn:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+/* ─────────────── Semáforo (metas de SLA) ─────────────── */
+
+.semaforo {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.semaforo.verde {
+  background: var(--teal);
+}
+.semaforo.amarillo {
+  background: var(--gold);
+}
+.semaforo.rojo {
+  background: var(--red);
+}
+
+/* ─────────────── Barras de ranking ─────────────── */
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.rank-row:last-child {
+  border-bottom: none;
+}
+.rank-row .name {
+  font-size: 12.5px;
+  font-weight: 600;
+  width: 150px;
+  flex-shrink: 0;
+}
+.rank-row .track {
+  flex: 1;
+  height: 7px;
+  background: var(--bg);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.rank-row .fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--navy);
+  transition: width 0.3s ease;
+}
+.rank-row .num {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  width: 52px;
+  text-align: right;
+}
+
+/* ─────────────── Tablas ─────────────── */
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.tabla th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.tabla td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.tabla tr:last-child td {
+  border-bottom: none;
+}
+.tabla tbody tr:hover {
+  background: var(--bg);
+}
+.tabla .num {
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+/* Contenedor con scroll propio: la página nunca se desborda en horizontal. */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─────────────── Nota de dato ilustrativo ─────────────── */
+
+.nota-demo {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+/* ─────────────── MapLibre ─────────────── */
+
+.maplibregl-ctrl-attrib {
+  font-size: 10px;
+}
+.maplibregl-popup-content {
+  border-radius: 10px;
+  padding: 0;
+  box-shadow: 0 10px 28px rgba(24, 27, 74, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ─────────────── Utilidades ─────────────── */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.grid-2-igual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* ─────────────── Tarjeta de nivel (gerencia / área) ─────────────── */
+
+.tarjeta-nivel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+.tarjeta-nivel:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(24, 27, 74, 0.08);
+  border-color: var(--navy);
+}
+.tarjeta-nivel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--accent, var(--navy));
+}
+.tn-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.tn-rank {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.tn-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+  background: rgba(47, 175, 160, 0.12);
+  color: #1e8479;
+  white-space: nowrap;
+}
+.tarjeta-nivel h3 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  margin: 8px 0 16px;
+  line-height: 1.3;
+}
+.tn-arrow {
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+.tarjeta-nivel:hover .tn-arrow {
+  color: var(--navy);
+}
+.tn-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.tn-num {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+}
+.tn-unit {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.tn-bar {
+  height: 5px;
+  background: var(--bg);
+  border-radius: 99px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+.tn-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent, var(--navy));
+}
+.tn-cap {
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+@media (max-width: 980px) {
+  .kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .grid-2,
+  .grid-2-igual {
+    grid-template-columns: 1fr;
+  }
+  .grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .rank-row .name {
+    width: 110px;
+  }
+}
+
+.grid-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 980px) {
+  .grid-tarjetas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .grid-tarjetas {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─────────────── Tablero de estados (Nivel 3) ─────────────── */
+
+.tablero {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.tablero-col {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  min-width: 0;
+}
+.tablero-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 2px solid var(--c, var(--navy));
+}
+.tablero-titulo {
+  font-size: 12px;
+  font-weight: 600;
+}
+.tablero-conteo {
+  font-size: 11px;
+  color: #fff;
+  background: var(--c, var(--navy));
+  padding: 1px 7px;
+  border-radius: 99px;
+}
+.tablero-card {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 9px 10px;
+  margin-bottom: 7px;
+}
+.tablero-clave {
+  font-size: 10.5px;
+  color: var(--navy);
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+.tablero-asunto {
+  font-size: 11.5px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tablero-pie {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 9px;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+.tablero-pie .alerta {
+  color: var(--red);
+  font-weight: 600;
+}
+.tablero-mas,
+.tablero-vacio {
+  font-size: 10px;
+  color: var(--ink-soft);
+  text-align: center;
+  padding: 6px 0 2px;
+}
+
+@media (max-width: 1100px) {
+  .tablero {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .tablero {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─────────────── Filtros de reportes ─────────────── */
+
+.filtros {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+.filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+.filtro-campo label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  margin-bottom: 5px;
+}
+.filtro-campo select,
+.filtro-campo input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--card);
+}
+.filtro-campo select:focus,
+.filtro-campo input:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(36, 40, 104, 0.1);
+}
+.filtros-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.btn-secundario {
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+.btn-secundario:hover {
+  border-color: var(--navy);
+  color: var(--ink);
+}
+.btn-primario {
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--navy);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+.btn-primario:hover {
+  background: var(--navy-deep);
+}
+
+/*
+ * Hijos de grid con `min-width: 0`.
+ *
+ * Sin esto, un hijo de grid toma como ancho mínimo el de su contenido, y los
+ * componentes que se miden solos (ResponsiveContainer de Recharts, el canvas
+ * de MapLibre) se calculan contra un ancho equivocado y quedan diminutos o
+ * desbordan la celda. Es el bug de layout más común al meter gráficas en grid.
+ */
+.grid-2 > *,
+.grid-2-igual > *,
+.grid-3 > *,
+.grid-tarjetas > *,
+.mp-wrap > *,
+.tablero > * {
+  min-width: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEMA OSCURO
+   ═══════════════════════════════════════════════════════════
+
+   El tema se aplica con `data-tema` en <html>, no con
+   `prefers-color-scheme`: el default de esta app es OSCURO, y la
+   preferencia del sistema no debe pisarlo. El usuario decide con el
+   botón del topbar y la elección se guarda en localStorage.
+
+   Casi todo funciona solo porque los componentes usan variables. Lo
+   que se redefine aparte abajo son los pocos lugares donde el color
+   venía de un `rgba()` calculado sobre fondo claro, que en oscuro
+   queda invisible.
+
+   Los colores de marca (naranja, dorado, turquesa) NO cambian: son
+   identidad. Lo que se aclara es el navy, porque el navy original
+   sobre fondo oscuro no tiene contraste suficiente para leerse. */
+
+:root {
+  --card-translucido: rgba(255, 255, 255, 0.9);
+  --nav-activo-bg: rgba(36, 40, 104, 0.08);
+  --hover-suave: var(--bg);
+  --tag-bg: rgba(47, 175, 160, 0.12);
+  --tag-texto: #1e8479;
+  --sombra-panel: rgba(24, 27, 74, 0.08);
+  --sombra-menu: rgba(24, 27, 74, 0.12);
+  --aviso-bg: rgba(246, 166, 35, 0.1);
+  --aviso-borde: rgba(246, 166, 35, 0.32);
+  --aviso-texto: #8a5c05;
+  --aviso-texto-fuerte: #6f4a04;
+  --error-texto: #a52f2f;
+  --mapa-filtro: none;
+}
+
+[data-tema="oscuro"] {
+  --navy: #7A82E0;
+  --navy-deep: #0E1030;
+  --bg: #0F1130;
+  --card: #191C45;
+  --ink: #EDEEF7;
+  --ink-soft: #9BA0C4;
+  --line: #2E3366;
+  --red: #FF6B6B;
+
+  --card-translucido: rgba(25, 28, 69, 0.92);
+  --nav-activo-bg: rgba(122, 130, 224, 0.16);
+  --hover-suave: rgba(122, 130, 224, 0.07);
+  --tag-bg: rgba(47, 175, 160, 0.18);
+  --tag-texto: #6FE0CF;
+  --sombra-panel: rgba(0, 0, 0, 0.45);
+  --sombra-menu: rgba(0, 0, 0, 0.55);
+  --aviso-bg: rgba(246, 166, 35, 0.12);
+  --aviso-borde: rgba(246, 166, 35, 0.35);
+  --aviso-texto: #F0C577;
+  --aviso-texto-fuerte: #F6A623;
+  --error-texto: #FF9A9A;
+
+  /*
+   * Teselas de OpenStreetMap en oscuro.
+   *
+   * OSM solo sirve el estilo claro, así que se invierte con un filtro y se
+   * rota el matiz 180° para devolverle el color a lo que no es gris (los
+   * verdes vuelven a ser verdes en vez de rosados). No es tan bueno como un
+   * estilo vectorial oscuro de verdad — por eso, con MapTiler configurado,
+   * la app usa `dataviz-dark` y desactiva este filtro.
+   */
+  --mapa-filtro: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.95);
+}
+
+/* ---- Lugares donde el rgba() fijo no sobrevive al cambio de tema ---- */
+
+[data-tema="oscuro"] .sh-link.activo {
+  background: var(--nav-activo-bg);
+}
+[data-tema="oscuro"] .sh-link:hover,
+[data-tema="oscuro"] .sh-user:hover,
+[data-tema="oscuro"] .sh-menu button:hover,
+[data-tema="oscuro"] .sh-menu a:hover,
+[data-tema="oscuro"] .tabla tbody tr:hover {
+  background: var(--hover-suave);
+}
+[data-tema="oscuro"] .tn-tag {
+  background: var(--tag-bg);
+  color: var(--tag-texto);
+}
+[data-tema="oscuro"] .tarjeta-nivel:hover {
+  box-shadow: 0 10px 28px var(--sombra-panel);
+}
+[data-tema="oscuro"] .sh-menu {
+  box-shadow: 0 12px 32px var(--sombra-menu);
+}
+[data-tema="oscuro"] .sh-aviso-demo {
+  background: var(--aviso-bg);
+  border-color: var(--aviso-borde);
+  color: var(--aviso-texto);
+}
+[data-tema="oscuro"] .sh-aviso-demo strong {
+  color: var(--aviso-texto-fuerte);
+}
+[data-tema="oscuro"] .lg-error {
+  color: var(--error-texto);
+  background: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.3);
+}
+[data-tema="oscuro"] .text-input::placeholder {
+  color: #6C719C;
+}
+[data-tema="oscuro"] .text-input:hover {
+  border-color: #414780;
+}
+[data-tema="oscuro"] .text-input:focus,
+[data-tema="oscuro"] .filtro-campo select:focus,
+[data-tema="oscuro"] .filtro-campo input:focus {
+  box-shadow: 0 0 0 3px rgba(122, 130, 224, 0.22);
+}
+[data-tema="oscuro"] .submit-btn,
+[data-tema="oscuro"] .btn-primario,
+[data-tema="oscuro"] .chip.active {
+  color: #0F1130;
+  font-weight: 600;
+}
+[data-tema="oscuro"] .submit-btn:hover:not(:disabled),
+[data-tema="oscuro"] .btn-primario:hover {
+  background: #9AA1EC;
+}
+[data-tema="oscuro"] .tablero-conteo {
+  color: #0F1130;
+}
+[data-tema="oscuro"] .tablero-card {
+  background: rgba(122, 130, 224, 0.08);
+}
+[data-tema="oscuro"] .filtro-campo select,
+[data-tema="oscuro"] .filtro-campo input {
+  background: var(--card);
+  color: var(--ink);
+  color-scheme: dark;
+}
+
+/* ---- Botón de tema en el topbar ---- */
+
+.sh-tema {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.sh-tema:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.sh-tema:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+/*
+ * Logo en modo oscuro.
+ *
+ * El wordmark "sitti" del archivo oficial es azul marino: sobre fondo oscuro
+ * queda casi invisible. No se reconstruye el logo (es la marca), así que se le
+ * pone una placa clara detrás — es la práctica estándar para un logo de color
+ * fijo sobre fondo oscuro, y conserva el archivo tal cual.
+ */
+[data-tema="oscuro"] .sh-logo-placa,
+[data-tema="oscuro"] .lg-logo {
+  background: #fff;
+  border-radius: 8px;
+  padding: 4px 9px;
+}
+[data-tema="oscuro"] .lg-logo {
+  align-self: flex-start;
+}

@@ -1,0 +1,484 @@
+/* Mapa de sedes + panel de detalle. */
+
+.mp-wrap {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.mp-panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  position: relative;
+}
+
+.mp-lienzo {
+  width: 100%;
+  height: 520px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.mp-cargando {
+  position: absolute;
+  inset: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+/* ---------- Pines ---------- */
+
+.mp-pin {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  /* El marcador se ancla en su centro; sin esto MapLibre lo desplaza al hover. */
+  transform-origin: center;
+}
+.mp-pin-nucleo {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--navy);
+  border: 2.5px solid #fff;
+  box-shadow: 0 2px 8px rgba(24, 27, 74, 0.35);
+  transition:
+    background 0.15s ease,
+    inset 0.15s ease;
+}
+.mp-pin.aprox .mp-pin-nucleo {
+  border-style: dashed;
+}
+.mp-pin.activo .mp-pin-nucleo {
+  background: var(--orange);
+  inset: 1px;
+}
+.mp-pin-onda {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--orange);
+  opacity: 0;
+}
+.mp-pin.activo .mp-pin-onda {
+  animation: mp-onda 1.6s ease-out infinite;
+}
+@keyframes mp-onda {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.mp-etiqueta {
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--card-translucido);
+  padding: 2px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+  pointer-events: none;
+  border: 1px solid var(--line);
+}
+.mp-pin.activo .mp-etiqueta {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+
+/* ---------- Leyenda / pie del mapa ---------- */
+
+.mp-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+  flex-wrap: wrap;
+}
+.mp-pie .mp-leyenda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mp-pie .mp-muestra {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--line);
+  background: var(--navy);
+}
+.mp-pie .mp-muestra.aprox {
+  background: var(--card);
+  border: 1.5px dashed var(--navy);
+}
+
+/* ---------- Panel de detalle ---------- */
+
+.mp-detalle {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mp-detalle-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 6px;
+}
+.mp-detalle h3 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+.mp-detalle .mp-dir {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.mp-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.mp-kpi {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 11px 13px;
+}
+.mp-kpi .l {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+.mp-kpi .v {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.mp-kpi .v.sm {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mp-gran {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.mp-gran button {
+  flex: 1;
+  padding: 5px 0;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.mp-gran button.activo {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+.mp-spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 62px;
+  margin-bottom: 4px;
+}
+.mp-spark .col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 4px;
+  min-width: 0;
+}
+.mp-spark .barra {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, var(--teal), rgba(47, 175, 160, 0.3));
+  min-height: 2px;
+}
+.mp-spark-ejes {
+  display: flex;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+.mp-spark-ejes span {
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.mp-lista-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 12px 0 6px;
+}
+.mp-lista-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.mp-lista-item:last-of-type {
+  border-bottom: none;
+}
+.mp-lista-item .tid {
+  font-family: var(--font-mono);
+  color: var(--navy);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.mp-lista-item .titulo {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-lista-item .val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  flex-shrink: 0;
+  color: var(--ink-soft);
+}
+.mp-lista-item .val.alerta {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.mp-vacio {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--ink-soft);
+  gap: 8px;
+  padding: 20px;
+}
+.mp-vacio .titulo {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.mp-vacio p {
+  font-size: 12.5px;
+  line-height: 1.55;
+  max-width: 280px;
+  margin: 0;
+}
+
+.mp-ver-mas {
+  margin-top: auto;
+  padding-top: 16px;
+}
+.mp-ver-mas a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--navy);
+  text-decoration: none;
+}
+.mp-ver-mas a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 980px) {
+  .mp-wrap {
+    grid-template-columns: 1fr;
+  }
+  .mp-lienzo {
+    height: 380px;
+  }
+  .mp-detalle {
+    min-height: 0;
+  }
+}
+
+/*
+ * Posición de la etiqueta del pin.
+ * Caribe y Centro de servicios comparten dirección física: si las dos etiquetas
+ * salen a la derecha, la de arriba tapa a la de abajo y no se lee ninguna.
+ * La posición se define por sede en `catalogo.ts`, no se calcula sola.
+ */
+.mp-pin.et-derecha .mp-etiqueta {
+  left: 22px;
+  right: auto;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.mp-pin.et-izquierda .mp-etiqueta {
+  right: 22px;
+  left: auto;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.mp-pin.et-arriba .mp-etiqueta {
+  left: 50%;
+  top: -8px;
+  transform: translate(-50%, -100%);
+}
+.mp-pin.et-abajo .mp-etiqueta {
+  left: 50%;
+  top: 26px;
+  transform: translateX(-50%);
+}
+
+/*
+ * El mapa estira para acompañar al panel de detalle, que suele ser más alto.
+ * Sin esto queda un hueco vacío debajo del mapa que se lee como algo roto.
+ */
+.mp-wrap {
+  align-items: stretch;
+}
+.mp-panel {
+  display: flex;
+  flex-direction: column;
+}
+.mp-lienzo {
+  flex: 1;
+  min-height: 520px;
+  height: auto;
+}
+@media (max-width: 980px) {
+  .mp-lienzo {
+    min-height: 380px;
+  }
+}
+
+/* ---------- Selector de sede (barra sobre el mapa) ---------- */
+
+.mp-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.mp-chip {
+  padding: 6px 13px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.mp-chip:hover {
+  border-color: var(--navy);
+  color: var(--ink);
+}
+.mp-chip.activo {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+[data-tema="oscuro"] .mp-chip.activo {
+  color: #0f1130;
+  font-weight: 600;
+}
+
+/* Anillo del pin fijado con clic: distingue "lo estoy mirando" (activo,
+   que puede venir de un hover pasajero) de "lo dejé seleccionado" (fijo). */
+.mp-pin.fijo .mp-pin-nucleo {
+  box-shadow:
+    0 2px 8px rgba(24, 27, 74, 0.35),
+    0 0 0 3px rgba(241, 89, 42, 0.35);
+}
+
+/* Teselas en oscuro — ver la explicación de `--mapa-filtro` en globals.css. */
+.mp-lienzo .maplibregl-canvas {
+  filter: var(--mapa-filtro);
+}
+.mp-lienzo.vectorial .maplibregl-canvas {
+  filter: none;
+}
+
+/* El lienzo vive en su propia caja para que el overlay de carga se limite al
+   mapa y no tape la barra de selección de sede. */
+.mp-lienzo-caja {
+  position: relative;
+  flex: 1;
+  display: flex;
+  min-height: 520px;
+}
+.mp-lienzo-caja .mp-cargando {
+  inset: 0;
+}
+@media (max-width: 980px) {
+  .mp-lienzo-caja {
+    min-height: 380px;
+  }
+}

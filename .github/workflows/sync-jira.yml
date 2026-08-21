@@ -1,0 +1,44 @@
+# Sincronización Jira → Neon, 2 veces al día.
+#
+# Por qué GitHub Actions y no Vercel Cron:
+# el ETL trae ~9.000 tickets paginando la API de Jira y eso tarda minutos.
+# Una función serverless de Vercel se corta a los 60 segundos en el plan
+# gratuito, así que el sync quedaría a medias y el swap nunca ocurriría.
+# GitHub Actions da 2.000 minutos/mes gratis en repos privados e ilimitado
+# en públicos, sin tope por corrida. Es el lugar correcto para este trabajo.
+#
+# Horarios: 11:00 y 19:00 UTC = 06:00 y 14:00 hora de Colombia.
+#
+# ⚠️ ANTES DE QUE ESTO FUNCIONE hay que cargar los secrets del repo en
+# Settings → Secrets and variables → Actions:
+#   DATABASE_URL · JIRA_BASE_URL · JIRA_EMAIL · JIRA_API_TOKEN
+
+name: Sync Jira
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+    - cron: "0 19 * * *"
+  workflow_dispatch: # permite dispararlo a mano desde la pestaña Actions
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Correr ETL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: npm run etl
