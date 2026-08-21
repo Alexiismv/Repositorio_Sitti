@@ -63,6 +63,10 @@ una reunión y quien lo abra ve el mismo reporte.
 **Administración** — usuarios, roles y el modelo de permisos anidado
 (sede → áreas dentro de esa sede).
 
+**Refrescar** — botón en la barra superior (Gerente y Administrador) que trae
+de Jira lo que cambió y repinta el panel en segundos, sin esperar a la
+sincronización programada.
+
 **Modo claro / oscuro** — botón en la barra superior. Arranca en oscuro y
 recuerda tu elección.
 
@@ -78,7 +82,7 @@ recuerda tu elección.
 | Gráficas | Recharts |
 | Sesión | JWT firmado en cookie httpOnly (`jose`), 2 h |
 | Base de datos | PostgreSQL — pensado para Neon (plan gratuito) |
-| Despliegue | Vercel (plan gratuito) · sync 2x/día en GitHub Actions |
+| Despliegue | Vercel (plan gratuito) · botón Refrescar + sync opcional en GitHub Actions |
 
 ---
 

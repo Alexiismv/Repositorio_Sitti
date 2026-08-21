@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { ROL_LABEL, iniciales, type Sesion } from "@/lib/auth/tipos";
 import { BotonTema } from "@/components/tema";
+import { BotonRefrescar } from "@/components/boton-refrescar";
 
 const ENLACES = [
   { href: "/", label: "Panel General" },
@@ -76,6 +77,10 @@ export function Topbar({
         <span className="pulso" />
         Sync {ultimaSync}
       </div>
+
+      <BotonRefrescar
+        puedeSincronizar={sesion.rol === "gerente" || sesion.rol === "administrador"}
+      />
 
       <BotonTema />
 

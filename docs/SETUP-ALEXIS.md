@@ -271,7 +271,25 @@ npx vercel login
 
 ---
 
-## Paso 7 — Que se actualice solo, 2 veces al día
+## Paso 7 — Mantener los datos frescos
+
+Dos vías, las dos gratis. La primera es la que vas a usar todos los días.
+
+### A. El botón "Refrescar" (ya está listo, no hay que configurar nada)
+
+Arriba a la derecha del panel. Trae de Jira lo que cambió en los últimos días y
+repinta los números en segundos. Es lo que usas cuando vas a entrar a una
+reunión y quieres el dato de este momento.
+
+Solo lo ven Gerente y Administrador: sincronizar reescribe la tabla que todos
+ven, no es una consulta.
+
+> ⚠️ **Una limitación honesta:** el refresco rápido no puede darse cuenta de un
+> ticket **borrado** en Jira, porque un ticket borrado ya no aparece en ninguna
+> consulta. Cada tanto (una vez al mes está bien) corre `npm run etl`, que
+> reconstruye la tabla completa y sí limpia esos casos.
+
+### B. Que se actualice solo, 2 veces al día (opcional)
 
 Ya está programado en `.github/workflows/sync-jira.yml` (6:00 a.m. y 2:00 p.m.
 hora de Colombia). Solo falta cargar las credenciales en GitHub:
@@ -284,6 +302,10 @@ hora de Colombia). Solo falta cargar las credenciales en GitHub:
 - `JIRA_API_TOKEN`
 
 Para probarlo sin esperar al horario: pestaña **Actions → Sync Jira → Run workflow**.
+
+**Esto no cuesta nada.** GitHub Actions incluye 2.000 minutos al mes en repos
+privados y este sync usa unos 240. Si prefieres no automatizar nada y refrescar
+solo con el botón, borra ese archivo y ya.
 
 ---
 

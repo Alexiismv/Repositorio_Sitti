@@ -307,23 +307,48 @@ DEMO_MODE=false
 En ese momento la app deja de generar datos y lee de Neon. La franja amarilla de
 "Modo demo" desaparece sola y las cuentas demo dejan de funcionar.
 
-### 5.4 Programar el sync 2 veces al día
+### 5.4 Mantener los datos frescos
 
-Ya está listo en **`.github/workflows/sync-jira.yml`**: corre a las 11:00 y
-19:00 UTC (6:00 y 14:00 hora de Colombia). Solo hay que cargar los secrets del
-repositorio en **Settings → Secrets and variables → Actions**:
+Hay dos vías, y las dos son **gratis**. La manual es la principal.
+
+#### A. Botón "Refrescar" (principal)
+
+En la barra superior del panel, visible para Gerente y Administrador. Llama a
+`POST /api/sync`, que trae de Jira lo que cambió en los últimos
+`DIAS_INCREMENTAL` días (3 por defecto) y lo actualiza con un upsert por clave.
+Termina en segundos.
+
+Existe porque el caso real es "voy a entrar a una reunión y quiero el dato de
+ahora", y eso ninguna sincronización programada lo resuelve.
+
+> ⚠️ **Lo que el incremental NO puede hacer: enterarse de un ticket BORRADO en
+> Jira.** Un ticket borrado no aparece en ninguna consulta, así que la fila
+> vieja se queda en la tabla. Por eso el modo completo sigue existiendo —
+> `npm run etl` reconstruye la tabla entera — y conviene correrlo cada tanto.
+
+#### B. GitHub Actions, 2 veces al día (opcional)
+
+Ya está listo en **`.github/workflows/sync-jira.yml`** (11:00 y 19:00 UTC =
+6:00 a.m. y 2:00 p.m. hora de Colombia). Solo hay que cargar los secrets en
+**Settings → Secrets and variables → Actions**:
 
 `DATABASE_URL` · `JIRA_BASE_URL` · `JIRA_EMAIL` · `JIRA_API_TOKEN`
 
-Después puedes dispararlo a mano desde la pestaña **Actions → Sync Jira → Run
-workflow**, para no esperar al horario.
+Se puede disparar a mano desde **Actions → Sync Jira → Run workflow**.
 
-> **Por qué GitHub Actions y no Vercel Cron.** El ETL trae ~9.000 tickets
-> paginando la API de Jira, y eso toma minutos. Una función serverless de Vercel
-> se corta a los 60 segundos en el plan gratuito: el sync quedaría a medias y el
-> swap atómico nunca ocurriría, así que el panel se quedaría con los datos
-> viejos sin avisar. Actions no tiene ese tope y también es gratis. Vercel sirve
-> el panel; Actions hace el trabajo pesado.
+Si Alexis prefiere no automatizar nada y refrescar solo con el botón, se puede
+borrar ese archivo sin que nada más se rompa.
+
+#### Los números, verificados (agosto 2026)
+
+| | Costo | Límite real |
+|---|---|---|
+| GitHub Actions | **$0** | Repo público: ilimitado. Privado: 2.000 min/mes incluidos; este sync usa ~240 |
+| Vercel Cron (Hobby) | **$0** | Pero **1 vez al día** máximo y ±59 min de imprecisión → no sirve para 2x/día |
+| Función Vercel (Hobby) | **$0** | 300 s por invocación — de sobra para el botón |
+
+Por eso **no se usa Vercel Cron**: no es que cobre, es que en Hobby no puede
+correr dos veces al día y su hora de disparo es aproximada.
 
 ---
 
