@@ -121,8 +121,10 @@ Si tienes el **MCP de Neon** conectado, Claude lo hace por API sin abrir el
 navegador. Si no, lo hace por el navegador del paso 2. Para conectar el MCP:
 
 ```bash
-claude mcp add neon -- npx -y @neondatabase/mcp-server-neon start
+npx add-mcp https://mcp.neon.tech/mcp -a claude-code
 ```
+
+Reinicia Claude Code y autoriza en la ventana que se abre.
 
 ### A mano
 

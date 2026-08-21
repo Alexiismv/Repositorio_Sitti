@@ -189,12 +189,17 @@ Después ya puedes operar solo.
 ### 3.5.2 MCPs útiles
 
 ```bash
-# Neon — crear el proyecto y correr SQL sin abrir el navegador
-claude mcp add neon -- npx -y @neondatabase/mcp-server-neon start
+# Neon — crear el proyecto y correr SQL sin abrir el navegador.
+# Servidor remoto con OAuth: se autoriza en el navegador, sin API key a mano.
+npx add-mcp https://mcp.neon.tech/mcp -a claude-code
 
-# Vercel — deploys, variables de entorno y logs de build
-claude mcp add vercel -- npx -y @vercel/mcp-adapter
+# Vercel — deploys, variables de entorno y logs de build (también remoto + OAuth)
+claude mcp add --transport http vercel https://mcp.vercel.com
 ```
+
+En ambos casos hay que **reiniciar Claude Code** y autorizar en la ventana de
+OAuth que se abre. Si el flujo de OAuth no arranca, es un login interactivo:
+pídeselo al usuario en vez de intentar rodearlo.
 
 Si el MCP de Neon está conectado, úsalo en vez del navegador para la §4: es más
 confiable y deja rastro de lo que hiciste.
