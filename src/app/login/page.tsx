@@ -22,7 +22,7 @@ export default async function LoginPage() {
       <div className="lg-brand">
         <div className="lg-mark">
           <span className="lg-dot" />
-          SITTI
+          SOMOS SITTI
         </div>
 
         <div className="lg-radar" aria-hidden="true">
@@ -44,7 +44,7 @@ export default async function LoginPage() {
 
         <div className="lg-copy">
           <span className="lg-eyebrow">Panel de Gestión</span>
-          <h1>Movilidad de Medellín, medida en tiempo real.</h1>
+          <h1>Nos mueve MEDELLÍN</h1>
           <p>
             Indicadores de gestión conectados a la operación diaria — para decidir con datos, no con
             suposiciones.

@@ -40,7 +40,7 @@
   gap: 10px;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 22px;
+  font-size: 25.3px; /* 22px + 15% */
   letter-spacing: -0.01em;
   position: relative;
   z-index: 2;
@@ -140,7 +140,7 @@
 }
 .lg-eyebrow {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13.8px; /* 12px + 15% */
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--gold);
@@ -149,14 +149,14 @@
 }
 .lg-copy h1 {
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: 39.1px; /* 34px + 15% */
   line-height: 1.18;
   font-weight: 600;
   margin: 0 0 16px;
   letter-spacing: -0.01em;
 }
 .lg-copy p {
-  font-size: 15px;
+  font-size: 17.25px; /* 15px + 15% */
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.68);
   margin: 0;
@@ -176,7 +176,7 @@
   white-space: nowrap;
   animation: lg-ticker-scroll 26s linear infinite;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14.4px; /* 12px + 20% */
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.03em;
 }
