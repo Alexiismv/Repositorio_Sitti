@@ -890,12 +890,15 @@ body {
  * El wordmark "sitti" del archivo oficial es azul marino: sobre fondo oscuro
  * queda casi invisible. No se reconstruye el logo (es la marca), así que se le
  * pone una placa clara detrás — es la práctica estándar para un logo de color
- * fijo sobre fondo oscuro, y conserva el archivo tal cual.
+ * fijo sobre fondo oscuro, y conserva el archivo tal cual. La placa es blanco
+ * semitransparente (no sólido) para que no se vea como una caja recortada
+ * sobre el fondo oscuro.
  */
 [data-tema="oscuro"] .sh-logo-placa,
 [data-tema="oscuro"] .lg-logo {
-  background: #fff;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(2px);
+  border-radius: 10px;
   padding: 4px 9px;
 }
 [data-tema="oscuro"] .lg-logo {
