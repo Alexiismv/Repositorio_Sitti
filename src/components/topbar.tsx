@@ -111,6 +111,9 @@ export function Topbar({
               Gestión de usuarios
             </Link>
           )}
+          <Link href="/cambiar-password" onClick={() => setAbierto(false)}>
+            Cambiar mi contraseña
+          </Link>
           <button className="peligro" onClick={salir}>
             Cerrar sesión
           </button>
