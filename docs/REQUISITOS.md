@@ -188,13 +188,13 @@
 
 - **✅ Valores reales del campo Sede (`customfield_10066`)** — corrige la lista anterior:
   - `Caribe`
-  - `Centro de servicios`
+  - `Centro de Servicios` — ⚠️ **con "S" mayúscula.** Confirmado por consulta directa a `jira_cache.tickets_raw` (27 ago 2026): el literal real es `Centro de Servicios`, no `Centro de servicios` como se había asumido antes de conectar a Jira real. `catalogo.ts` tenía la minúscula, y como el match de sede es por texto exacto, esos 652 tickets no encontraban su sede en el catálogo y el pin desaparecía del mapa por completo. Corregido en `catalogo.ts`.
   - `Sao Paulo`
   - `Poblado`
   - `Concesionarios` — sede nueva: **✅ confirmado**, agrupa varios puntos físicos (varios centros comerciales/locales de carros) bajo un solo valor genérico "Concesionarios" en Jira — no se distingue el punto físico exacto en el dato. Para el mapa interactivo, se representa como **un solo pin genérico** (no georreferenciado a una dirección única), ya que no hay forma de saber desde el dato de Jira a qué concesionario específico corresponde cada ticket.
   - `Premium Plaza - Belén`
 
-  ⚠️ **Cambio respecto al prototipo ya construido:** el mapa interactivo (`sitti-gerencias-prototipo.html`) tiene pines con nombres distintos a estos 6 valores reales (ej. "Punto MásCerca Poblado" y "Punto MásCerca Belén" como sedes separadas, cuando en realidad es un solo valor combinado "Premium Plaza - Belén"; y "Tránsito Caribe" + "Servicios Caribe" cuando los valores reales son "Caribe" y "Centro de servicios"). Hay que renombrar los 6 pines para que coincidan exactamente con los valores del campo.
+  ⚠️ **Cambio respecto al prototipo ya construido:** el mapa interactivo (`sitti-gerencias-prototipo.html`) tiene pines con nombres distintos a estos 6 valores reales (ej. "Punto MásCerca Poblado" y "Punto MásCerca Belén" como sedes separadas, cuando en realidad es un solo valor combinado "Premium Plaza - Belén"; y "Tránsito Caribe" + "Servicios Caribe" cuando los valores reales son "Caribe" y "Centro de Servicios"). Hay que renombrar los 6 pines para que coincidan exactamente con los valores del campo.
 
 - **Implicación técnica clave:** el dashboard de un área (ej. "Cartera") probablemente necesita agregar tickets **de varios de los 12 proyectos a la vez**, no de uno solo — y para "Mesa de ayuda SMM" específicamente, la consulta debe usar `cf[11698]` en vez de `cf[10506]`. El JQL para los 11 proyectos "estándar" es `project in (X, Y, Z, ...) AND cf[10506] = "Cartera"`; para SMM sería una consulta aparte con `cf[11698]`.
 - ⚠️ **Riesgo de calidad de datos:** al ser selección manual, puede haber tickets mal categorizados. No bloquea el MVP, pero conviene monitorear consistencia.

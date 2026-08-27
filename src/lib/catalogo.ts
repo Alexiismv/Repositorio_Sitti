@@ -125,7 +125,7 @@ export interface Sede {
   aproximado?: boolean;
   /**
    * Dónde se dibuja la etiqueta respecto del pin.
-   * Caribe y Centro de servicios comparten dirección: sin esto sus etiquetas
+   * Caribe y Centro de Servicios comparten dirección: sin esto sus etiquetas
    * se tapan una a la otra y no se lee ninguna de las dos.
    */
   etiqueta?: "derecha" | "izquierda" | "arriba" | "abajo";
@@ -145,7 +145,7 @@ export const SEDES: Sede[] = [
   },
   {
     slug: "centro-de-servicios",
-    nombre: "Centro de servicios",
+    nombre: "Centro de Servicios",
     direccion: "Cra 64C # 72-58, Barrio Caribe, Medellín (misma sede, operación distinta)",
     lat: 6.27245,
     etiqueta: "derecha",

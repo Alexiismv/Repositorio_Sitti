@@ -37,7 +37,7 @@ export const USUARIOS_DEMO: UsuarioDemo[] = [
     nombre: "Carlos Múnera",
     rol: "coordinador",
     activo: true,
-    // Coordinador de Cartera y Financiera, únicamente en Caribe y Centro de servicios.
+    // Coordinador de Cartera y Financiera, únicamente en Caribe y Centro de Servicios.
     permisos: [
       { sede: "caribe", area: "cartera" },
       { sede: "caribe", area: "financiera" },

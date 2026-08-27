@@ -354,7 +354,7 @@
 
 /*
  * Posición de la etiqueta del pin.
- * Caribe y Centro de servicios comparten dirección física: si las dos etiquetas
+ * Caribe y Centro de Servicios comparten dirección física: si las dos etiquetas
  * salen a la derecha, la de arriba tapa a la de abajo y no se lee ninguna.
  * La posición se define por sede en `catalogo.ts`, no se calcula sola.
  */
