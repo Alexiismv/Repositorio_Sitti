@@ -43,19 +43,21 @@
 
 .mp-pin {
   position: relative;
-  width: 18px;
-  height: 18px;
+  /* 4x el tamaño original (18px) — pedido explícito para que los pines se
+     vean bien sobre el mapa incluso en pantallas grandes. */
+  width: 72px;
+  height: 72px;
   cursor: pointer;
   /* El marcador se ancla en su centro; sin esto MapLibre lo desplaza al hover. */
   transform-origin: center;
 }
 .mp-pin-nucleo {
   position: absolute;
-  inset: 3px;
+  inset: 12px;
   border-radius: 50%;
   background: var(--navy);
-  border: 2.5px solid #fff;
-  box-shadow: 0 2px 8px rgba(24, 27, 74, 0.35);
+  border: 10px solid #fff;
+  box-shadow: 0 8px 32px rgba(24, 27, 74, 0.35);
   transition:
     background 0.15s ease,
     inset 0.15s ease;
@@ -65,13 +67,13 @@
 }
 .mp-pin.activo .mp-pin-nucleo {
   background: var(--orange);
-  inset: 1px;
+  inset: 4px;
 }
 .mp-pin-onda {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1.5px solid var(--orange);
+  border: 6px solid var(--orange);
   opacity: 0;
 }
 .mp-pin.activo .mp-pin-onda {
@@ -90,7 +92,7 @@
 
 .mp-etiqueta {
   position: absolute;
-  left: 22px;
+  left: 88px;
   top: 50%;
   transform: translateY(-50%);
   font-family: var(--font-mono);
@@ -371,25 +373,25 @@
  * La posición se define por sede en `catalogo.ts`, no se calcula sola.
  */
 .mp-pin.et-derecha .mp-etiqueta {
-  left: 22px;
+  left: 88px;
   right: auto;
   top: 50%;
   transform: translateY(-50%);
 }
 .mp-pin.et-izquierda .mp-etiqueta {
-  right: 22px;
+  right: 88px;
   left: auto;
   top: 50%;
   transform: translateY(-50%);
 }
 .mp-pin.et-arriba .mp-etiqueta {
   left: 50%;
-  top: -8px;
+  top: -32px;
   transform: translate(-50%, -100%);
 }
 .mp-pin.et-abajo .mp-etiqueta {
   left: 50%;
-  top: 26px;
+  top: 104px;
   transform: translateX(-50%);
 }
 
@@ -454,8 +456,8 @@
    que puede venir de un hover pasajero) de "lo dejé seleccionado" (fijo). */
 .mp-pin.fijo .mp-pin-nucleo {
   box-shadow:
-    0 2px 8px rgba(24, 27, 74, 0.35),
-    0 0 0 3px rgba(241, 89, 42, 0.35);
+    0 8px 32px rgba(24, 27, 74, 0.35),
+    0 0 0 12px rgba(241, 89, 42, 0.35);
 }
 
 /* Teselas en oscuro — ver la explicación de `--mapa-filtro` en globals.css. */
