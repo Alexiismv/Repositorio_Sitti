@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Inter, Space_Grotesk } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { ProveedorTema, SCRIPT_TEMA, TEMA_POR_DEFECTO } from "@/components/tema";
 
@@ -55,6 +57,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${display.variable} ${cuerpo.variable} ${mono.variable}`}>
         <ProveedorTema>{children}</ProveedorTema>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

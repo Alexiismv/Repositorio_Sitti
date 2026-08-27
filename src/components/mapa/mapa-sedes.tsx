@@ -182,7 +182,7 @@ export function MapaSedes({
 
     for (const sede of sedes) {
       const el = document.createElement("div");
-      el.className = `mp-pin et-${sede.etiquetaPos}${sede.aproximado ? " aprox" : ""}`;
+      el.className = `mp-pin et-${sede.etiquetaPos}`;
       el.setAttribute("role", "button");
       el.setAttribute("tabindex", "0");
       el.setAttribute("aria-label", `Ver detalle de la sede ${sede.nombre}`);
@@ -262,7 +262,6 @@ export function MapaSedes({
 
   const detalle =
     activa === TODAS ? consolidado : (sedes.find((s) => s.slug === activa) ?? consolidado);
-  const hayAproximada = sedes.some((s) => s.aproximado);
 
   return (
     <div className="mp-wrap">
@@ -312,14 +311,6 @@ export function MapaSedes({
         </div>
 
         <div className="mp-pie">
-          <span className="mp-leyenda">
-            <span className="mp-muestra" /> Ubicación exacta
-          </span>
-          {hayAproximada && (
-            <span className="mp-leyenda">
-              <span className="mp-muestra aprox" /> Ubicación agrupada
-            </span>
-          )}
           <span>
             {fijada === TODAS
               ? "Pasa el mouse sobre un pin para verla · haz clic para fijarla"

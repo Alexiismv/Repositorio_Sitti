@@ -69,9 +69,6 @@
     background 0.15s ease,
     inset 0.15s ease;
 }
-.mp-pin.aprox .mp-pin-nucleo {
-  border-style: dashed;
-}
 .mp-pin.activo .mp-pin-nucleo {
   background: var(--orange);
   inset: 4px;
@@ -133,24 +130,6 @@
   color: var(--ink-soft);
   flex-wrap: wrap;
 }
-.mp-pie .mp-leyenda {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.mp-pie .mp-muestra {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px var(--line);
-  background: var(--navy);
-}
-.mp-pie .mp-muestra.aprox {
-  background: var(--card);
-  border: 1.5px dashed var(--navy);
-}
-
 /* ---------- Panel de detalle ---------- */
 
 .mp-detalle {
@@ -375,7 +354,7 @@
 
 /*
  * Posición de la etiqueta del pin.
- * Caribe y Centro de servicios comparten dirección física: si las dos etiquetas
+ * Caribe y Centro de Servicios comparten dirección física: si las dos etiquetas
  * salen a la derecha, la de arriba tapa a la de abajo y no se lee ninguna.
  * La posición se define por sede en `catalogo.ts`, no se calcula sola.
  */

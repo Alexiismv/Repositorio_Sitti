@@ -46,7 +46,7 @@ sin que Alexis lo confirme):
 
 - **9.038 tickets** en 2026, repartidos en **18 áreas** y **6 gerencias**.
 - **6 sedes reales** (valores literales del campo `customfield_10066`):
-  `Caribe` · `Centro de servicios` · `Sao Paulo` · `Poblado` · `Concesionarios` · `Premium Plaza - Belén`.
+  `Caribe` · `Centro de Servicios` · `Sao Paulo` · `Poblado` · `Concesionarios` · `Premium Plaza - Belén`.
 - **12 proyectos JSM**. 11 usan `customfield_10506` para Área; **"Mesa de ayuda SMM" usa `customfield_11698`** y su sede es SIEMPRE `Caribe`.
 - **Metas de SLA:** TTFR **4 h para todo ticket**. TTR según prioridad: Alta 4 h · Media 8 h · Baja 24 h.
 - **Sincronización: 2 veces al día.** No es tiempo real, y eso es una decisión, no una limitación.
@@ -138,7 +138,7 @@ Abre **http://localhost:3100** y entra con:
 | Usuario | Contraseña | Rol | Qué muestra |
 |---|---|---|---|
 | `maria.gomez` | `demo1234` | Gerente | Todo: 6 sedes, 7 gerencias, 9.038 tickets |
-| `carlos.munera` | `demo1234` | Coordinador | Solo Cartera/Financiera en Caribe y Centro de servicios |
+| `carlos.munera` | `demo1234` | Coordinador | Solo Cartera/Financiera en Caribe y Centro de Servicios |
 | `admin` | `demo1234` | Administrador | Todo + gestión de usuarios |
 
 **Entra con las dos primeras y compáralas** — es la forma más rápida de ver que
@@ -529,6 +529,13 @@ código; se documentan acá para que no se repita el diagnóstico:
   tuvo el ciclo de SLA corriendo y no es un bug del ETL ni de `parsearSla()`.
   Con el tiempo el % de NULL debería bajar solo, a medida que se acumulen
   tickets creados después de la activación.
+- **(27 ago 2026) El valor real de la sede es `Centro de Servicios`, con "S"
+  mayúscula** — `catalogo.ts` tenía `Centro de servicios` (minúscula). El match
+  de sede en `sedes-detalle.ts` es por texto exacto contra `SEDES`, así que los
+  652 tickets reales de esa sede no encontraban coincidencia y el pin
+  desaparecía del mapa por completo (ni pin ni etiqueta, sin error en consola).
+  Confirmado con una consulta directa a `jira_cache.tickets_raw` agrupando por
+  `sede`. Corregido en `catalogo.ts`.
 
 ---
 
