@@ -149,7 +149,11 @@ export const SEDES: Sede[] = [
     direccion: "Cra 64C # 72-58, Barrio Caribe, Medellín (misma sede, operación distinta)",
     lat: 6.27245,
     etiqueta: "derecha",
-    lon: -75.57055,
+    // Corrido más al oriente que la dirección literal a propósito: comparte
+    // edificio con "Caribe" (ver dirección arriba), y con los pines a 72px
+    // (4x) el offset anterior (-75.57055) dejaba los dos círculos
+    // sobrepuestos — no se podía seleccionar uno sin clickear el otro.
+    lon: -75.5537,
     peso: 0.26,
   },
   {
