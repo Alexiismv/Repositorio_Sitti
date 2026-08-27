@@ -19,6 +19,7 @@ export type GerenciaSlug =
   | "financiera"
   | "conexion-de-soluciones"
   | "experiencia-y-bienestar"
+  | "smm-esu"
   | "sin-gerencia";
 
 export interface Gerencia {
@@ -35,11 +36,12 @@ export const GERENCIAS: Gerencia[] = [
   { slug: "financiera", nombre: "Financiera", color: "#F1592A" },
   { slug: "conexion-de-soluciones", nombre: "Conexión de Soluciones", color: "#8B8FBF" },
   { slug: "experiencia-y-bienestar", nombre: "Experiencia y Bienestar", color: "#6BBF59" },
+  { slug: "smm-esu", nombre: "SMM/ESU", color: "#7A5AC4" },
   { slug: "sin-gerencia", nombre: "Sin gerencia asignada", color: "#B7BAD6" },
 ];
 
 // ─────────────────────────────────────────────────────────────
-// ÁREAS  (18 filas · volumen 2026 confirmado)
+// ÁREAS  (24 filas · volumen 2026 confirmado)
 // ─────────────────────────────────────────────────────────────
 
 export interface Area {
@@ -60,7 +62,11 @@ export const AREAS: Area[] = [
   { slug: "experiencia-de-servicio", nombre: "Experiencia de Servicio", gerencia: "experiencia-de-servicio", volumen2026: 276 },
   { slug: "financiera", nombre: "Financiera", gerencia: "financiera", volumen2026: 222 },
   { slug: "gestion-de-notificaciones", nombre: "Gestión de Notificaciones", gerencia: "experiencia-de-servicio", volumen2026: 175 },
-  { slug: "otras", nombre: "Otras", gerencia: "sin-gerencia", volumen2026: 124 },
+  // Reclasificado por Alexis desde la raíz en Jira (25 ago 2026): ya no quedan
+  // tickets reales en 2026 con Área = "Otras". Se conserva la fila (no se
+  // borra) porque "Otras" sigue siendo una opción seleccionable en Jira — si
+  // alguien la vuelve a elegir, el ETL necesita dónde aterrizarla.
+  { slug: "otras", nombre: "Otras", gerencia: "sin-gerencia", volumen2026: 0 },
   { slug: "sin-nombre", nombre: "(Sin nombre — origen por identificar)", gerencia: "sin-gerencia", volumen2026: 97 },
   { slug: "cad", nombre: "CAD", gerencia: "operacion-contravencional", volumen2026: 40 },
   { slug: "gestion-juridica-de-cobro", nombre: "Gestión Jurídica de Cobro", gerencia: "juridica", volumen2026: 38 },
@@ -68,10 +74,36 @@ export const AREAS: Area[] = [
   { slug: "aseguramiento-contractual", nombre: "Aseguramiento Contractual", gerencia: "operacion-contravencional", volumen2026: 27 },
   { slug: "experiencia-y-bienestar", nombre: "Experiencia y Bienestar", gerencia: "experiencia-y-bienestar", volumen2026: 4 },
   { slug: "gerencia-general", nombre: "Gerencia General", gerencia: "sin-gerencia", volumen2026: 2 },
-  { slug: "digitalizacion", nombre: "Digitalización", gerencia: "sin-gerencia", volumen2026: 1 },
+  // Confirmado por Alexis (25 ago 2026): Digitalización pertenece a Operación
+  // Contravencional, no a "sin gerencia".
+  { slug: "digitalizacion", nombre: "Digitalización", gerencia: "operacion-contravencional", volumen2026: 1 },
+
+  // Dependencias de "Mesa de ayuda SMM" (customfield_11698) — confirmado por
+  // Alexis (25 ago 2026) que forman su propia gerencia, "SMM/ESU", y no
+  // corresponden a ninguna de las 18 áreas de arriba (ver CLAUDE.md § 9 punto 2).
+  { slug: "subsecretaria-seguridad-vial-control", nombre: "Subsecretaría de Seguridad Vial y Control", gerencia: "smm-esu", volumen2026: 2196 },
+  { slug: "subsecretaria-legal", nombre: "Subsecretaría Legal", gerencia: "smm-esu", volumen2026: 70 },
+  { slug: "esu", nombre: "ESU", gerencia: "smm-esu", volumen2026: 27 },
+  { slug: "unidad-administrativa", nombre: "Unidad Administrativa", gerencia: "smm-esu", volumen2026: 13 },
+  { slug: "despacho-legal", nombre: "Despacho Legal", gerencia: "smm-esu", volumen2026: 3 },
+  // Sin tickets en 2026 todavía, pero es una opción seleccionable en Jira —
+  // se conserva la fila para que el ETL sepa dónde aterrizarla si aparece.
+  { slug: "subsecretaria-tecnica", nombre: "Subsecretaría Técnica", gerencia: "smm-esu", volumen2026: 0 },
 ];
 
-/** 9.038 tickets — la suma de las 18 áreas. Es el número que muestra el KPI general. */
+/**
+ * Nombres de área que llegan de Jira con un texto distinto al canónico del
+ * catálogo, pero que el negocio confirmó que son la MISMA área. Hoy solo pasa
+ * con "Gestión Juridica Documental" (sin tilde en "Juridica"), que Alexis
+ * confirmó (25 ago 2026) que es "Gestión Jurídica de Cobro" con otro nombre
+ * en Jira. `resolverArea()` en `src/lib/data/provider.ts` normaliza por acá
+ * ANTES de buscar en `AREAS`.
+ */
+export const ALIAS_AREA: Record<string, string> = {
+  "Gestión Juridica Documental": "Gestión Jurídica de Cobro",
+};
+
+/** 11.223 tickets — la suma de las 24 áreas. Solo alimenta el generador demo (`DEMO_MODE=true`); con datos reales el KPI general sale de la base. */
 export const TOTAL_2026 = AREAS.reduce((acc, a) => acc + a.volumen2026, 0);
 
 // ─────────────────────────────────────────────────────────────
@@ -179,19 +211,22 @@ export interface Proyecto {
   sedeFija?: string;
 }
 
+// Claves confirmadas por Alexis contra el Jira real (conexiondesoluciones.atlassian.net):
+// solo los 12 proyectos "* - Tickets" (se excluyen a propósito sus contrapartes
+// "* - Backlog", que son trabajo interno del equipo, no solicitudes de usuario).
 export const PROYECTOS: Proyecto[] = [
-  { clave: "ANL", nombre: "Analítica", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "AUW", nombre: "Audiencias Web", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "BO", nombre: "BackOffice", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "CC", nombre: "Cobro Coactivo", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "DEI", nombre: "DEI", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "FO", nombre: "FrontOffice", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "GA", nombre: "Gestión de la Atención", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "GIC", nombre: "GIC", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "MUL", nombre: "Multas", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "QXT", nombre: "Qx Tránsito", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "MAS", nombre: "Mesa de ayuda SITTI", vocabulario: "mesa", campoArea: "customfield_10506" },
-  { clave: "SMM", nombre: "Mesa de ayuda SMM", vocabulario: "mesa", campoArea: "customfield_11698", sedeFija: "Caribe" },
+  { clave: "TA", nombre: "Analítica", vocabulario: "estandar", campoArea: "customfield_10506" },
+  { clave: "TAW", nombre: "Audiencias Web", vocabulario: "estandar", campoArea: "customfield_10506" },
+  { clave: "TBACK", nombre: "BackOffice", vocabulario: "estandar", campoArea: "customfield_10506" },
+  { clave: "TCOBRO", nombre: "Cobro Coactivo", vocabulario: "estandar", campoArea: "customfield_10506" },
+  { clave: "TDEI", nombre: "DEI", vocabulario: "estandar", campoArea: "customfield_10506" },
+  { clave: "TFRONT", nombre: "FrontOffice", vocabulario: "estandar", campoArea: "customfield_10506" },
+  { clave: "TGA", nombre: "Gestión de la Atención", vocabulario: "estandar", campoArea: "customfield_10506" },
+  { clave: "TGIC", nombre: "GIC", vocabulario: "estandar", campoArea: "customfield_10506" },
+  { clave: "TMULTAS", nombre: "Multas", vocabulario: "estandar", campoArea: "customfield_10506" },
+  { clave: "TQX", nombre: "Qx Tránsito", vocabulario: "estandar", campoArea: "customfield_10506" },
+  { clave: "TMA", nombre: "Mesa de ayuda SITTI", vocabulario: "mesa", campoArea: "customfield_10506" },
+  { clave: "REQ", nombre: "Mesa de ayuda SMM", vocabulario: "mesa", campoArea: "customfield_11698", sedeFija: "Caribe" },
 ];
 
 // ─────────────────────────────────────────────────────────────

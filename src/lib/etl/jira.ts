@@ -31,7 +31,7 @@ const CAMPOS = [
   "customfield_10506", // Área             (los otros 11 proyectos)
   "customfield_10044", // TTFR
   "customfield_10043", // TTR
-].join(",");
+];
 
 export interface IssueJira {
   key?: string;
@@ -90,55 +90,88 @@ export const hayCredencialesJira = (): boolean =>
 // JQL
 // ─────────────────────────────────────────────────────────────
 
-const TODOS_LOS_PROYECTOS = PROYECTOS.map((p) => `"${p.nombre}"`).join(", ");
+// Por CLAVE de proyecto, no por nombre: el nombre visible en Jira puede
+// cambiar (espacios, guiones, mayúsculas) sin que la clave se mueva.
+const TODOS_LOS_PROYECTOS = PROYECTOS.map((p) => p.clave).join(", ");
+
+/**
+ * Regla de oro, pedida explícitamente por Alexis (24 ago 2026): el panel solo
+ * opera con el año calendario vigente. Ningún ticket de otro año entra, ni en
+ * carga completa ni en incremental — así nunca hay que limpiar histórico viejo
+ * a mano. Si el negocio decide ampliar la ventana, este es el único lugar que
+ * hay que tocar (y subir el año cuando empiece 2027).
+ */
+const ANIO_OPERATIVO = 2026;
+const FILTRO_ANIO = `created >= "${ANIO_OPERATIVO}-01-01" AND created <= "${ANIO_OPERATIVO}-12-31"`;
 
 export const jqlCompleto = (): string =>
-  `project in (${TODOS_LOS_PROYECTOS}) ORDER BY created ASC`;
+  `project in (${TODOS_LOS_PROYECTOS}) AND ${FILTRO_ANIO} ORDER BY created ASC`;
 
 /**
  * JQL incremental: solo lo que se movió en los últimos N días.
  *
  * Se filtra por `updated` y no por `created` a propósito: un ticket abierto
  * hace tres meses que hoy cambió de estado TIENE que volver a bajarse, y por
- * fecha de creación no entraría.
+ * fecha de creación no entraría. El filtro de año igual aplica sobre `created`,
+ * para que un ticket de 2025 que se actualizó hoy no se cuele.
  */
 export const jqlIncremental = (dias: number): string =>
-  `project in (${TODOS_LOS_PROYECTOS}) AND updated >= "-${dias}d" ORDER BY updated ASC`;
+  `project in (${TODOS_LOS_PROYECTOS}) AND ${FILTRO_ANIO} AND updated >= "-${dias}d" ORDER BY updated ASC`;
 
 // ─────────────────────────────────────────────────────────────
 // Descarga
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * `GET /rest/api/3/search` fue ELIMINADO por Atlassian (HTTP 410). El
+ * reemplazo, `POST /rest/api/3/search/jql`, cambia dos cosas de fondo:
+ *   1. Va por POST con body JSON, no por querystring.
+ *   2. Pagina con `nextPageToken`, no con `startAt`/`total`. La API ya no
+ *      garantiza el conteo total, así que no se puede mostrar "traídos / total"
+ *      de forma confiable — solo "traídos hasta ahora".
+ */
 export async function traerIssues(
   jql: string,
   opciones: { limite?: number; alProgresar?: (traidos: number, total: number | null) => void } = {},
 ): Promise<IssueJira[]> {
   const { base, auth } = credencialesJira();
   const issues: IssueJira[] = [];
-  let startAt = 0;
+  let nextPageToken: string | undefined;
 
   for (;;) {
     const maxResults = Math.min(100, opciones.limite ? opciones.limite - issues.length : 100);
     if (maxResults <= 0) break;
 
-    const url =
-      `${base}/rest/api/3/search?jql=${encodeURIComponent(jql)}` +
-      `&fields=${CAMPOS}&startAt=${startAt}&maxResults=${maxResults}`;
-
-    const res = await fetch(url, { headers: { Authorization: auth, Accept: "application/json" } });
+    const res = await fetch(`${base}/rest/api/3/search/jql`, {
+      method: "POST",
+      headers: {
+        Authorization: auth,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        jql,
+        fields: CAMPOS,
+        maxResults,
+        ...(nextPageToken ? { nextPageToken } : {}),
+      }),
+    });
 
     if (!res.ok) {
       throw new Error(`Jira respondió ${res.status}: ${(await res.text()).slice(0, 300)}`);
     }
 
-    const cuerpo = (await res.json()) as { issues?: IssueJira[]; total?: number };
+    const cuerpo = (await res.json()) as {
+      issues?: IssueJira[];
+      nextPageToken?: string;
+    };
     const lote = cuerpo.issues ?? [];
     issues.push(...lote);
-    opciones.alProgresar?.(issues.length, cuerpo.total ?? null);
+    opciones.alProgresar?.(issues.length, null);
 
-    if (lote.length < maxResults) break;
+    nextPageToken = cuerpo.nextPageToken;
+    if (!nextPageToken) break;
     if (opciones.limite && issues.length >= opciones.limite) break;
-    startAt += lote.length;
   }
 
   return issues;
@@ -214,15 +247,59 @@ interface ObjetoSla {
   ongoingCycle?: CicloSla;
 }
 
-const POR_NOMBRE = new Map(PROYECTOS.map((p) => [p.nombre, p]));
+const POR_CLAVE = new Map(PROYECTOS.map((p) => [p.clave, p]));
+
+/** La clave del proyecto (ej. "TDEI"), no el nombre visible. `f.project` trae `{id, key, name}`. */
+const claveProyecto = (v: unknown): string | null => {
+  if (v != null && typeof v === "object" && typeof (v as { key?: unknown }).key === "string") {
+    return (v as { key: string }).key;
+  }
+  return null;
+};
+
+/**
+ * Jira devuelve la prioridad como "ALTO"/"MEDIO"/"BAJO" (masculino, mayúscula);
+ * el catálogo usa "Alta"/"Media"/"Baja". Sin este mapeo, `prioridad` nunca
+ * matchea una clave de `META_TTR_HORAS` y todo ticket cae al default Media,
+ * falseando el cumplimiento de TTR de los de prioridad Alta y Baja.
+ */
+const PRIORIDAD_JIRA_A_CATALOGO: Record<string, Prioridad> = {
+  ALTO: "Alta",
+  ALTA: "Alta",
+  MEDIO: "Media",
+  MEDIA: "Media",
+  BAJO: "Baja",
+  BAJA: "Baja",
+};
+
+const prioridadDesdeJira = (v: unknown): Prioridad => {
+  const literal = texto(v)?.toUpperCase() ?? "";
+  return PRIORIDAD_JIRA_A_CATALOGO[literal] ?? "Media";
+};
+
+/**
+ * `customfield_10010` (Request Type) no trae `{name}` en la raíz como los
+ * demás campos de selección: el nombre vive en `requestType.name`.
+ */
+const tipoRequerimientoDesdeJira = (v: unknown): string | null => {
+  if (v != null && typeof v === "object") {
+    const rt = (v as { requestType?: { name?: unknown } }).requestType;
+    if (rt && typeof rt.name === "string") return rt.name;
+  }
+  return null;
+};
 
 export function normalizar(issue: IssueJira): TicketNormalizado {
   const f = issue.fields ?? {};
-  const proyecto = texto(f.project);
-  const conf = proyecto ? POR_NOMBRE.get(proyecto) : undefined;
+  const conf = POR_CLAVE.get(claveProyecto(f.project) ?? "");
+  // Nombre CANÓNICO del catálogo, no el literal de Jira ("DEI - Tickets",
+  // "Mesa de ayuda - SMM"...): `jira_cache.v_tickets` compara `proyecto` por
+  // texto exacto contra 'Mesa de ayuda SMM' para el switch de Área — si acá
+  // quedara el nombre crudo de Jira, esa comparación dejaría de matchear.
+  const proyecto = conf?.nombre ?? texto(f.project);
 
-  const prioridad = (texto(f.priority) ?? "Media") as Prioridad;
-  const metaTtr = META_TTR_HORAS[prioridad] ?? META_TTR_HORAS.Media;
+  const prioridad = prioridadDesdeJira(f.priority);
+  const metaTtr = META_TTR_HORAS[prioridad];
 
   const ttfrHoras = parsearSla(f.customfield_10044);
   const ttrHoras = parsearSla(f.customfield_10043);
@@ -238,7 +315,7 @@ export function normalizar(issue: IssueJira): TicketNormalizado {
     fechaCierre: texto(f.resolutiondate),
     fechaActualizacion: texto(f.updated),
     tipoIncidencia: texto(f.issuetype),
-    tipoRequerimiento: texto(f.customfield_10010),
+    tipoRequerimiento: tipoRequerimientoDesdeJira(f.customfield_10010),
     // Regla dura: "Mesa de ayuda SMM" no trae Sede; es SIEMPRE Caribe.
     sede: conf?.sedeFija ?? texto(f.customfield_10066),
     // Los dos campos de área se guardan SEPARADOS. No se combinan acá:

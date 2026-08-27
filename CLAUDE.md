@@ -478,12 +478,57 @@ docs/SETUP-ALEXIS.md          Este mismo camino, explicado para humanos
 
 No las resuelvas por tu cuenta. Están marcadas también en `docs/REQUISITOS.md`.
 
-1. **Formato real de TTFR/TTR** por API. Se resuelve con `npm run etl -- --dry-run` (§5.2).
+1. ~~**Formato real de TTFR/TTR** por API.~~ **RESUELTO (24 ago 2026).** Confirmado
+   contra Jira real: llega como objeto SLA (`completedCycles[].elapsedTime.millis`
+   o `ongoingCycle.elapsedTime.millis`), tal como se sospechaba. `parsearSla()`
+   ya lo interpretaba bien sin cambios.
 2. **¿Los valores de `customfield_11698` (Dependencia_SMM) coinciden con las 18 áreas estándar** o son un listado propio de SMM? Si son propios, hay que mapearlos.
 3. **Umbral de "ticket estancado":** hoy son 5 días (`DIAS_ESTANCADO_DEFAULT`). ¿3? ¿5 hábiles?
 4. **¿La agrupación en 5 categorías de estado tiene sentido de negocio**, o las prefieren separadas distinto?
 5. **Área "(sin nombre)" con 97 tickets** — falta identificar de dónde salen.
 6. **Proveedor y dominio final.** Vercel resuelve el MVP; si más adelante quieren VM propia, el `docker-compose.yml` de este repo ya la cubre.
+
+### Hallazgos confirmados el 24 ago 2026 (conexión real a Jira)
+
+El Jira real de SITTI vive en `conexiondesoluciones.atlassian.net` (cuenta del
+proveedor), no en `sitti.atlassian.net`. Al conectar con credenciales reales
+por primera vez aparecieron varios desajustes entre lo que asumía este repo
+(escrito sin acceso a Jira) y la instancia real. Ya están corregidos en el
+código; se documentan acá para que no se repita el diagnóstico:
+
+- **`GET /rest/api/3/search` fue ELIMINADO por Atlassian** (HTTP 410). Se
+  migró a `POST /rest/api/3/search/jql`, que pagina con `nextPageToken` en vez
+  de `startAt`/`total`. Corregido en `traerIssues()` (`src/lib/etl/jira.ts`).
+- **Los proyectos NO se identifican de forma confiable por nombre.** El Jira
+  real tiene ~34 proyectos, no 12, y cada área tiene un par `"X - Backlog"` /
+  `"X - Tickets"`. Los 12 confirmados por Alexis (solo "Tickets", sin
+  "Backlog") son: `TQX, TAW, TBACK, TA, TCOBRO, TDEI, TFRONT, TGA, TGIC,
+  TMULTAS, TMA, REQ`. `PROYECTOS` en `catalogo.ts` y el JQL en `jira.ts` ya
+  filtran por estas CLAVES, no por nombre — el nombre visible en Jira puede
+  traer guiones o sufijos ("DEI - Tickets") que no coinciden con el nombre de
+  negocio ("DEI"). El campo `proyecto` que se guarda en `tickets_raw` usa el
+  nombre CANÓNICO del catálogo, no el literal de Jira, para que el switch de
+  Área de `jira_cache.v_tickets` (que compara contra `'Mesa de ayuda SMM'`
+  literal) siga funcionando.
+- **`customfield_10506` (Área) SÍ es el campo correcto** — se confirmó por
+  `/rest/api/3/field` y por muestreo de tickets recientes. Si un dry-run
+  muestra `area: null`, antes de sospechar del campo, revisa si cayó en
+  tickets viejos (2023) de antes de que el campo existiera en el proyecto.
+- **La prioridad de Jira llega como `"ALTO"/"MEDIO"/"BAJO"`** (masculino,
+  mayúscula), no `"Alta"/"Media"/"Baja"` como espera el catálogo. Sin mapeo,
+  ningún valor matcheaba y todo ticket caía al default "Media", falseando el
+  cumplimiento de TTR de los tickets Alta y Baja. Corregido con
+  `PRIORIDAD_JIRA_A_CATALOGO` en `jira.ts`.
+- **`customfield_10010` (Request Type / Tipo_de_Requerimiento) no trae
+  `{name}` en la raíz** como los demás campos de selección: el nombre vive en
+  `f.customfield_10010.requestType.name`. Corregido con
+  `tipoRequerimientoDesdeJira()` en `jira.ts`.
+- **`ttfr_horas` sale NULL en ~68% de los tickets de 2026, parejo en los 12
+  proyectos (55%-76%).** Confirmado por Alexis: la métrica de TTFR se activó
+  en Jira hace ~2 meses (≈ jun 2026), así que todo ticket anterior a eso nunca
+  tuvo el ciclo de SLA corriendo y no es un bug del ETL ni de `parsearSla()`.
+  Con el tiempo el % de NULL debería bajar solo, a medida que se acumulen
+  tickets creados después de la activación.
 
 ---
 

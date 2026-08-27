@@ -1,10 +1,71 @@
+import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { crearSesion } from "@/lib/auth/sesion";
+import type { Permiso, Rol } from "@/lib/auth/tipos";
 import { buscarUsuarioDemo } from "@/lib/auth/usuarios-demo";
+import { conCliente } from "@/lib/db";
 import { DEMO_MODE } from "@/lib/data/provider";
 import { registrarAuditoria } from "@/lib/logs";
+
+interface FilaUsuario {
+  id: string;
+  email: string;
+  nombre: string;
+  password_hash: string;
+  rol: Rol;
+  activo: boolean;
+  ver_personas: boolean;
+}
+
+/**
+ * Login contra Postgres: `auth.usuarios` + `auth.usuario_permiso`.
+ *
+ * `SELECT *` está prohibido en tablas con datos de personas (CLAUDE.md § 2.2
+ * regla 10) — se enumeran columnas explícitas, sin traer `password_hash` más
+ * de lo necesario para la comparación.
+ */
+async function autenticarPostgres(
+  usuario: string,
+  password: string,
+): Promise<{
+  id: string;
+  email: string;
+  nombre: string;
+  rol: Rol;
+  permisos: Permiso[];
+  verPersonas: boolean;
+} | null> {
+  return conCliente(async (cliente) => {
+    const r = await cliente.query<FilaUsuario>(
+      `SELECT id, email, nombre, password_hash, rol, activo, ver_personas
+       FROM auth.usuarios
+       WHERE lower(email) = lower($1) AND activo`,
+      [usuario.trim()],
+    );
+
+    const fila = r.rows[0];
+    if (!fila) return null;
+
+    const coincide = await bcrypt.compare(password, fila.password_hash);
+    if (!coincide) return null;
+
+    const permisosRes = await cliente.query<{ sede_slug: string; area_slug: string }>(
+      `SELECT sede_slug, area_slug FROM auth.usuario_permiso WHERE usuario_id = $1`,
+      [fila.id],
+    );
+
+    return {
+      id: fila.id,
+      email: fila.email,
+      nombre: fila.nombre,
+      rol: fila.rol,
+      permisos: permisosRes.rows.map((p) => ({ sede: p.sede_slug, area: p.area_slug })),
+      verPersonas: fila.ver_personas,
+    };
+  });
+}
 
 const esquema = z.object({
   usuario: z.string().min(1).max(120),
@@ -26,17 +87,9 @@ export async function POST(req: Request) {
 
   const { usuario, password } = parsed.data;
 
-  if (!DEMO_MODE) {
-    // Con base real: SELECT ... FROM auth.usuarios WHERE email = $1 AND activo
-    // y comparar con bcrypt.compare(password, password_hash).
-    // Ver docs/SETUP-ALEXIS.md § Conectar la base de datos.
-    return NextResponse.json(
-      { error: "La autenticación contra Postgres todavía no está implementada." },
-      { status: 501 },
-    );
-  }
-
-  const encontrado = buscarUsuarioDemo(usuario, password);
+  const encontrado = DEMO_MODE
+    ? buscarUsuarioDemo(usuario, password)
+    : await autenticarPostgres(usuario, password);
 
   if (!encontrado) {
     await registrarAuditoria({

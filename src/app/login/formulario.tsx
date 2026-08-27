@@ -22,6 +22,7 @@ export function FormularioLogin({ demo }: { demo: boolean }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [enviando, iniciarEnvio] = useTransition();
+  const [verPassword, setVerPassword] = useState(false);
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -76,16 +77,48 @@ export function FormularioLogin({ demo }: { demo: boolean }) {
         <label className="lg-label" htmlFor="password">
           Contraseña
         </label>
-        <input
-          className="text-input"
-          id="password"
-          type="password"
-          placeholder="••••••••"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="lg-password-wrap">
+          <input
+            className="text-input"
+            id="password"
+            type={verPassword ? "text" : "password"}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            className="lg-password-toggle"
+            onClick={() => setVerPassword((v) => !v)}
+            aria-label={verPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            aria-pressed={verPassword}
+          >
+            {verPassword ? (
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                <path
+                  d="M3 3l18 18M10.58 10.58a2 2 0 002.83 2.83M9.36 5.11A9.99 9.99 0 0112 5c5 0 9 4.5 10 7-.44 1-1.36 2.51-2.7 3.79M6.6 6.6C4.53 8.02 2.9 10.06 2 12c1 2.5 5 7 10 7 1.36 0 2.63-.28 3.77-.77"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                <path
+                  d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7" />
+              </svg>
+            )}
+          </button>
+        </div>
 
         <div className="lg-row">
           <label className="lg-remember">

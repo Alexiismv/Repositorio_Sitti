@@ -53,7 +53,8 @@ export function resumen(tickets: Ticket[], diasEstancado = DIAS_ESTANCADO_DEFAUL
   const pendientes = total - resueltos - cancelados;
 
   const conTtr = tickets.filter((t) => t.ttrHoras !== null);
-  const ttfrOk = tickets.filter((t) => !t.ttfrIncumplido).length;
+  const conTtfr = tickets.filter((t) => t.ttfrHoras !== null);
+  const ttfrOk = conTtfr.filter((t) => !t.ttfrIncumplido).length;
   const ttrOk = conTtr.filter((t) => !t.ttrIncumplido).length;
 
   // Meses con actividad — el promedio mensual se divide entre esos, no entre 12,
@@ -66,9 +67,11 @@ export function resumen(tickets: Ticket[], diasEstancado = DIAS_ESTANCADO_DEFAUL
     resueltos,
     cancelados,
     promedioMensual: meses.size ? Math.round(total / meses.size) : 0,
-    cumplimientoTtfr: total ? Math.round((ttfrOk / total) * 100) : 0,
+    cumplimientoTtfr: conTtfr.length ? Math.round((ttfrOk / conTtfr.length) * 100) : 0,
     cumplimientoTtr: conTtr.length ? Math.round((ttrOk / conTtr.length) * 100) : 0,
-    ttfrPromedioHoras: total ? redondear(tickets.reduce((a, t) => a + t.ttfrHoras, 0) / total) : 0,
+    ttfrPromedioHoras: conTtfr.length
+      ? redondear(conTtfr.reduce((a, t) => a + (t.ttfrHoras ?? 0), 0) / conTtfr.length)
+      : 0,
     ttrPromedioHoras: conTtr.length
       ? redondear(conTtr.reduce((a, t) => a + (t.ttrHoras ?? 0), 0) / conTtr.length)
       : 0,
@@ -288,7 +291,7 @@ export function modaDe(tickets: Ticket[], campo: (t: Ticket) => string): string 
 export function semaforo(t: Ticket): "verde" | "amarillo" | "rojo" {
   if (t.ttfrIncumplido || t.ttrIncumplido) return "rojo";
   const metaTtr = META_TTR_HORAS[t.prioridad];
-  const cercaTtfr = t.ttfrHoras > META_TTFR_HORAS * 0.75;
+  const cercaTtfr = t.ttfrHoras !== null && t.ttfrHoras > META_TTFR_HORAS * 0.75;
   const cercaTtr = t.ttrHoras !== null && t.ttrHoras > metaTtr * 0.75;
   return cercaTtfr || cercaTtr ? "amarillo" : "verde";
 }

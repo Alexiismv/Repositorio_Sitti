@@ -12,7 +12,8 @@
 
 import { ticketsDemo, type Ticket } from "@/lib/demo/generador";
 import { puedeVer, type Sesion } from "@/lib/auth/tipos";
-import { SEDES } from "@/lib/catalogo";
+import { ALIAS_AREA, AREAS, PROYECTOS, SEDES, type CategoriaEstado, type Prioridad } from "@/lib/catalogo";
+import { conCliente } from "@/lib/db";
 
 export interface Filtros {
   /** ISO date (inclusive) sobre `fecha_creacion`. */
@@ -35,6 +36,33 @@ export interface Filtros {
 export const DEMO_MODE = process.env.DEMO_MODE !== "false";
 
 const slugDeSede = new Map(SEDES.map((s) => [s.nombre, s.slug]));
+const areaPorNombre = new Map(AREAS.map((a) => [a.nombre, a]));
+const claveDeProyecto = new Map(PROYECTOS.map((p) => [p.nombre, p.clave]));
+const AREA_OTRAS = AREAS.find((a) => a.slug === "otras")!;
+const AREA_SIN_NOMBRE = AREAS.find((a) => a.slug === "sin-nombre")!;
+
+/**
+ * `area_efectiva` en `jira_cache.v_tickets` es texto libre traído de Jira, no
+ * un slug del catálogo. Tres casos:
+ *   1. NULL (campo nunca se llenó en Jira) -> bucket "sin-nombre".
+ *   2. Coincide con el nombre de una de las 18 áreas -> esa área.
+ *   3. Cualquier otro texto (la opción literal "Otras", o los valores propios
+ *      de Dependencia SMM como "Subsecretaría de Seguridad Vial y Control",
+ *      que NO son ninguna de las 18 áreas — ver CLAUDE.md § 9 punto 2, pendiente
+ *      de que Alexis defina a qué gerencia mapea cada dependencia) -> "Otras",
+ *      para no perder el ticket mientras se define la reclasificación.
+ */
+function resolverArea(nombreArea: string | null): { area: string; areaSlug: string; gerenciaSlug: string } {
+  if (nombreArea === null) {
+    return { area: AREA_SIN_NOMBRE.nombre, areaSlug: AREA_SIN_NOMBRE.slug, gerenciaSlug: AREA_SIN_NOMBRE.gerencia };
+  }
+  const nombreCanonico = ALIAS_AREA[nombreArea] ?? nombreArea;
+  const conocida = areaPorNombre.get(nombreCanonico);
+  if (conocida) {
+    return { area: conocida.nombre, areaSlug: conocida.slug, gerenciaSlug: conocida.gerencia };
+  }
+  return { area: nombreArea, areaSlug: AREA_OTRAS.slug, gerenciaSlug: AREA_OTRAS.gerencia };
+}
 
 function cumpleFiltros(t: Ticket, f: Filtros): boolean {
   if (f.desde && t.fechaCreacion < f.desde) return false;
@@ -79,24 +107,108 @@ export async function ultimaSincronizacion(): Promise<{ fecha: string; total: nu
     const { FECHA_CORTE } = await import("@/lib/demo/generador");
     return { fecha: FECHA_CORTE.toISOString(), total: ticketsDemo().length, estado: "exito" };
   }
-  // Con datos reales: SELECT * FROM jira_cache.sync_log ORDER BY finalizado_en DESC LIMIT 1
-  throw new Error("ultimaSincronizacion: falta implementar la lectura de jira_cache.sync_log");
+
+  return conCliente(async (cliente) => {
+    const r = await cliente.query<{
+      finalizado_en: Date | null;
+      iniciado_en: Date;
+      total_tickets: number | null;
+      estado: "en_curso" | "exito" | "error";
+    }>(
+      `SELECT finalizado_en, iniciado_en, total_tickets, estado
+       FROM jira_cache.sync_log
+       WHERE estado IN ('exito', 'error')
+       ORDER BY finalizado_en DESC NULLS LAST
+       LIMIT 1`,
+    );
+
+    const fila = r.rows[0];
+    if (!fila) {
+      // Tabla real pero sin ninguna corrida registrada todavía (recién aplicado
+      // el schema, antes del primer `npm run etl`).
+      return { fecha: new Date(0).toISOString(), total: 0, estado: "error" as const };
+    }
+
+    return {
+      fecha: (fila.finalizado_en ?? fila.iniciado_en).toISOString(),
+      total: fila.total_tickets ?? 0,
+      estado: fila.estado === "exito" ? ("exito" as const) : ("error" as const),
+    };
+  });
+}
+
+interface FilaVTicket {
+  clave: string;
+  titulo_ticket: string | null;
+  proyecto: string | null;
+  fecha_creacion: Date;
+  fecha_cierre: Date | null;
+  fecha_actualizacion: Date;
+  persona_asignada: string | null;
+  estado_ticket: string;
+  categoria_estado: CategoriaEstado;
+  prioridad: Prioridad;
+  tipo_incidencia: string | null;
+  tipo_requerimiento: string | null;
+  sede: string | null;
+  area_efectiva: string | null;
+  comentarios: number;
+  ttfr_horas: number | null;
+  ttr_horas: number | null;
+  ttfr_incumplido: boolean | null;
+  ttr_incumplido: boolean | null;
+  dias_sin_actualizar: number;
+}
+
+function mapearFila(f: FilaVTicket): Ticket {
+  const { area, areaSlug, gerenciaSlug } = resolverArea(f.area_efectiva);
+  const proyecto = f.proyecto ?? "";
+
+  return {
+    clave: f.clave,
+    tituloTicket: f.titulo_ticket ?? "",
+    proyecto,
+    proyectoClave: claveDeProyecto.get(proyecto) ?? "",
+    fechaCreacion: f.fecha_creacion.toISOString(),
+    fechaCierre: f.fecha_cierre?.toISOString() ?? null,
+    fechaActualizacion: f.fecha_actualizacion.toISOString(),
+    personaAsignada: f.persona_asignada ?? "(Sin asignar)",
+    estadoTicket: f.estado_ticket,
+    categoriaEstado: f.categoria_estado,
+    prioridad: f.prioridad,
+    tipoIncidencia: f.tipo_incidencia ?? "",
+    tipoRequerimiento: f.tipo_requerimiento ?? "",
+    sede: f.sede ?? "",
+    area,
+    areaSlug,
+    gerenciaSlug,
+    ttfrHoras: f.ttfr_horas,
+    ttrHoras: f.ttr_horas,
+    // NULL = SLA no trackeado para este ticket (ver CLAUDE.md § 9): no cuenta
+    // como incumplido, igual que un ticket sin ttrHoras porque sigue abierto.
+    ttfrIncumplido: f.ttfr_incumplido ?? false,
+    ttrIncumplido: f.ttr_incumplido ?? false,
+    comentarios: f.comentarios,
+    diasSinActualizar: f.dias_sin_actualizar,
+  };
 }
 
 /**
- * TODO (Alexis): implementar cuando exista la base.
- *
- * Pasos, en orden:
- *  1. `npm run db:schema` para crear los esquemas (ver `db/schema.sql`).
- *  2. Correr el ETL (`npm run etl`) para poblar `jira_cache.tickets_raw`.
- *  3. Reemplazar el `throw` de abajo por la consulta y poner `DEMO_MODE=false`.
- *
- * Ojo con el switch de área por proyecto — es la regla que más fácil se olvida:
- *   CASE WHEN proyecto = 'Mesa de ayuda SMM' THEN dependencia_smm ELSE area END
+ * Lee `jira_cache.v_tickets` — nunca `tickets_raw` directo: la vista ya
+ * resuelve el switch de Área por proyecto (SMM usa `dependencia_smm`, los
+ * otros 11 usan `area`) y la categoría de estado normalizada.
  */
 async function obtenerTicketsDesdeDB(): Promise<Ticket[]> {
-  throw new Error(
-    "DEMO_MODE=false pero la lectura desde Postgres no está implementada todavía. " +
-      "Ver docs/SETUP-ALEXIS.md § Conectar la base de datos.",
-  );
+  return conCliente(async (cliente) => {
+    const r = await cliente.query<FilaVTicket>(
+      `SELECT clave, titulo_ticket, proyecto, fecha_creacion, fecha_cierre, fecha_actualizacion,
+              persona_asignada, estado_ticket, categoria_estado, prioridad, tipo_incidencia,
+              tipo_requerimiento, sede, area_efectiva, comentarios,
+              ttfr_horas, ttr_horas, ttfr_incumplido, ttr_incumplido, dias_sin_actualizar
+       FROM jira_cache.v_tickets
+       ORDER BY fecha_creacion ASC`,
+    );
+
+    return r.rows.map(mapearFila);
+  });
 }

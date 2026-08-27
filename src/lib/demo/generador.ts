@@ -122,24 +122,24 @@ function equipoDeArea(areaSlug: string): string[] {
 // ─────────────────────────────────────────────────────────────
 
 const PROYECTOS_POR_AREA: Record<string, string[]> = {
-  servicio: ["FO", "GA", "MAS", "SMM"],
-  "aseguramiento-contravencional": ["QXT", "MUL", "SMM"],
-  "gestion-legal": ["AUW", "CC", "QXT"],
-  radicacion: ["BO", "GA"],
-  cartera: ["CC", "BO"],
-  fotodeteccion: ["MUL", "QXT"],
-  "experiencia-de-servicio": ["FO", "GA"],
-  financiera: ["CC", "BO"],
-  "gestion-de-notificaciones": ["GA", "BO"],
-  otras: ["MAS", "DEI"],
-  "sin-nombre": ["MAS", "SMM"],
-  cad: ["QXT", "GIC"],
-  "gestion-juridica-de-cobro": ["CC", "AUW"],
-  "conexion-de-soluciones": ["ANL", "GIC"],
-  "aseguramiento-contractual": ["BO", "GIC"],
-  "experiencia-y-bienestar": ["MAS"],
-  "gerencia-general": ["MAS"],
-  digitalizacion: ["DEI"],
+  servicio: ["TFRONT", "TGA", "TMA", "REQ"],
+  "aseguramiento-contravencional": ["TQX", "TMULTAS", "REQ"],
+  "gestion-legal": ["TAW", "TCOBRO", "TQX"],
+  radicacion: ["TBACK", "TGA"],
+  cartera: ["TCOBRO", "TBACK"],
+  fotodeteccion: ["TMULTAS", "TQX"],
+  "experiencia-de-servicio": ["TFRONT", "TGA"],
+  financiera: ["TCOBRO", "TBACK"],
+  "gestion-de-notificaciones": ["TGA", "TBACK"],
+  otras: ["TMA", "TDEI"],
+  "sin-nombre": ["TMA", "REQ"],
+  cad: ["TQX", "TGIC"],
+  "gestion-juridica-de-cobro": ["TCOBRO", "TAW"],
+  "conexion-de-soluciones": ["TA", "TGIC"],
+  "aseguramiento-contractual": ["TBACK", "TGIC"],
+  "experiencia-y-bienestar": ["TMA"],
+  "gerencia-general": ["TMA"],
+  digitalizacion: ["TDEI"],
 };
 
 /** Estacionalidad Ene..Ago — la operación crece en el año. Ago va parcial (corte el 20). */
@@ -182,8 +182,12 @@ export interface Ticket {
   area: string; // nombre del área (ya resuelto el switch SMM)
   areaSlug: string;
   gerenciaSlug: string;
-  /** Horas hasta la primera respuesta (customfield_10044). */
-  ttfrHoras: number;
+  /**
+   * Horas hasta la primera respuesta (customfield_10044). `null` cuando la
+   * métrica TTFR no estaba activa en Jira al momento de crear el ticket
+   * (se activó ~jun 2026 — ver CLAUDE.md § 9).
+   */
+  ttfrHoras: number | null;
   /** Horas hábiles hasta la resolución (customfield_10043). `null` si sigue abierto. */
   ttrHoras: number | null;
   ttfrIncumplido: boolean;
@@ -200,7 +204,7 @@ export interface Ticket {
 function generarTicketsDeArea(area: (typeof AREAS)[number]): Ticket[] {
   const rng = mulberry32(hashSemilla(`area:${area.slug}`));
   const equipo = equipoDeArea(area.slug);
-  const clavesProyecto = PROYECTOS_POR_AREA[area.slug] ?? ["MAS"];
+  const clavesProyecto = PROYECTOS_POR_AREA[area.slug] ?? ["TMA"];
   const proyectos = clavesProyecto
     .map((c) => PROYECTOS.find((p) => p.clave === c))
     .filter((p): p is (typeof PROYECTOS)[number] => Boolean(p));

@@ -150,8 +150,18 @@ CREATE TABLE IF NOT EXISTS auth.usuarios (
   password_hash  text NOT NULL,
   rol            text NOT NULL CHECK (rol IN ('gerente', 'coordinador', 'administrador')),
   activo         boolean NOT NULL DEFAULT true,
+  -- Acceso a la pestaña Personas: permiso explícito por usuario, no derivado
+  -- del rol (ver `puedeVerPersonas` en src/lib/auth/tipos.ts). El administrador
+  -- la ve siempre sin importar este valor.
+  ver_personas   boolean NOT NULL DEFAULT false,
   creado_en      timestamptz NOT NULL DEFAULT now()
 );
+
+-- `CREATE TABLE IF NOT EXISTS` no altera una tabla ya existente: en una base
+-- que se aplicó antes de que `ver_personas` existiera, el ALTER de abajo es
+-- lo que de verdad la agrega. Sí es seguro correrlo de nuevo (columna ya
+-- creada -> no-op).
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS ver_personas boolean NOT NULL DEFAULT false;
 
 -- Permisos: cada fila es "este usuario ve esta área DENTRO de esta sede".
 --
