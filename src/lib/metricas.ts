@@ -110,12 +110,36 @@ export function porMes(tickets: Ticket[]): PuntoMes[] {
 }
 
 export interface PuntoSemana {
+  /** Etiqueta del eje X: el día en que cierra esa semana ("20 Ago"). */
   semana: string;
+  /** Rango completo de la semana, para el tooltip ("14 Ago – 20 Ago"). */
+  rango: string;
   creados: number;
   resueltos: number;
 }
 
-/** Últimas N semanas ISO, para el comparativo semana vs. semana. */
+/** Bogotá es UTC-5 fijo (no tiene horario de verano), así que basta el offset. */
+const OFFSET_BOGOTA_MS = 5 * 60 * 60 * 1000;
+
+/**
+ * "20 Ago" — la fecha como se ve en Bogotá.
+ *
+ * Se corre el instante -5 h y se leen las partes UTC: así la fecha no depende
+ * de la zona horaria del servidor ni de la versión de ICU, y reutiliza los
+ * mismos meses cortos que el resto del tablero.
+ */
+function fechaCorta(ms: number): string {
+  const bogota = new Date(ms - OFFSET_BOGOTA_MS);
+  return `${bogota.getUTCDate()} ${MESES_CORTOS[bogota.getUTCMonth()]}`;
+}
+
+/**
+ * Últimas N semanas, para el comparativo semana vs. semana.
+ *
+ * El eje va con fechas reales y no con `S-0 / S-1 / S-7`: la sigla obligaba a
+ * traducir mentalmente cada barra a un calendario, y nadie sabía de qué semana
+ * estaba hablando el gráfico. El conteo no cambió, solo el rótulo.
+ */
 export function porSemana(tickets: Ticket[], semanas = 8): PuntoSemana[] {
   const finSemanaActual = FECHA_CORTE.getTime();
   const puntos: PuntoSemana[] = [];
@@ -129,7 +153,9 @@ export function porSemana(tickets: Ticket[], semanas = 8): PuntoSemana[] {
       return ms > inicio && ms <= fin;
     };
     puntos.push({
-      semana: `S-${i === 0 ? "0" : i}`,
+      semana: i === 0 ? "Esta sem." : fechaCorta(fin),
+      // La ventana es (inicio, fin]: el primer día contado es el siguiente a `inicio`.
+      rango: `${fechaCorta(inicio + 1)} – ${fechaCorta(fin)}`,
       creados: tickets.filter((t) => dentro(t.fechaCreacion)).length,
       resueltos: tickets.filter((t) => dentro(t.fechaCierre)).length,
     });

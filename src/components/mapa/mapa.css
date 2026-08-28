@@ -214,11 +214,19 @@
   color: #fff;
 }
 
+/*
+ * Sparkline del histórico.
+ *
+ * Cada columna es "número + pista", no solo la barra: el alto de la barra se
+ * calcula en % sobre `.pista`, así que la etiqueta numérica ocupa su propia
+ * franja fija arriba y nunca empuja ni recorta la barra más alta.
+ * Sin el número, el usuario tenía que deducir el volumen por el alto.
+ */
 .mp-spark {
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  height: 62px;
+  height: 78px;
   margin-bottom: 4px;
 }
 .mp-spark .col {
@@ -227,8 +235,25 @@
   flex-direction: column;
   justify-content: flex-end;
   height: 100%;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
+}
+.mp-spark .num {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-spark .pista {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  min-height: 0;
 }
 .mp-spark .barra {
   width: 100%;

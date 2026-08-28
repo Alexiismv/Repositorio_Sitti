@@ -78,7 +78,7 @@ export function PanelSede({
           <div className="v sm">{detalle.tipoMasSolicitado}</div>
         </div>
         <div className="mp-kpi">
-          <div className="l">Portal JSM más usado</div>
+          <div className="l">Portal más usado de Jira</div>
           <div className="v sm">{detalle.portalMasUsado}</div>
         </div>
       </div>
@@ -100,7 +100,10 @@ export function PanelSede({
       <div className="mp-spark" aria-hidden="true">
         {serie.map((p, i) => (
           <div className="col" key={`${p.etiqueta}-${i}`} title={`${p.etiqueta}: ${p.valor}`}>
-            <div className="barra" style={{ height: `${(p.valor / maximo) * 100}%` }} />
+            <div className="num">{numero(p.valor)}</div>
+            <div className="pista">
+              <div className="barra" style={{ height: `${(p.valor / maximo) * 100}%` }} />
+            </div>
           </div>
         ))}
       </div>
