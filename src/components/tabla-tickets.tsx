@@ -119,8 +119,8 @@ export function TablaTickets({
 
       {tickets.length > visibles.length && (
         <p className="nota-demo">
-          Mostrando {numero(visibles.length)} de {numero(tickets.length)} tickets. Afina los filtros
-          para ver el resto — la exportación a PDF/Excel entra en Fase 2.
+          Mostrando {numero(visibles.length)} de {numero(tickets.length)} tickets. El Excel exportado
+          trae el detalle completo, sin este límite.
         </p>
       )}
     </>

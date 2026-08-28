@@ -5,18 +5,17 @@ import { GraficaComparativa } from "@/components/charts";
 import { TablaTickets } from "@/components/tabla-tickets";
 import { KpiStrip, SectionLabel } from "@/components/ui";
 import { leerSesion } from "@/lib/auth/sesion";
-import { obtenerTickets, type Filtros } from "@/lib/data/provider";
+import { obtenerTickets } from "@/lib/data/provider";
 import { numero, porcentaje } from "@/lib/formato";
 import { porArea, porPersona, porProyecto, porTipoRequerimiento, resumen } from "@/lib/metricas";
+import { filtrosDesdeSearchParams } from "@/lib/reportes-filtros";
 
+import { BotonesExportar } from "./exportar";
 import { FiltrosReporte } from "./filtros";
 
 export const metadata = { title: "Reportes · SITTI" };
 
 type Params = Promise<Record<string, string | string[] | undefined>>;
-
-const uno = (v: string | string[] | undefined): string | undefined =>
-  Array.isArray(v) ? v[0] : v || undefined;
 
 /**
  * Reportes con filtros dinámicos.
@@ -30,21 +29,7 @@ export default async function ReportesPage({ searchParams }: { searchParams: Par
   if (!sesion) redirect("/login");
 
   const sp = await searchParams;
-
-  const filtros: Filtros = {
-    gerencias: uno(sp.gerencia) ? [uno(sp.gerencia)!] : undefined,
-    areas: uno(sp.area) ? [uno(sp.area)!] : undefined,
-    sedes: uno(sp.sede) ? [uno(sp.sede)!] : undefined,
-    personas: uno(sp.persona) ? [uno(sp.persona)!] : undefined,
-    tiposRequerimiento: uno(sp.tipo) ? [uno(sp.tipo)!] : undefined,
-    estado: (uno(sp.estado) as Filtros["estado"]) ?? "todos",
-    // El input date da 'YYYY-MM-DD'; se normaliza a ISO para comparar contra
-    // `fecha_creacion`. El 'hasta' incluye el día completo, si no se pierde
-    // el último día del rango y nadie entiende por qué faltan tickets.
-    desde: uno(sp.desde) ? `${uno(sp.desde)}T00:00:00.000Z` : undefined,
-    hasta: uno(sp.hasta) ? `${uno(sp.hasta)}T23:59:59.999Z` : undefined,
-    soloIncumplidos: uno(sp.rojo) === "1",
-  };
+  const filtros = filtrosDesdeSearchParams(sp);
 
   const tickets = await obtenerTickets(sesion, filtros);
   const todos = await obtenerTickets(sesion);
@@ -176,6 +161,9 @@ export default async function ReportesPage({ searchParams }: { searchParams: Par
       <SectionLabel>Detalle de tickets</SectionLabel>
 
       <div className="panel">
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+          <BotonesExportar searchParams={sp} />
+        </div>
         <TablaTickets tickets={tickets} limite={60} mostrarArea />
       </div>
     </>

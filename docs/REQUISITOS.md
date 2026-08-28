@@ -136,7 +136,7 @@ operativa en `CLAUDE.md` §7.3. Para cualquier cambio futuro a `DEMO_MODE` o
 - **Ranking de impacto**: gerencias y áreas ordenadas por volumen de creación, para priorizar atención gerencial
 
 - **✅ Filtros interactivos por fecha, área, persona:** confirmado, requerido.
-- **Exportar reportes (PDF/Excel):** No urgente — se planea para **Fase 2**, no bloquea el MVP.
+- **✅ Exportar reportes (PDF/Excel):** implementado (28 ago 2026). Botones "Exportar Excel" / "Exportar PDF" en `/reportes` (respeta los filtros de la URL), `/areas/[slug]` y `/personas`. El Excel trae el detalle completo sin el límite de filas de la pantalla; el PDF es un reporte ejecutivo de una página con KPIs y gráficas de barras, pensado para compartir en reunión. Código en `src/lib/export/`.
 - **✅ Alertas:** cuando un KPI se sale de rango, se resalta en **color rojo**.
 - **✅ Vista consolidada "toda la empresa":** confirmado, sí.
 - **Nueva dimensión de filtro:** "Tipo de Requerimiento" (`customfield_10010`) — se usa para saber el tipo de requerimiento más solicitado por sede/área.

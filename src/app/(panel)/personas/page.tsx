@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { GraficaComparativa } from "@/components/charts";
-import { KpiStrip, SectionLabel } from "@/components/ui";
+import { ExportarEnlaces, KpiStrip, SectionLabel } from "@/components/ui";
 import { leerSesion } from "@/lib/auth/sesion";
 import { puedeVerPersonas } from "@/lib/auth/tipos";
 import { DIAS_ESTANCADO_DEFAULT } from "@/lib/catalogo";
@@ -31,7 +31,10 @@ export default async function PersonasPage() {
     return (
       <div className="sh-page-head">
         <h1>Sin acceso</h1>
-        <p>Esta pestaña requiere un permiso que no tenés asignado. Pedile acceso a un administrador.</p>
+        <p>
+          Esta pestaña requiere un permiso que no tienes asignado. Pídele acceso a un
+          administrador.
+        </p>
       </div>
     );
   }
@@ -115,6 +118,9 @@ export default async function PersonasPage() {
       <SectionLabel>Detalle por persona</SectionLabel>
 
       <div className="panel">
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+          <ExportarEnlaces excelHref="/api/export/personas/excel" pdfHref="/api/export/personas/pdf" />
+        </div>
         <div className="scroll-x">
           <table className="tabla">
             <thead>
