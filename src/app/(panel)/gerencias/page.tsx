@@ -89,11 +89,11 @@ export default async function GerenciasPage() {
       <div className="panel">
         <h4>Volumen 2026 por área</h4>
         <div className="panel-sub">
-          Las 10 áreas de mayor volumen, coloreadas por la gerencia a la que pertenecen
+          Todas las áreas con actividad, coloreadas por la gerencia a la que pertenecen
         </div>
         <GraficaComparativa
-          datos={areas.slice(0, 10).map((a) => ({ nombre: a.nombre, total: a.total, color: a.color }))}
-          altura={360}
+          datos={areas.map((a) => ({ nombre: a.nombre, total: a.total, color: a.color }))}
+          altura={Math.max(260, areas.length * 42)}
         />
       </div>
     </>
