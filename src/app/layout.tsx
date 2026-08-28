@@ -35,6 +35,14 @@ export const metadata: Metadata = {
   title: "SITTI — Panel de Gestión",
   description:
     "Indicadores de gestión de la operación de movilidad de Medellín. Seguimiento por sede, área y persona.",
+
+  /*
+   * Sin indexar. El §7.3 de CLAUDE.md lo pide explícitamente mientras el
+   * proyecto sea una sorpresa para las gerencias: la URL de Vercel es pública
+   * para quien la adivine, y un buscador la volvería encontrable. Se retira
+   * cuando el proyecto sea oficial.
+   */
+  robots: { index: false, follow: false, nocache: true },
 };
 
 export const viewport: Viewport = {

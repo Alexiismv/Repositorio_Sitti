@@ -2,8 +2,14 @@
 
 import { useState, useTransition } from "react";
 
-import { USUARIOS_DEMO } from "@/lib/auth/usuarios-demo";
-import { ROL_LABEL } from "@/lib/auth/tipos";
+import { ROL_LABEL, type Rol } from "@/lib/auth/tipos";
+
+/** Lo mínimo para pintar la cajita de demo. Lo arma el servidor. */
+export interface CuentaDemo {
+  email: string;
+  rol: Rol;
+  password: string;
+}
 
 /**
  * Formulario de login.
@@ -11,13 +17,18 @@ import { ROL_LABEL } from "@/lib/auth/tipos";
  * El diseño está congelado (prototipo aprobado). Lo único que se agrega es
  * el caso de error y — solo en DEMO — una cajita con las cuentas de prueba,
  * para que quien abra la demo pueda entrar sin preguntarle nada a nadie.
- * Esa cajita desaparece sola cuando `DEMO_MODE=false`.
+ *
+ * Las cuentas llegan por prop y NO se importan acá. Este componente es
+ * `"use client"`: al importar `USUARIOS_DEMO` de forma estática, el array
+ * entero —correos, roles y la contraseña— viajaba al navegador en el bundle
+ * de producción aunque la cajita nunca se pintara. Estaba publicado en el JS
+ * de la URL pública. Con la prop, si el servidor no las manda, no existen.
  *
  * Nota para la migración a SSO (Azure AD): cuando llegue ese momento, este
  * componente se reemplaza por un botón "Continuar con Microsoft" y la pantalla
  * de al lado no cambia nada.
  */
-export function FormularioLogin({ demo }: { demo: boolean }) {
+export function FormularioLogin({ cuentasDemo }: { cuentasDemo?: CuentaDemo[] }) {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +62,9 @@ export function FormularioLogin({ demo }: { demo: boolean }) {
     });
   }
 
-  function usarCuenta(email: string) {
-    setUsuario(email);
-    setPassword("demo1234");
+  function usarCuenta(cuenta: CuentaDemo) {
+    setUsuario(cuenta.email);
+    setPassword(cuenta.password);
     setError(null);
   }
 
@@ -148,24 +159,24 @@ export function FormularioLogin({ demo }: { demo: boolean }) {
         </button>
       </form>
 
-      {demo && (
+      {cuentasDemo && cuentasDemo.length > 0 && (
         <div className="lg-demo-box">
           <div className="lg-demo-title">Modo demo · cuentas de prueba</div>
-          {USUARIOS_DEMO.map((u) => (
+          {cuentasDemo.map((c) => (
             <button
-              key={u.id}
+              key={c.email}
               type="button"
               className="lg-demo-user"
-              onClick={() => usarCuenta(u.email)}
+              onClick={() => usarCuenta(c)}
             >
-              <span className="lg-demo-name">{u.email}</span>
-              <span className="lg-demo-role">{ROL_LABEL[u.rol]}</span>
+              <span className="lg-demo-name">{c.email}</span>
+              <span className="lg-demo-role">{ROL_LABEL[c.rol]}</span>
             </button>
           ))}
           <p className="nota-demo" style={{ marginTop: 10 }}>
-            Contraseña para todas: <span className="mono">demo1234</span>. Haz clic en una cuenta
-            para llenar el formulario. Con <span className="mono">Carlos Múnera</span> se ve el
-            recorte real de un coordinador.
+            Contraseña para todas: <span className="mono">{cuentasDemo[0].password}</span>. Haz
+            clic en una cuenta para llenar el formulario. Con{" "}
+            <span className="mono">Carlos Múnera</span> se ve el recorte real de un coordinador.
           </p>
         </div>
       )}

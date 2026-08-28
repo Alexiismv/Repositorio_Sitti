@@ -5,10 +5,24 @@ import { leerSesion } from "@/lib/auth/sesion";
 import { DEMO_MODE } from "@/lib/data/provider";
 import { GERENCIAS } from "@/lib/catalogo";
 
-import { FormularioLogin } from "./formulario";
+import { USUARIOS_DEMO } from "@/lib/auth/usuarios-demo";
+
+import { FormularioLogin, type CuentaDemo } from "./formulario";
 import "./login.css";
 
 export const metadata = { title: "Ingresar · SITTI" };
+
+/*
+ * Las cuentas de prueba se arman EN EL SERVIDOR y solo si el modo demo está
+ * activo. Antes el formulario las importaba directamente y, por ser un
+ * componente de cliente, el array viajaba al navegador siempre — contraseña
+ * incluida — aunque la cajita no se pintara. Si esto devuelve `undefined`, no
+ * queda ni rastro en el bundle ni en el HTML.
+ */
+function cuentasDemo(): CuentaDemo[] | undefined {
+  if (!DEMO_MODE) return undefined;
+  return USUARIOS_DEMO.map((u) => ({ email: u.email, rol: u.rol, password: u.password }));
+}
 
 export default async function LoginPage() {
   // Si ya hay sesión válida, no tiene sentido volver a pedir credenciales.
@@ -69,7 +83,7 @@ export default async function LoginPage() {
           <h2 className="h-display">Inicia sesión</h2>
           <p className="lg-sub">Accede con tu usuario para ver los indicadores de tu gerencia.</p>
 
-          <FormularioLogin demo={DEMO_MODE} />
+          <FormularioLogin cuentasDemo={cuentasDemo()} />
 
           <p className="lg-helper">
             ¿Problemas para entrar? <a href="#">Contacta a Mesa de Ayuda SITTI</a>.

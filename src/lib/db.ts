@@ -14,6 +14,16 @@ declare global {
   var __sittiPool: Pool | undefined;
 }
 
+/** ¿La base corre en la misma máquina? Solo ahí se acepta ir sin TLS. */
+function esLocal(url: string): boolean {
+  try {
+    const host = new URL(url).hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  } catch {
+    return false; // URL rara: se asume remota y se exige TLS.
+  }
+}
+
 export function pool(): Pool {
   if (globalThis.__sittiPool) return globalThis.__sittiPool;
 
@@ -31,7 +41,19 @@ export function pool(): Pool {
     max: 5,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 10_000,
-    ssl: url.includes("localhost") ? undefined : { rejectUnauthorized: false },
+    /*
+     * TLS con verificación de certificado.
+     *
+     * Antes iba `rejectUnauthorized: false`: el tráfico se cifraba pero no se
+     * comprobaba con quién. Alguien en posición de red podía interponerse y
+     * leer los hashes de `auth.usuarios`, la tabla de tickets y el propio
+     * DATABASE_URL. Neon presenta un certificado válido de CA pública, así que
+     * verificar no cuesta nada.
+     *
+     * El host se lee parseando la URL, no con `includes("localhost")`: esa
+     * heurística desactivaba TLS si la CONTRASEÑA contenía esa subcadena.
+     */
+    ssl: esLocal(url) ? undefined : { rejectUnauthorized: true },
   });
 
   globalThis.__sittiPool = p;
