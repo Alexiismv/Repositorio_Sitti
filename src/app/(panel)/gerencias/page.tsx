@@ -42,43 +42,47 @@ export default async function GerenciasPage() {
 
       <SectionLabel>Panorama</SectionLabel>
 
-      <KpiStrip
-        kpis={[
-          { label: "Gerencias visibles", valor: numero(gerencias.length), color: "#242868" },
-          {
-            label: "Gerencia líder",
-            valor: lider?.nombre ?? "—",
-            cap: lider ? `${numero(lider.total)} tickets · ${porcentaje((lider.total / total) * 100)} del total` : undefined,
-            color: lider?.color ?? "#2FAFA0",
-          },
-          { label: "Áreas con actividad", valor: numero(areas.length), color: "#F6A623" },
-          {
-            label: "Tickets en rojo",
-            valor: numero(tickets.filter((t) => t.ttrIncumplido || t.ttfrIncumplido).length),
-            cap: `${porcentaje(100 - r.cumplimientoTtr)} del TTR fuera de meta`,
-            color: "#F1592A",
-            alerta: true,
-          },
-        ]}
-      />
+      <div className="panorama-grande">
+        <KpiStrip
+          kpis={[
+            { label: "Gerencias visibles", valor: numero(gerencias.length), color: "#242868" },
+            {
+              label: "Gerencia líder",
+              valor: lider?.nombre ?? "—",
+              cap: lider ? `${numero(lider.total)} tickets · ${porcentaje((lider.total / total) * 100)} del total` : undefined,
+              color: lider?.color ?? "#2FAFA0",
+            },
+            { label: "Áreas con actividad", valor: numero(areas.length), color: "#F6A623" },
+            {
+              label: "Tickets en rojo",
+              valor: numero(tickets.filter((t) => t.ttrIncumplido || t.ttfrIncumplido).length),
+              cap: `${porcentaje(100 - r.cumplimientoTtr)} del TTR fuera de meta`,
+              color: "#F1592A",
+              alerta: true,
+            },
+          ]}
+        />
+      </div>
 
-      <SectionLabel>Ranking de impacto</SectionLabel>
+      <SectionLabel>Ranking de impacto por gerencia</SectionLabel>
 
-      <GridTarjetas n={gerencias.length}>
-        {gerencias.map((g, i) => (
-          <TarjetaNivel
-            key={g.slug}
-            href={`/gerencias/${g.slug}`}
-            rank={i + 1}
-            titulo={g.nombre}
-            total={g.total}
-            proporcion={(g.total / total) * 100}
-            color={g.color ?? "#242868"}
-            etiqueta={`${porcentaje((g.total / total) * 100)} del total`}
-            pie={`${numero(g.pendientes)} pendientes · ${porcentaje(g.cumplimientoTtr)} cumplimiento TTR`}
-          />
-        ))}
-      </GridTarjetas>
+      <div className="ranking-impacto-grande">
+        <GridTarjetas n={gerencias.length}>
+          {gerencias.map((g, i) => (
+            <TarjetaNivel
+              key={g.slug}
+              href={`/gerencias/${g.slug}`}
+              rank={i + 1}
+              titulo={g.nombre}
+              total={g.total}
+              proporcion={(g.total / total) * 100}
+              color={g.color ?? "#242868"}
+              etiqueta={`${porcentaje((g.total / total) * 100)} del total`}
+              pie={`${numero(g.pendientes)} pendientes · ${porcentaje(g.cumplimientoTtr)} cumplimiento TTR`}
+            />
+          ))}
+        </GridTarjetas>
+      </div>
 
       <SectionLabel>Comparativo entre áreas</SectionLabel>
 
