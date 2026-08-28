@@ -24,6 +24,25 @@ import {
 
 export type Granularidad = "anio" | "mes" | "semana" | "dia";
 
+const DIA_MS = 86_400_000;
+
+/** Bogotá es UTC-5 fijo (no tiene horario de verano), así que basta el offset. */
+const OFFSET_BOGOTA_MS = 5 * 60 * 60 * 1000;
+
+/** Número de día calendario en Bogotá al que pertenece un instante. */
+function diaBogota(ms: number): number {
+  return Math.floor((ms - OFFSET_BOGOTA_MS) / DIA_MS);
+}
+
+/**
+ * Domingo = no laboral, así que no se grafica: una barra en cero por semana
+ * solo mete ruido y hace ver caídas que no existen.
+ * El día 0 de la época (1-ene-1970) fue jueves; de ahí el +4.
+ */
+function esDomingo(dia: number): boolean {
+  return (dia + 4) % 7 === 0;
+}
+
 export interface PuntoHistorico {
   etiqueta: string;
   valor: number;
@@ -84,23 +103,31 @@ function historicoDe(tickets: Ticket[]): Record<Granularidad, PuntoHistorico[]> 
     semanas.push({ etiqueta: i === 0 ? "Esta" : `-${i}`, valor });
   }
 
-  // DÍA — los últimos 14 días.
-  const dias: PuntoHistorico[] = [];
-  for (let i = 13; i >= 0; i--) {
-    const fin = FECHA_CORTE.getTime() - i * 86_400_000;
-    const inicio = fin - 86_400_000;
-    const valor = tickets.filter((t) => {
-      const ms = new Date(t.fechaCreacion).getTime();
-      return ms > inicio && ms <= fin;
-    }).length;
-    dias.push({
-      etiqueta: new Date(fin).toLocaleDateString("es-CO", {
-        timeZone: "America/Bogota",
-        day: "2-digit",
-      }),
-      valor,
-    });
+  // DÍA — el día de corte y los 13 días laborales anteriores (14 barras en
+  // total), saltando los domingos. Se agrupa por día CALENDARIO de Bogotá, no
+  // por ventanas de 24 h contra la hora de corte: si no, la etiqueta "21" podía
+  // contener tickets creados el 20 por la tarde.
+  const diaCorte = diaBogota(FECHA_CORTE.getTime());
+  const diasLaborales: number[] = [];
+  for (let d = diaCorte; diasLaborales.length < 14; d--) {
+    if (!esDomingo(d)) diasLaborales.push(d);
   }
+  diasLaborales.reverse();
+
+  const creadosPorDia = new Map<number, number>();
+  for (const t of tickets) {
+    const d = diaBogota(new Date(t.fechaCreacion).getTime());
+    creadosPorDia.set(d, (creadosPorDia.get(d) ?? 0) + 1);
+  }
+
+  const dias: PuntoHistorico[] = diasLaborales.map((d) => ({
+    // Mediodía de ese día en Bogotá — evita que un redondeo caiga en el día vecino.
+    etiqueta: new Date(d * DIA_MS + OFFSET_BOGOTA_MS + DIA_MS / 2).toLocaleDateString("es-CO", {
+      timeZone: "America/Bogota",
+      day: "2-digit",
+    }),
+    valor: creadosPorDia.get(d) ?? 0,
+  }));
 
   return {
     anio: [...porAnio.entries()]

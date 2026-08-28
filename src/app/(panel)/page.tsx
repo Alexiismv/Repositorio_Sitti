@@ -42,12 +42,14 @@ export default async function PanelGeneral() {
         <div className="eyebrow">
           <span className="dot" /> Panel de Gestión
         </div>
-        <h1>Panel General</h1>
+        <h1>Panel General de Gestión de Tickets</h1>
         <p>
           {alcanceTotal ? (
             <>
-              Vista consolidada 2026 de toda la operación. Pasa el mouse sobre una sede del mapa
-              para ver su detalle, o entra a una gerencia para bajar al área y al ticket.
+              Vista consolidada 2026 de toda la operación SITTI.
+              <br />
+              Pasa el mouse sobre una sede del mapa para ver su detalle, o entra a una gerencia
+              para bajar al área y al ticket.
             </>
           ) : (
             <>
@@ -69,7 +71,7 @@ export default async function PanelGeneral() {
             color: "#242868",
           },
           {
-            label: "Pendientes",
+            label: "Pendientes Totales",
             valor: numero(r.pendientes),
             cap: `${numero(r.estancados)} sin movimiento hace 5+ días`,
             color: "#F1592A",
@@ -116,7 +118,12 @@ export default async function PanelGeneral() {
       <div className="grid-2-igual" style={{ marginTop: 16 }}>
         <div className="panel">
           <h4>Comparativo semana vs. semana</h4>
-          <div className="panel-sub">Últimas 8 semanas · S-0 es la semana en curso</div>
+          <div className="panel-sub">
+            Últimas 8 semanas. Cada par de barras es una semana: la primera son los tickets
+            creados y la segunda los resueltos. Si la de creados queda por encima varias semanas
+            seguidas, el backlog está creciendo. La fecha del eje es el día en que cierra la
+            semana.
+          </div>
           <GraficaSemanal datos={porSemana(tickets)} />
         </div>
 
