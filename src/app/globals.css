@@ -298,7 +298,15 @@ body {
   width: 150px;
   flex-shrink: 0;
 }
+/*
+ * `.track` y `.fill` son <span>, o sea `display: inline` por defecto. `.track`
+ * se blockifica sola por ser flex item de `.rank-row`, pero `.fill` no: seguía
+ * siendo inline, y un elemento inline IGNORA width y height. Por eso la barra
+ * nunca se pintaba — ni siquiera la fila del 100%. Se ve el canal gris y nada
+ * adentro, que es justo lo que parecía "no cargó".
+ */
 .rank-row .track {
+  display: flex;
   flex: 1;
   height: 7px;
   background: var(--bg);
@@ -306,7 +314,9 @@ body {
   overflow: hidden;
 }
 .rank-row .fill {
+  display: block;
   height: 100%;
+  min-width: 3px;
   border-radius: 99px;
   background: var(--navy);
   transition: width 0.3s ease;
