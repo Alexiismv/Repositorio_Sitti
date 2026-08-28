@@ -11,6 +11,7 @@
  */
 
 import { ticketsDemo, type Ticket } from "@/lib/demo/generador";
+import { DEMO_MODE } from "@/lib/modo";
 import { puedeVer, type Sesion } from "@/lib/auth/tipos";
 import { ALIAS_AREA, AREAS, PROYECTOS, SEDES, type CategoriaEstado, type Prioridad } from "@/lib/catalogo";
 import { conCliente } from "@/lib/db";
@@ -33,7 +34,8 @@ export interface Filtros {
   soloIncumplidos?: boolean;
 }
 
-export const DEMO_MODE = process.env.DEMO_MODE !== "false";
+// Se re-exporta para no tocar los ~10 módulos que ya lo importan desde acá.
+export { DEMO_MODE };
 
 const slugDeSede = new Map(SEDES.map((s) => [s.nombre, s.slug]));
 const areaPorNombre = new Map(AREAS.map((a) => [a.nombre, a]));

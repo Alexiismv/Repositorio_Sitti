@@ -12,7 +12,7 @@
  */
 
 import { SEDES, type Sede } from "@/lib/catalogo";
-import { FECHA_CORTE, type Ticket } from "@/lib/demo/generador";
+import { fechaCorte, type Ticket } from "@/lib/demo/generador";
 import {
   MESES_CORTOS,
   masAntiguosSinResolver,
@@ -89,12 +89,15 @@ function historicoDe(tickets: Ticket[]): Record<Granularidad, PuntoHistorico[]> 
     porMes[f.getUTCMonth()] += 1;
   }
 
-  const mesTope = FECHA_CORTE.getUTCMonth();
+  // Una sola lectura del corte para toda la función: si se pidiera por serie,
+  // dos series del mismo panel podrían caer a lados distintos de la medianoche.
+  const corte = fechaCorte();
+  const mesTope = corte.getUTCMonth();
 
   // SEMANA — las últimas 8 semanas contra la fecha de corte.
   const semanas: PuntoHistorico[] = [];
   for (let i = 7; i >= 0; i--) {
-    const fin = FECHA_CORTE.getTime() - i * 7 * 86_400_000;
+    const fin = corte.getTime() - i * 7 * 86_400_000;
     const inicio = fin - 7 * 86_400_000;
     const valor = tickets.filter((t) => {
       const ms = new Date(t.fechaCreacion).getTime();
@@ -107,7 +110,7 @@ function historicoDe(tickets: Ticket[]): Record<Granularidad, PuntoHistorico[]> 
   // total), saltando los domingos. Se agrupa por día CALENDARIO de Bogotá, no
   // por ventanas de 24 h contra la hora de corte: si no, la etiqueta "21" podía
   // contener tickets creados el 20 por la tarde.
-  const diaCorte = diaBogota(FECHA_CORTE.getTime());
+  const diaCorte = diaBogota(corte.getTime());
   const diasLaborales: number[] = [];
   for (let d = diaCorte; diasLaborales.length < 14; d--) {
     if (!esDomingo(d)) diasLaborales.push(d);
@@ -121,11 +124,16 @@ function historicoDe(tickets: Ticket[]): Record<Granularidad, PuntoHistorico[]> 
   }
 
   const dias: PuntoHistorico[] = diasLaborales.map((d) => ({
-    // Mediodía de ese día en Bogotá — evita que un redondeo caiga en el día vecino.
-    etiqueta: new Date(d * DIA_MS + OFFSET_BOGOTA_MS + DIA_MS / 2).toLocaleDateString("es-CO", {
-      timeZone: "America/Bogota",
-      day: "2-digit",
-    }),
+    // El día de hoy se nombra, no se numera: es el que se busca primero.
+    // Si hoy cae domingo no está en la serie, y entonces ninguna barra dice "Hoy".
+    etiqueta:
+      d === diaCorte
+        ? "Hoy"
+        : // Mediodía de ese día en Bogotá — evita que un redondeo caiga en el día vecino.
+          new Date(d * DIA_MS + OFFSET_BOGOTA_MS + DIA_MS / 2).toLocaleDateString("es-CO", {
+            timeZone: "America/Bogota",
+            day: "2-digit",
+          }),
     valor: creadosPorDia.get(d) ?? 0,
   }));
 

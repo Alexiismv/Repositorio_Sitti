@@ -29,6 +29,7 @@ import {
   type CategoriaEstado,
   type Prioridad,
 } from "@/lib/catalogo";
+import { DEMO_MODE } from "@/lib/modo";
 
 // ─────────────────────────────────────────────────────────────
 // Fecha de corte del snapshot demo
@@ -40,10 +41,32 @@ import {
  * `Date.now()`. Eso evita dos problemas: que el servidor y el cliente
  * calculen distinto (hydration mismatch) y que la demo cambie sola cada día.
  *
- * Con datos reales esto pasa a ser `MAX(sync_log.finalizado_en)`.
+ * OJO: esta constante ancla SOLO al dataset demo. Para preguntar "¿hasta
+ * cuándo llegan los datos?" se usa `fechaCorte()`, acá abajo.
  */
 export const FECHA_CORTE = new Date("2026-08-20T18:00:00.000Z");
 export const ANIO_DEMO = 2026;
+
+/**
+ * Hasta dónde llega la información que muestra el panel.
+ *
+ * Con datos reales es AHORA: las ventanas de "últimos N días/semanas" tienen
+ * que terminar en el día de hoy. Antes, todas las métricas por tiempo se
+ * calculaban contra `FECHA_CORTE` sin importar el modo, así que el panel se
+ * quedó congelado en el 20 de agosto y dejó de mostrar los tickets nuevos
+ * aunque el ETL los estuviera trayendo bien.
+ *
+ * En modo demo se conserva la fecha fija, que es lo que hace que la foto no
+ * cambie sola cada día.
+ *
+ * Se llama por render y no se cachea en un módulo a propósito: un `new Date()`
+ * a nivel de módulo se congelaría en el arranque del servidor, que es el mismo
+ * bug con otra cara. Todo esto corre en el servidor (las gráficas reciben los
+ * datos ya calculados por props), así que no hay riesgo de hydration mismatch.
+ */
+export function fechaCorte(): Date {
+  return DEMO_MODE ? FECHA_CORTE : new Date();
+}
 
 /** Meses ya transcurridos en 2026 a la fecha de corte (Ene..Ago = 8). */
 const MESES_TRANSCURRIDOS = 8;

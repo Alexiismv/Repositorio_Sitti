@@ -21,7 +21,7 @@ import {
   SEDES,
   type CategoriaEstado,
 } from "@/lib/catalogo";
-import { FECHA_CORTE, type Ticket } from "@/lib/demo/generador";
+import { fechaCorte, type Ticket } from "@/lib/demo/generador";
 
 export const MESES_CORTOS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
@@ -101,7 +101,7 @@ export function porMes(tickets: Ticket[]): PuntoMes[] {
     if (t.fechaCierre) resueltos[new Date(t.fechaCierre).getUTCMonth()] += 1;
   }
 
-  const ultimoMes = FECHA_CORTE.getUTCMonth();
+  const ultimoMes = fechaCorte().getUTCMonth();
   return MESES_CORTOS.slice(0, ultimoMes + 1).map((mes, i) => ({
     mes,
     creados: creados[i],
@@ -141,7 +141,7 @@ function fechaCorta(ms: number): string {
  * estaba hablando el gráfico. El conteo no cambió, solo el rótulo.
  */
 export function porSemana(tickets: Ticket[], semanas = 8): PuntoSemana[] {
-  const finSemanaActual = FECHA_CORTE.getTime();
+  const finSemanaActual = fechaCorte().getTime();
   const puntos: PuntoSemana[] = [];
 
   for (let i = semanas - 1; i >= 0; i--) {
@@ -287,7 +287,7 @@ export function estancados(tickets: Ticket[], dias = DIAS_ESTANCADO_DEFAULT, lim
 }
 
 export function diasAbierto(t: Ticket): number {
-  return Math.floor((FECHA_CORTE.getTime() - new Date(t.fechaCreacion).getTime()) / 86_400_000);
+  return Math.floor((fechaCorte().getTime() - new Date(t.fechaCreacion).getTime()) / 86_400_000);
 }
 
 /** Tablero del Nivel 3: columnas = categorías normalizadas de estado. */
