@@ -311,12 +311,27 @@ body {
   background: var(--navy);
   transition: width 0.3s ease;
 }
+/*
+ * El peso sobre el total, en texto. Va más marcado que el conteo absoluto
+ * porque es el dato que la barra no alcanza a mostrar cuando una fila domina
+ * el ranking y las demás quedan en barras de pocos píxeles.
+ */
+.rank-row .pct {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+  width: 50px;
+  text-align: right;
+  flex-shrink: 0;
+}
 .rank-row .num {
   font-family: var(--font-mono);
   font-size: 11.5px;
   color: var(--ink-soft);
   width: 52px;
   text-align: right;
+  flex-shrink: 0;
 }
 
 /* ─────────────── Tablas ─────────────── */

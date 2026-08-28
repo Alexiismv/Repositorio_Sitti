@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { numero } from "@/lib/formato";
+import { decimal, numero } from "@/lib/formato";
 import type { FilaAgrupada } from "@/lib/metricas";
 
 /**
@@ -65,17 +65,38 @@ export function KpiStrip({ kpis }: { kpis: Kpi[] }) {
 }
 
 /** Ranking de barras — el patrón que ya validó Alexis en el prototipo. */
+/**
+ * Ranking con barra y peso relativo.
+ *
+ * La barra y el porcentaje miden cosas distintas a propósito, porque una sola
+ * barra no puede con las dos:
+ *
+ *   - La BARRA se escala contra la fila mayor, para comparar filas entre sí.
+ *     Escalarla contra el total no funciona cuando una fila domina: con Caribe
+ *     en el 75% de los tickets, las otras cinco sedes quedaban en barras de
+ *     ~10px y se leían como si no tuvieran barra.
+ *   - El PORCENTAJE va como texto y sí es sobre el total, que es el dato que
+ *     una barra corta no alcanza a comunicar.
+ *
+ * El porcentaje lleva un decimal: con enteros, sedes del 3,5% y del 4,0%
+ * se mostraban las dos como "4%".
+ */
 export function Ranking({
   filas,
   href,
-  maximo,
+  total,
 }: {
   filas: FilaAgrupada[];
   /** Si se pasa, cada fila enlaza a `${href}/${slug}`. */
   href?: string;
-  maximo?: number;
+  /**
+   * Universo para el porcentaje. Por defecto la suma de las filas; se pasa
+   * explícito cuando el ranking no cubre todo el conjunto.
+   */
+  total?: number;
 }) {
-  const tope = maximo ?? Math.max(1, ...filas.map((f) => f.total));
+  const tope = Math.max(1, ...filas.map((f) => f.total));
+  const universo = total || filas.reduce((a, f) => a + f.total, 0) || 1;
 
   return (
     <div>
@@ -89,6 +110,7 @@ export function Ranking({
                 style={{ width: `${(f.total / tope) * 100}%`, background: f.color ?? "var(--navy)" }}
               />
             </span>
+            <span className="pct">{decimal((f.total / universo) * 100, 1)}%</span>
             <span className="num">{numero(f.total)}</span>
           </>
         );

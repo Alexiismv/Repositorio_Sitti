@@ -111,7 +111,7 @@ export default async function PanelGeneral() {
         <div className="panel">
           <h4>Tickets por sede</h4>
           <div className="panel-sub">Todas las áreas y gerencias visibles para ti</div>
-          <Ranking filas={sedes} maximo={r.total} />
+          <Ranking filas={sedes} total={r.total} />
         </div>
       </div>
 
