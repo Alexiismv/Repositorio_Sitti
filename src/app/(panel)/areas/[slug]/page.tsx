@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { GraficaCreadosVsResueltos } from "@/components/charts";
 import { TablaTickets } from "@/components/tabla-tickets";
-import { EstadoVacio, KpiStrip, Ranking, SectionLabel } from "@/components/ui";
+import { EstadoVacio, ExportarEnlaces, KpiStrip, Ranking, SectionLabel } from "@/components/ui";
 import { leerSesion } from "@/lib/auth/sesion";
 import { DIAS_ESTANCADO_DEFAULT, areaPorSlug, gerenciaPorSlug } from "@/lib/catalogo";
 import { obtenerTickets } from "@/lib/data/provider";
@@ -281,6 +281,12 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
           <SectionLabel>Todos los tickets del área</SectionLabel>
 
           <div className="panel">
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+              <ExportarEnlaces
+                excelHref={`/api/export/areas/${slug}/excel`}
+                pdfHref={`/api/export/areas/${slug}/pdf`}
+              />
+            </div>
             <TablaTickets tickets={tickets} limite={40} />
           </div>
         </>

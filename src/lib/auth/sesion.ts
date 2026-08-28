@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 
 import type { Sesion } from "@/lib/auth/tipos";
+import { claveSecreta } from "@/lib/auth/clave";
 
 /**
  * Sesión propia de SITTI (usuario/contraseña), como quedó decidido en la
@@ -17,21 +18,12 @@ import type { Sesion } from "@/lib/auth/tipos";
 export const COOKIE_SESION = "sitti_sesion";
 export const DURACION_SESION_SEGUNDOS = 2 * 60 * 60; // 2 horas
 
-function claveSecreta(): Uint8Array {
-  const secreto = process.env.AUTH_SECRET;
-  if (!secreto || secreto.length < 32) {
-    // En demo aceptamos un fallback para que `npm run dev` funcione sin configurar nada,
-    // pero fuera de demo es un error duro: firmar sesiones con un secreto conocido
-    // permitiría a cualquiera falsificar una cookie de gerente.
-    if (process.env.DEMO_MODE !== "false") {
-      return new TextEncoder().encode("sitti-demo-secret-no-usar-en-produccion-32b");
-    }
-    throw new Error(
-      "AUTH_SECRET no está definido (o tiene menos de 32 caracteres). Genera uno con: openssl rand -base64 32",
-    );
-  }
-  return new TextEncoder().encode(secreto);
-}
+/*
+ * La derivación de la clave vive en `@/lib/auth/clave`, compartida con el
+ * middleware. Antes había una copia acá y otra allá con reglas distintas, y la
+ * del middleware no fallaba nunca: usaba un secreto del repositorio sin
+ * condición alguna.
+ */
 
 export async function crearSesion(sesion: Sesion): Promise<void> {
   const token = await new SignJWT({ ...sesion })
@@ -57,7 +49,8 @@ export async function leerSesion(): Promise<Sesion | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, claveSecreta());
+    // `algorithms` fija HS256: sin la lista blanca se acepta cualquier HS*.
+    const { payload } = await jwtVerify(token, claveSecreta(), { algorithms: ["HS256"] });
     return {
       sub: String(payload.sub),
       email: String(payload.email),
@@ -74,5 +67,13 @@ export async function leerSesion(): Promise<Sesion | null> {
 
 export async function cerrarSesion(): Promise<void> {
   const store = await cookies();
-  store.set(COOKIE_SESION, "", { httpOnly: true, path: "/", maxAge: 0 });
+  // Mismos atributos que al crearla: si algún día se le agrega un `domain`,
+  // un borrado con atributos distintos dejaría la cookie viva.
+  store.set(COOKIE_SESION, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
 }

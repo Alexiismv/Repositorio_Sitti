@@ -219,3 +219,27 @@ export function GridTarjetas({ children, n }: { children: React.ReactNode; n: nu
     </div>
   );
 }
+
+/**
+ * Enlaces de exportar (Fase 2). Son `<a href>` planos, no botones con JS: el
+ * navegador maneja la descarga solo, y el enlace sigue funcionando si alguien
+ * lo copia y lo abre después.
+ */
+export function ExportarEnlaces({ excelHref, pdfHref }: { excelHref: string; pdfHref: string }) {
+  const estilo: React.CSSProperties = {
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+  };
+  return (
+    <div style={{ display: "flex", gap: 10 }}>
+      <a href={excelHref} className="btn-secundario" style={estilo}>
+        ⬇ Exportar Excel
+      </a>
+      <a href={pdfHref} className="btn-secundario" style={estilo}>
+        ⬇ Exportar PDF
+      </a>
+    </div>
+  );
+}

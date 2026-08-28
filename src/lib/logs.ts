@@ -15,11 +15,14 @@
  */
 
 import { DEMO_MODE } from "@/lib/data/provider";
+import { conCliente } from "@/lib/db";
 
 export interface EventoAuditoria {
   accion: string;
   actor: string;
   detalle?: string;
+  /** IP de origen, para poder reconstruir un acceso indebido. */
+  ip?: string | null;
 }
 
 export interface EventoError {
@@ -33,21 +36,43 @@ export async function registrarAuditoria(evento: EventoAuditoria): Promise<void>
     evento.detalle ? ` ${evento.detalle}` : ""
   }`;
 
-  if (DEMO_MODE) {
-    console.log(linea);
-    return;
-  }
-  // INSERT INTO auth.audit_log (ocurrido_en, accion, actor, detalle) VALUES (...)
   console.log(linea);
+  if (DEMO_MODE) return;
+
+  /*
+   * El INSERT estaba como comentario: `auth.audit_log` existe desde el primer
+   * esquema pero nunca se escribió, así que el rastro vivía solo en los logs
+   * de Vercel, que en plan Hobby se retienen horas. Sin esto no hay forma de
+   * investigar un acceso indebido después de que ocurra.
+   *
+   * Va en try/catch a propósito: una bitácora caída no puede tumbar un login.
+   */
+  try {
+    await conCliente((cliente) =>
+      cliente.query(
+        `INSERT INTO auth.audit_log (accion, actor, detalle, ip) VALUES ($1, $2, $3, $4)`,
+        [evento.accion, evento.actor, evento.detalle ?? null, evento.ip || null],
+      ),
+    );
+  } catch (e) {
+    console.error("[auditoria] no se pudo persistir el evento:", e instanceof Error ? e.message : e);
+  }
 }
 
 export async function registrarError(evento: EventoError): Promise<void> {
   const linea = `[error] ${new Date().toISOString()} ${evento.origen}: ${evento.mensaje}`;
 
-  if (DEMO_MODE) {
-    console.error(linea, evento.detalle ?? "");
-    return;
-  }
-  // INSERT INTO auth.error_log (ocurrido_en, origen, mensaje, detalle) VALUES (...)
   console.error(linea, evento.detalle ?? "");
+  if (DEMO_MODE) return;
+
+  try {
+    await conCliente((cliente) =>
+      cliente.query(
+        `INSERT INTO auth.error_log (origen, mensaje, detalle) VALUES ($1, $2, $3)`,
+        [evento.origen, evento.mensaje, evento.detalle ? JSON.stringify(evento.detalle) : null],
+      ),
+    );
+  } catch (e) {
+    console.error("[error] no se pudo persistir el evento:", e instanceof Error ? e.message : e);
+  }
 }

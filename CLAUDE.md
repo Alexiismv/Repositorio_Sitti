@@ -554,10 +554,12 @@ src/
       reportes/               Filtros dinámicos (viven en la URL)
       admin/usuarios/         Gestión de usuarios (solo Administrador)
     api/auth/                 login / logout
+    api/sync/                 Botón "Refrescar" (sync incremental contra Jira)
+    api/export/               Fase 2: exportar Excel/PDF (reportes, área, personas)
   components/
     mapa/                     MapLibre + panel de detalle de sede
     charts.tsx                Gráficas (Recharts)
-    ui.tsx                    KPIs, rankings, tarjetas, GridTarjetas
+    ui.tsx                    KPIs, rankings, tarjetas, GridTarjetas, ExportarEnlaces
     tabla-tickets.tsx         Tabla detallada con semáforo
   lib/
     catalogo.ts               ⭐ Gerencias, áreas, sedes, proyectos, estados, SLA
@@ -565,6 +567,10 @@ src/
     data/provider.ts          ⭐ Única puerta a los datos. Demo hoy, Postgres mañana
     demo/generador.ts         Generador determinístico de los 9.038 tickets
     auth/                     Sesión JWT (2h), tipos, permisos, usuarios demo
+    export/                   Fase 2: excel.ts (ExcelJS) + pdf/ (@react-pdf/renderer)
+    reportes-filtros.ts       Traduce la URL de /reportes a `Filtros` — compartido
+                               entre la página y el endpoint de exportar, para que
+                               el archivo descargado nunca se desincronice de la UI
     sedes-detalle.ts          Lo que se ve al hacer hover en el mapa
     formato.ts                Números y fechas en es-CO
   middleware.ts               Nada se ve sin sesión

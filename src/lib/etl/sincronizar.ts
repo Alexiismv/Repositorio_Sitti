@@ -135,6 +135,21 @@ export async function sincronizar(
   const modo = opciones.modo ?? "incremental";
   const inicio = Date.now();
 
+  /*
+   * Se comprueba el candado ANTES de bajar nada de Jira.
+   *
+   * Antes la descarga iba primero y el candado se miraba después, así que N
+   * peticiones simultáneas a /api/sync disparaban N descargas completas —unas
+   * 90 llamadas paginadas a la API de Jira cada una— y solo entonces se
+   * rechazaban. Bastaba con eso para agotar la cuota del token de Jira de
+   * SITTI. Ahora la petición de más se corta antes de tocar la red.
+   */
+  await conCliente(async (cliente) => {
+    if (await syncEnCurso(cliente)) {
+      throw new Error("Ya hay una sincronización en curso. Espera a que termine.");
+    }
+  });
+
   // La descarga desde Jira va ANTES de tomar el cliente de base de datos:
   // puede tardar minutos y no tiene sentido retener una conexión del pool
   // mientras solo se está esperando a la red.
