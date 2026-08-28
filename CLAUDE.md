@@ -118,6 +118,16 @@ Estas reglas existen porque romperlas ya costaría retrabajo o daño real.
     en verde. Si tocaste UI, ábrela en el navegador y míralas — build verde no
     es evidencia de que se vea bien.
 16. **`main` protegida.** Trabaja en `feature/*` y abre PR. No hagas push directo a `main`.
+
+    > **Excepción vigente ahora, mientras dure la pre-entrega (27 ago 2026):**
+    > Alexis autorizó desplegar cambios **directo a producción en Vercel**
+    > (`vercel --prod`) sin probar antes en un Preview Deployment — no hay
+    > usuarios reales a los que se les pueda romper algo todavía. Esto **no**
+    > toca la regla 16 en sí: la rama `main` sigue protegida, se sigue
+    > trabajando en `feature/*` y abriendo PR igual que siempre. Lo único que
+    > se salta es el paso de "probar en preview antes de promover a
+    > producción". Esta excepción se retira en cuanto el proyecto se entregue
+    > a las gerencias — ver §7.4.
 17. **`git add .` está prohibido.** Agrega solo los archivos que tú tocaste.
 18. **Nunca borres nada que no creaste tú** — variables de entorno, tablas,
     filas, proyectos, ramas, deployments. Si algo hay que borrar, que lo haga
@@ -428,6 +438,37 @@ npx vercel login
 > **Recordatorio del contexto:** el proyecto es una sorpresa para las gerencias.
 > La URL de Vercel es pública si alguien la adivina — no la publiques, no la
 > indexes, y no la compartas en canales abiertos hasta que el proyecto sea oficial.
+
+### 7.4 Cuando el proyecto pase a producción real (gerentes usándolo)
+
+Hoy (pre-entrega) local y Vercel comparten la misma base de Neon — está bien
+porque los datos no son de nadie todavía. En cuanto haya gerentes con datos
+reales dependiendo del panel, eso deja de ser seguro: un script de prueba o un
+`npm run dev` local ya no pueden correr contra la misma base que ven ellos.
+
+Checklist de la transición:
+
+- [ ] **Retira la excepción de la regla 16** (§2.4): borra o tacha el
+      recuadro de "Excepción vigente ahora" — de aquí en adelante, todo cambio
+      se prueba en su Preview Deployment de Vercel (se genera solo al abrir el
+      PR) y solo se promueve a producción después de confirmarlo ahí.
+- [ ] **Separa la base de datos.** Crea una rama (branch) de Neon para
+      desarrollo, aparte de la de producción — el plan gratuito de Neon
+      permite varias ramas sin costo:
+      - Pídele a Claude: *"Crea una rama de Neon llamada `desarrollo` a partir
+        de la rama de producción del proyecto sitti-panel, y dame la
+        connection string."* (usa el MCP de Neon, §3.5.2).
+      - El `.env` **local** apunta a esa rama de desarrollo.
+      - La variable `DATABASE_URL` en Vercel (**Production**) sigue apuntando
+        a la rama de producción real — no se toca.
+      - Los *Preview Deployments* de Vercel pueden apuntar a la rama de
+        desarrollo también (o a su propia rama efímera de Neon, si se quiere
+        ir más fino) — pero nunca a la de producción.
+- [ ] Confirma que el checklist de §7.3 sigue en verde con estos cambios.
+
+Si llegas a esta sección y el proyecto YA se entregó pero el checklist de
+arriba no está marcado, la base de datos de producción sigue expuesta a
+pruebas locales — resuélvelo antes de seguir tocando código.
 
 ---
 
