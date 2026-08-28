@@ -5,6 +5,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   Legend,
   Line,
   LineChart,
@@ -115,20 +116,38 @@ export function GraficaCreadosVsResueltos({
   );
 }
 
+/**
+ * Comparativo semana vs. semana.
+ *
+ * Cada semana son DOS barras (creados y resueltos), y el valor va escrito
+ * encima de cada una: leer la altura contra el eje Y obligaba a estimar, y con
+ * dos series pegadas la comparación que importa — ¿resolvimos más de lo que
+ * entró? — no se veía. El eje X lleva la fecha de cierre de cada semana y el
+ * tooltip el rango completo.
+ */
 export function GraficaSemanal({
   datos,
 }: {
-  datos: { semana: string; creados: number; resueltos: number }[];
+  datos: { semana: string; rango: string; creados: number; resueltos: number }[];
 }) {
   const e = useEstilos();
+  const etiqueta = { ...e.eje, fontSize: 9.5, fontWeight: 600 };
 
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={datos} margin={{ top: 6, right: 8, left: -18, bottom: 0 }} barGap={3}>
+    <ResponsiveContainer width="100%" height={216}>
+      <BarChart data={datos} margin={{ top: 18, right: 8, left: -18, bottom: 0 }} barGap={3}>
         <CartesianGrid stroke={e.rejilla} strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="semana" tick={e.eje} axisLine={false} tickLine={false} />
         <YAxis tick={e.eje} axisLine={false} tickLine={false} width={46} />
-        <Tooltip {...e.tooltip} cursor={e.cursor} />
+        <Tooltip
+          {...e.tooltip}
+          cursor={e.cursor}
+          // El eje muestra solo el día de cierre; el tooltip sí da la semana completa.
+          labelFormatter={(_v: unknown, carga: unknown) => {
+            const fila = (carga as { payload?: { rango?: string } }[] | undefined)?.[0];
+            return fila?.payload?.rango ?? "";
+          }}
+        />
         <Legend wrapperStyle={e.leyenda} iconType="circle" iconSize={7} />
         <Bar
           isAnimationActive={false}
@@ -136,14 +155,18 @@ export function GraficaSemanal({
           name="Creados"
           fill={e.serieA}
           radius={[3, 3, 0, 0]}
-        />
+        >
+          <LabelList dataKey="creados" position="top" offset={4} {...etiqueta} />
+        </Bar>
         <Bar
           isAnimationActive={false}
           dataKey="resueltos"
           name="Resueltos"
           fill={e.serieB}
           radius={[3, 3, 0, 0]}
-        />
+        >
+          <LabelList dataKey="resueltos" position="top" offset={4} {...etiqueta} />
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
