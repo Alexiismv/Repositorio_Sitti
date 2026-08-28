@@ -68,18 +68,18 @@ export function KpiStrip({ kpis }: { kpis: Kpi[] }) {
 /**
  * Ranking con barra y peso relativo.
  *
- * La barra y el porcentaje miden cosas distintas a propósito, porque una sola
- * barra no puede con las dos:
+ * La barra y el porcentaje cuentan LO MISMO: los dos son la fracción de esa
+ * fila sobre el total. Es una decisión explícita de Alexis y no se cambia sin
+ * hablarlo — antes la barra se normalizaba contra la fila mayor, así que la
+ * sede líder se pintaba llena mientras la etiqueta de al lado decía 74,9%, y
+ * eso se lee como una contradicción por más que la escala tuviera su lógica.
  *
- *   - La BARRA se escala contra la fila mayor, para comparar filas entre sí.
- *     Escalarla contra el total no funciona cuando una fila domina: con Caribe
- *     en el 75% de los tickets, las otras cinco sedes quedaban en barras de
- *     ~10px y se leían como si no tuvieran barra.
- *   - El PORCENTAJE va como texto y sí es sobre el total, que es el dato que
- *     una barra corta no alcanza a comunicar.
+ * Si una fila domina y deja a las demás en barras muy cortas, la salida es
+ * darle más ancho a la pista o replantear la visualización, nunca cambiarle el
+ * significado a la barra.
  *
- * El porcentaje lleva un decimal: con enteros, sedes del 3,5% y del 4,0%
- * se mostraban las dos como "4%".
+ * El porcentaje lleva un decimal: con enteros, filas del 3,5% y del 4,0% se
+ * mostraban las dos como "4%".
  */
 export function Ranking({
   filas,
@@ -95,7 +95,6 @@ export function Ranking({
    */
   total?: number;
 }) {
-  const tope = Math.max(1, ...filas.map((f) => f.total));
   const universo = total || filas.reduce((a, f) => a + f.total, 0) || 1;
 
   return (
@@ -107,7 +106,7 @@ export function Ranking({
             <span className="track">
               <span
                 className="fill"
-                style={{ width: `${(f.total / tope) * 100}%`, background: f.color ?? "var(--navy)" }}
+                style={{ width: `${(f.total / universo) * 100}%`, background: f.color ?? "var(--navy)" }}
               />
             </span>
             <span className="pct">{decimal((f.total / universo) * 100, 1)}%</span>
