@@ -430,6 +430,7 @@ npx vercel login
 
 - [ ] `DEMO_MODE=false` y el ETL ya corrió al menos una vez con éxito.
 - [ ] `AUTH_SECRET` es un valor generado, no el de ejemplo.
+- [ ] **Hiciste un login real de punta a punta** en la URL pública (no solo revisaste que las variables existan) — ver ⚠️ más abajo, el fallo no siempre se ve solo con `vercel env ls`.
 - [ ] Entraste con una cuenta de coordinador y confirmaste que **no** ve lo que no le toca.
 - [ ] El token de Jira es de solo lectura.
 - [ ] La llave de MapTiler está restringida por dominio.
@@ -438,6 +439,41 @@ npx vercel login
 > **Recordatorio del contexto:** el proyecto es una sorpresa para las gerencias.
 > La URL de Vercel es pública si alguien la adivina — no la publiques, no la
 > indexes, y no la compartas en canales abiertos hasta que el proyecto sea oficial.
+
+> ⚠️ **Bug encontrado y corregido (27 ago 2026) — dos fallas encadenadas que
+> dejaban el login real completamente roto en Preview y en Producción, sin que
+> nada lo hiciera evidente hasta intentar entrar de verdad:**
+>
+> 1. **`DEMO_MODE` se evalúa como `process.env.DEMO_MODE !== "false"`**
+>    (`src/lib/data/provider.ts:36`) — solo se desactiva el modo demo si el
+>    valor es *exactamente* la cadena `"false"`. En Vercel, la variable había
+>    quedado como cadena vacía (`""`) en vez de `"false"`, así que `DEMO_MODE`
+>    daba `true` igual, y el login (`src/app/api/auth/login/route.ts`) nunca
+>    llegaba a consultar `auth.usuarios` en Postgres — comparaba contra las 3
+>    cuentas demo en memoria y listo. `vercel env ls` no lo delata: muestra la
+>    variable como `Hidden`/`Secret` sin importar si el valor es válido.
+> 2. **Ese primer bug enmascaraba un segundo:** `AUTH_SECRET` estaba
+>    ausente/inválido en Vercel, tanto en Preview como en Producción.
+>    `claveSecreta()` (`src/lib/auth/sesion.ts:20-33`) solo lanza el error duro
+>    "AUTH_SECRET no está definido..." cuando `DEMO_MODE !== "false"` es
+>    `false` (o sea, cuando el modo demo real está apagado) — mientras el bug 1
+>    mantuvo `DEMO_MODE` en `true` de facto, la app usaba el secreto de
+>    respaldo silencioso y esta validación nunca se ejecutó.
+>
+> **Cómo se detectó:** intentando un login real con un usuario de Neon
+> (`alexis.martinez@sitti.com.co`) y revisando `vercel logs` del deployment —
+> el error de `AUTH_SECRET` solo apareció ahí, no en ningún chequeo de
+> variables. **Moraleja:** después de tocar `DEMO_MODE` o `AUTH_SECRET` en
+> Vercel, no basta con `vercel env ls` ni con que el build pase — hay que
+> hacer un intento de login real contra la URL pública y leer `vercel logs`
+> si falla, porque estos dos bugs no producían ningún error visible en la UI
+> más que un genérico "No pudimos iniciar sesión."
+>
+> Corregido: `DEMO_MODE=false` explícito (no vacío) y `AUTH_SECRET` regenerado
+> con `openssl rand -base64 32` en ambos entornos, seguido de
+> `vercel redeploy <url> --target <preview|production>` para que el rebuild
+> recogiera los valores nuevos (cambiar una env var en Vercel **no** actualiza
+> los deployments ya construidos).
 
 ### 7.4 Cuando el proyecto pase a producción real (gerentes usándolo)
 

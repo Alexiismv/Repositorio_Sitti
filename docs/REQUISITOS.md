@@ -50,6 +50,17 @@
   - **Dos logs distintos requeridos:** log de **auditoría** (quién hizo qué, cuándo — accesos, cambios) y log de **errores del sistema** (fallos técnicos, para soporte/debug). Son tablas/streams separados con propósitos distintos.
   - Cuentas: **creación manual por el Administrador** (ver sección 2) — sin autoregistro.
 
+⚠️ **Hallazgo operativo (27 ago 2026):** el login real contra Postgres estuvo
+roto en Vercel (Preview y Producción) por dos variables de entorno mal
+configuradas — `DEMO_MODE` guardada como cadena vacía en vez de `"false"`
+(por lo que el login seguía usando las cuentas demo en memoria) y, una vez
+corregido eso, `AUTH_SECRET` ausente/inválido (bloqueaba la firma de la
+cookie de sesión). Ninguna de las dos fallas era visible revisando
+`vercel env ls` ni el resultado del build — solo se detectaron al intentar un
+login real y leer `vercel logs`. Detalle técnico completo y la lección
+operativa en `CLAUDE.md` §7.3. Para cualquier cambio futuro a `DEMO_MODE` o
+`AUTH_SECRET`: siempre validar con un login real después de redesplegar.
+
 ## 4. Indicadores de gestión (KPIs) por área
 
 **✅ Mapeo Gerencia → Área CONFIRMADO** (reemplaza la hipótesis anterior):
