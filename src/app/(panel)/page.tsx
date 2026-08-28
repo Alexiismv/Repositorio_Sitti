@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { GraficaCreadosVsResueltos, GraficaSemanal } from "@/components/charts";
 import { MapaSedes } from "@/components/mapa/mapa-sedes";
-import { GridTarjetas, KpiStrip, Ranking, SectionLabel, TarjetaNivel } from "@/components/ui";
+import { KpiStrip, Ranking, SectionLabel } from "@/components/ui";
 import { leerSesion } from "@/lib/auth/sesion";
 import { veTodo } from "@/lib/auth/tipos";
 import { META_TTFR_HORAS } from "@/lib/catalogo";
@@ -20,7 +20,9 @@ export const metadata = { title: "Panel General · SITTI" };
  *   1. Resumen consolidado del año, con el semáforo de cumplimiento.
  *   2. Mapa de sedes con detalle al hover.
  *   3. Tendencia: creados vs. resueltos + comparativo semanal.
- *   4. Nivel 1 del flujo: ranking de gerencias por volumen.
+ *
+ * El ranking de gerencias por volumen (Nivel 1 del flujo) NO vive acá — ya
+ * está en /gerencias, y repetirlo en las dos pantallas era redundante.
  */
 export default async function PanelGeneral() {
   const sesion = await leerSesion();
@@ -33,8 +35,6 @@ export default async function PanelGeneral() {
   const detallesSede = detallePorSede(tickets);
   const consolidado = detalleConsolidado(tickets, detallesSede.length);
   const alcanceTotal = veTodo(sesion);
-
-  const totalGerencias = gerencias.reduce((a, g) => a + g.total, 0) || 1;
 
   return (
     <>
@@ -111,7 +111,7 @@ export default async function PanelGeneral() {
         <div className="panel">
           <h4>Tickets por sede</h4>
           <div className="panel-sub">Todas las áreas y gerencias visibles para ti</div>
-          <Ranking filas={sedes} />
+          <Ranking filas={sedes} total={r.total} />
         </div>
       </div>
 
@@ -173,28 +173,6 @@ export default async function PanelGeneral() {
           </p>
         </div>
       </div>
-
-      <SectionLabel>Ranking de impacto por gerencia</SectionLabel>
-      <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "-6px 0 18px", lineHeight: 1.55 }}>
-        Ordenadas por volumen de tickets creados — es el orden en que conviene poner la atención
-        gerencial. Entra a una para ver qué área está pesando dentro.
-      </p>
-
-      <GridTarjetas n={gerencias.length}>
-        {gerencias.map((g, i) => (
-          <TarjetaNivel
-            key={g.slug}
-            href={`/gerencias/${g.slug}`}
-            rank={i + 1}
-            titulo={g.nombre}
-            total={g.total}
-            proporcion={(g.total / totalGerencias) * 100}
-            color={g.color ?? "#242868"}
-            etiqueta={g.pendientes ? `${numero(g.pendientes)} pendientes` : undefined}
-            pie={`${porcentaje(g.cumplimientoTtr)} cumplimiento TTR · ${numero(g.incumplidos)} en rojo`}
-          />
-        ))}
-      </GridTarjetas>
     </>
   );
 }
