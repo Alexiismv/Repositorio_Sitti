@@ -27,7 +27,7 @@ export const USUARIOS_DEMO: UsuarioDemo[] = [
     activo: true,
     permisos: [{ sede: "*", area: "*" }],
     // Placeholder de demo: no representa a la gerente de Conexión de Soluciones.
-    // Cámbialo a `true` en este archivo si querés probar Personas con esta cuenta.
+    // Cámbialo a `true` en este archivo si quieres probar Personas con esta cuenta.
     verPersonas: false,
   },
   {

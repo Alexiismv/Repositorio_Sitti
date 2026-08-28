@@ -20,6 +20,16 @@ interface FilaUsuario {
 }
 
 /**
+ * Hash señuelo, coste 12 — el mismo de las contraseñas reales.
+ *
+ * Se compara contra él cuando el usuario NO existe, para que ese camino tarde
+ * lo mismo que el de un usuario que sí existe. No es un secreto: su texto
+ * original se generó al azar y se descartó, así que ninguna contraseña
+ * coincide con él jamás.
+ */
+const HASH_SENUELO = "$2b$12$6jJ09aR1OBG2LqqPz8aWVOGNmw7ZTwml3zS9b48VQspk2tLZu.JfS";
+
+/**
  * Login contra Postgres: `auth.usuarios` + `auth.usuario_permiso`.
  *
  * `SELECT *` está prohibido en tablas con datos de personas (CLAUDE.md § 2.2
@@ -46,7 +56,19 @@ async function autenticarPostgres(
     );
 
     const fila = r.rows[0];
-    if (!fila) return null;
+    if (!fila) {
+      /*
+       * Usuario inexistente: igual se paga un bcrypt contra un hash señuelo.
+       *
+       * Sin esto, un usuario que no existe respondía tras una sola consulta
+       * mientras que uno que sí existe costaba ~300 ms de bcrypt. Esa
+       * diferencia es medible sobre el ruido de red y permite enumerar las
+       * cuentas reales del panel antes de atacar contraseñas — sobre todo
+       * porque los usuarios son `nombre.apellido`, fáciles de adivinar.
+       */
+      await bcrypt.compare(password, HASH_SENUELO);
+      return null;
+    }
 
     const coincide = await bcrypt.compare(password, fila.password_hash);
     if (!coincide) return null;
@@ -87,6 +109,9 @@ export async function POST(req: Request) {
 
   const { usuario, password } = parsed.data;
 
+  // Primera IP de la cadena: la del cliente. Vercel la pone en x-forwarded-for.
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+
   const encontrado = DEMO_MODE
     ? buscarUsuarioDemo(usuario, password)
     : await autenticarPostgres(usuario, password);
@@ -96,6 +121,7 @@ export async function POST(req: Request) {
       accion: "login_fallido",
       actor: usuario,
       detalle: "Credenciales inválidas",
+      ip,
     });
     // Mensaje deliberadamente genérico: no revelamos si el usuario existe.
     return NextResponse.json({ error: "Usuario o contraseña incorrectos." }, { status: 401 });
@@ -114,6 +140,7 @@ export async function POST(req: Request) {
     accion: "login_exitoso",
     actor: encontrado.email,
     detalle: `rol=${encontrado.rol}`,
+    ip,
   });
 
   return NextResponse.json({ ok: true });

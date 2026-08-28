@@ -4,7 +4,7 @@ import { leerSesion } from "@/lib/auth/sesion";
 import { DEMO_MODE } from "@/lib/data/provider";
 import { hayCredencialesJira } from "@/lib/etl/jira";
 import { DIAS_INCREMENTAL, sincronizar, type ModoSync } from "@/lib/etl/sincronizar";
-import { registrarAuditoria } from "@/lib/logs";
+import { registrarAuditoria, registrarError } from "@/lib/logs";
 
 /**
  * Endpoint del botón "Refrescar" del panel.
@@ -82,8 +82,21 @@ export async function POST(req: Request) {
           : `Recarga completa: ${r.totalTickets} tickets.`,
     });
   } catch (e) {
-    const mensaje = e instanceof Error ? e.message : "Error desconocido";
-    // El detalle ya quedó en `auth.error_log` dentro de `sincronizar()`.
-    return NextResponse.json({ error: mensaje }, { status: 500 });
+    const crudo = e instanceof Error ? e.message : "Error desconocido";
+
+    /*
+     * "Ya hay una sincronización en curso" es información útil y sin riesgo,
+     * así que se devuelve tal cual. Cualquier otro error se generaliza: el
+     * mensaje nativo de `pg` trae el host de Neon (`ep-xxxx.aws.neon.tech`) y
+     * el de Jira puede traer nombres de proyecto o detalles de permisos. Nada
+     * de eso tiene por qué salir en una respuesta HTTP.
+     */
+    const esperado = crudo.startsWith("Ya hay una sincronización en curso");
+    await registrarError({ origen: "api", mensaje: "Fallo en /api/sync", detalle: crudo });
+
+    return NextResponse.json(
+      { error: esperado ? crudo : "No se pudo sincronizar. El detalle quedó en la bitácora." },
+      { status: esperado ? 409 : 500 },
+    );
   }
 }
