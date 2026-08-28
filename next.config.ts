@@ -12,6 +12,20 @@ const nextConfig: NextConfig = {
   // raíz y el build de Docker/Vercel puede empacar de más o de menos.
   outputFileTracingRoot: path.join(import.meta.dirname ?? process.cwd()),
 
+  /*
+   * `@react-pdf/renderer` usa `pdfkit` por debajo, que carga sus fuentes
+   * estándar (Helvetica, etc.) con un `require()` armado en tiempo de
+   * ejecución a partir de un nombre — el rastreo estático de Next no puede
+   * seguir eso, así que con `output: "standalone"` esos archivos se quedan
+   * fuera del bundle y el endpoint truena en Vercel con "Cannot find module
+   * .../pdfkit/js/standard-fonts/Helvetica.cjs" aunque en local funcione
+   * perfecto (local lee directo de `node_modules` en disco, sin bundle).
+   * Confirmado con un fallo real en producción (28 ago 2026).
+   */
+  outputFileTracingIncludes: {
+    "/api/export/**/*": ["./node_modules/pdfkit/js/standard-fonts/**/*"],
+  },
+
   reactStrictMode: true,
 
   // No anunciar el framework y su versión en cada respuesta.
