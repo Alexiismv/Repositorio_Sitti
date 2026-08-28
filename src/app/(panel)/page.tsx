@@ -135,8 +135,8 @@ export default async function PanelGeneral() {
               <thead>
                 <tr>
                   <th>Indicador</th>
-                  <th className="num">Promedio</th>
-                  <th className="num">Cumplimiento</th>
+                  <th className="num">Valor</th>
+                  <th className="num">%</th>
                 </tr>
               </thead>
               <tbody>
