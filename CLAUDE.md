@@ -421,7 +421,7 @@ npx vercel login
 | `DEMO_MODE` | `true` al inicio | Ponlo en `false` cuando el ETL ya haya corrido. |
 | `DATABASE_URL` | connection string de Neon | Solo si `DEMO_MODE=false`. |
 | `NEXT_PUBLIC_MAPTILER_KEY` | tu llave | Opcional, recomendada. |
-| `JIRA_BASE_URL` / `JIRA_EMAIL` / `JIRA_API_TOKEN` | credenciales | Solo las usa el ETL — van en los **secrets de GitHub**, no en Vercel. |
+| `JIRA_BASE_URL` / `JIRA_EMAIL` / `JIRA_API_TOKEN` | credenciales | Van en los **secrets de GitHub** (para el sync automático) **y también en Vercel**: el botón "Refrescar" (`POST /api/sync`, §5.4-A) corre como función de Vercel y llama a `hayCredencialesJira()` (`src/lib/etl/jira.ts`), que exige estas tres variables en `process.env`. Sin ellas en Vercel, el botón responde "Faltan las credenciales de Jira en las variables de entorno" aunque el ETL programado sí funcione. |
 | `CRON_SECRET` | — | Ya no hace falta: el sync corre en GitHub Actions (§5.4). |
 
 5. **Deploy.**
@@ -474,6 +474,37 @@ npx vercel login
 > `vercel redeploy <url> --target <preview|production>` para que el rebuild
 > recogiera los valores nuevos (cambiar una env var en Vercel **no** actualiza
 > los deployments ya construidos).
+
+> ⚠️ **Bug encontrado y corregido (27-28 ago 2026) — el mismo patrón que el de
+> arriba, esta vez en el botón "Refrescar":** `JIRA_BASE_URL`, `JIRA_EMAIL` y
+> `JIRA_API_TOKEN` figuraban en `vercel env ls` como cargadas (`Hidden`/`Secret`,
+> "23h ago") en Production y Preview, pero con **valor vacío (`""`)**.
+> `hayCredencialesJira()` (`src/lib/etl/jira.ts:86`) hace
+> `Boolean(process.env.JIRA_BASE_URL && ...)`, así que una cadena vacía cuenta
+> como "falta la credencial" igual que si la variable no existiera — el botón
+> respondía "Faltan las credenciales de Jira en las variables de entorno. Ver
+> CLAUDE.md § 5.1." aunque las tres variables SÍ estuvieran creadas.
+>
+> **Sospecha del origen:** el `.env` local tiene estas tres líneas con espacios
+> alrededor del `=` y el valor entre comillas (`JIRA_API_TOKEN = "..."`, con
+> espacio *antes* del `=` incluso). Ese formato no es un `KEY=VALUE` de shell
+> válido — cualquier copiado que pase por `source .env` en vez de por un parser
+> de `.env` real (dotenv, el propio Next.js) rompe silenciosamente: la
+> variable se crea, pero vacía.
+>
+> **Cómo se detectó:** `vercel env ls` no lo delata (mismo problema que con
+> `AUTH_SECRET` arriba — no muestra si el valor es válido). Se confirmó
+> reproduciendo en vivo: login real en la URL pública + clic en "Refrescar" +
+> `vercel logs` del deployment mientras ocurría la llamada a `POST /api/sync`.
+>
+> Corregido: se eliminaron las tres variables (`vercel env rm ... production` /
+> `... preview`) y se volvieron a crear con `vercel env add NOMBRE <entorno>
+> --value "$VALOR" --yes`, extrayendo el valor del `.env` con
+> `grep -oP '^CLAVE\s*=\s*"\K[^"]+'` para no arrastrar comillas ni espacios, y
+> verificando la longitud del valor extraído antes de subirlo. Luego
+> `vercel redeploy <url> --target production` para que el rebuild recogiera los
+> valores nuevos — igual que con `AUTH_SECRET`, cambiar una env var en Vercel no
+> actualiza deployments ya construidos.
 
 ### 7.4 Cuando el proyecto pase a producción real (gerentes usándolo)
 
