@@ -52,7 +52,7 @@ export default async function LoginPage() {
             <g className="lg-spin-mid">
               <path className="lg-ring lg-ring-orange" d="M 200 130 A 170 170 0 0 1 440 260" />
             </g>
-            <circle className="lg-pulse-dot" cx="280" cy="280" r="4" fill="#F1592A" />
+            <circle className="lg-pulse-dot" cx="280" cy="280" r="4" fill="#EC623B" />
           </svg>
         </div>
 

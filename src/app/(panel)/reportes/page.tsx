@@ -68,27 +68,27 @@ export default async function ReportesPage({ searchParams }: { searchParams: Par
             label: "Tickets en el reporte",
             valor: numero(r.total),
             cap: hayFiltros ? `de ${numero(todos.length)} visibles` : "sin filtros aplicados",
-            color: "#242868",
+            color: "#33357E",
           },
           {
             label: "Pendientes",
             valor: numero(r.pendientes),
             cap: `${numero(r.estancados)} estancados`,
-            color: "#F1592A",
+            color: "#EC623B",
             alerta: r.estancados > 0,
           },
           {
             label: "Cumplimiento TTR",
             valor: porcentaje(r.cumplimientoTtr),
             cap: `Promedio ${r.ttrPromedioHoras.toLocaleString("es-CO")} h`,
-            color: r.cumplimientoTtr >= 90 ? "#2FAFA0" : "#F6A623",
+            color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C",
             alerta: r.cumplimientoTtr < 80,
           },
           {
             label: "Cumplimiento TTFR",
             valor: porcentaje(r.cumplimientoTtfr),
             cap: `Promedio ${r.ttfrPromedioHoras.toLocaleString("es-CO")} h`,
-            color: r.cumplimientoTtfr >= 90 ? "#2FAFA0" : "#F6A623",
+            color: r.cumplimientoTtfr >= 90 ? "#3FA9AC" : "#F7A82C",
             alerta: r.cumplimientoTtfr < 80,
           },
         ]}
@@ -111,7 +111,7 @@ export default async function ReportesPage({ searchParams }: { searchParams: Par
               <h4>Por tipo de requerimiento</h4>
               <div className="panel-sub">Qué está pidiendo la ciudadanía y la operación</div>
               <GraficaComparativa
-                datos={tipos.slice(0, 8).map((t) => ({ nombre: t.nombre, total: t.total, color: "#2FAFA0" }))}
+                datos={tipos.slice(0, 8).map((t) => ({ nombre: t.nombre, total: t.total, color: "#3FA9AC" }))}
                 altura={Math.max(150, Math.min(tipos.length, 8) * 38)}
               />
             </div>
@@ -122,7 +122,7 @@ export default async function ReportesPage({ searchParams }: { searchParams: Par
               <h4>Por portal de JSM</h4>
               <div className="panel-sub">De cuáles de los 12 proyectos vienen estos tickets</div>
               <GraficaComparativa
-                datos={proyectos.map((p) => ({ nombre: p.nombre, total: p.total, color: "#F6A623" }))}
+                datos={proyectos.map((p) => ({ nombre: p.nombre, total: p.total, color: "#F7A82C" }))}
                 altura={Math.max(150, proyectos.length * 38)}
               />
             </div>

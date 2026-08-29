@@ -30,10 +30,10 @@ export interface Gerencia {
 }
 
 export const GERENCIAS: Gerencia[] = [
-  { slug: "experiencia-de-servicio", nombre: "Experiencia de Servicio", color: "#2FAFA0" },
-  { slug: "operacion-contravencional", nombre: "Operación Contravencional", color: "#242868" },
-  { slug: "juridica", nombre: "Jurídica", color: "#F6A623" },
-  { slug: "financiera", nombre: "Financiera", color: "#F1592A" },
+  { slug: "experiencia-de-servicio", nombre: "Experiencia de Servicio", color: "#3FA9AC" },
+  { slug: "operacion-contravencional", nombre: "Operación Contravencional", color: "#33357E" },
+  { slug: "juridica", nombre: "Jurídica", color: "#F7A82C" },
+  { slug: "financiera", nombre: "Financiera", color: "#EC623B" },
   { slug: "conexion-de-soluciones", nombre: "Conexión de Soluciones", color: "#8B8FBF" },
   { slug: "experiencia-y-bienestar", nombre: "Experiencia y Bienestar", color: "#6BBF59" },
   { slug: "smm-esu", nombre: "SMM/ESU", color: "#7A5AC4" },
@@ -240,10 +240,10 @@ export const PROYECTOS: Proyecto[] = [
 export type CategoriaEstado = "pendiente" | "en-progreso" | "esperando-terceros" | "resuelto" | "cancelado";
 
 export const CATEGORIAS_ESTADO: { key: CategoriaEstado; label: string; color: string }[] = [
-  { key: "pendiente", label: "Pendiente", color: "#F1592A" },
-  { key: "en-progreso", label: "En progreso", color: "#242868" },
-  { key: "esperando-terceros", label: "Esperando terceros", color: "#F6A623" },
-  { key: "resuelto", label: "Resuelto", color: "#2FAFA0" },
+  { key: "pendiente", label: "Pendiente", color: "#EC623B" },
+  { key: "en-progreso", label: "En progreso", color: "#33357E" },
+  { key: "esperando-terceros", label: "Esperando terceros", color: "#F7A82C" },
+  { key: "resuelto", label: "Resuelto", color: "#3FA9AC" },
   { key: "cancelado", label: "Cancelado", color: "#9AA0B5" },
 ];
 

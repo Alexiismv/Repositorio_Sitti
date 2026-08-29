@@ -30,19 +30,19 @@ export function DocumentoPdfReportes({ datos }: { datos: DatosPdfReportes }) {
 
         <Kpis
           items={[
-            { label: "Tickets en el reporte", valor: r.total.toLocaleString("es-CO"), color: "#242868" },
-            { label: "Pendientes", valor: r.pendientes.toLocaleString("es-CO"), cap: `${r.estancados} estancados`, color: "#F1592A" },
+            { label: "Tickets en el reporte", valor: r.total.toLocaleString("es-CO"), color: "#33357E" },
+            { label: "Pendientes", valor: r.pendientes.toLocaleString("es-CO"), cap: `${r.estancados} estancados`, color: "#EC623B" },
             {
               label: "Cumplimiento TTR",
               valor: `${Math.round(r.cumplimientoTtr)}%`,
               cap: `Promedio ${r.ttrPromedioHoras.toLocaleString("es-CO")} h`,
-              color: r.cumplimientoTtr >= 90 ? "#2FAFA0" : "#F6A623",
+              color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C",
             },
             {
               label: "Cumplimiento TTFR",
               valor: `${Math.round(r.cumplimientoTtfr)}%`,
               cap: `Promedio ${r.ttfrPromedioHoras.toLocaleString("es-CO")} h`,
-              color: r.cumplimientoTtfr >= 90 ? "#2FAFA0" : "#F6A623",
+              color: r.cumplimientoTtfr >= 90 ? "#3FA9AC" : "#F7A82C",
             },
           ]}
         />

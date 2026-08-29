@@ -94,7 +94,7 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
                 label: "Pendientes",
                 valor: numero(r.pendientes),
                 cap: `${porcentaje((r.pendientes / r.total) * 100)} del área`,
-                color: "#F1592A",
+                color: "#EC623B",
                 alerta: r.pendientes > 0,
               },
               {
@@ -108,7 +108,7 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
                 label: "Cumplimiento TTR",
                 valor: porcentaje(r.cumplimientoTtr),
                 cap: `Tipo más solicitado: ${modaDe(tickets, (t) => t.tipoRequerimiento)}`,
-                color: r.cumplimientoTtr >= 90 ? "#2FAFA0" : "#F6A623",
+                color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C",
                 alerta: r.cumplimientoTtr < 80,
               },
             ]}

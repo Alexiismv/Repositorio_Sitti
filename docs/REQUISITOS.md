@@ -307,25 +307,32 @@ operativa en `CLAUDE.md` §7.3. Para cualquier cambio futuro a `DEMO_MODE` o
 
 ## 9. Diseño / marca
 
-**✅ Prototipo de login APROBADO como base del proyecto** (`sitti-login-prototipo.html`). Elementos confirmados a mantener en las siguientes pantallas:
-- Paleta: navy `#242868`/`#181B4A`, naranja `#F1592A`, dorado `#F6A623`, turquesa `#2FAFA0`, fondo `#F7F8FB`.
-- Tipografía: Space Grotesk (display) + Inter (cuerpo) + IBM Plex Mono (datos/etiquetas).
-- Layout de referencia: panel de marca (radar animado + ticker) / panel de contenido, con el mismo lenguaje visual a replicar en el dashboard.
-- Logo oficial (horizontal) incrustado directamente desde el archivo real, no reconstruido.
+**✅ Manual de Marca oficial recibido (29 ago 2026)** — reemplaza la paleta
+inferida del prototipo de login que se usó como aproximación mientras no
+existía el documento formal. Login, layout de referencia (radar animado +
+ticker) y logo se mantienen: solo cambiaron los valores de color y las
+tipografías, aplicados a toda la app incluido el login (excepción puntual,
+ver CLAUDE.md §2.3 regla 11).
+- Paleta: navy `#33357E` (Tecnología), navy profundo `#191B2B` (secundario
+  oscuro), naranja `#EC623B` (Humanidad), dorado `#F7A82C` (Medellín),
+  turquesa `#3FA9AC` (Movilidad), fondo `#F7F8FB`, magenta secundario
+  `#961E65` (definido, sin aplicar todavía en ningún componente).
+- Tipografía: Magdelin (títulos, oficial del manual — sin archivo de licencia
+  disponible para web, se aproxima con **Fredoka**) + Lato (cuerpo/web,
+  oficial) + Arial Nova (documentos de office, no aplica en el panel) + IBM
+  Plex Mono (datos/etiquetas, se mantiene — el manual no cubre este rol).
+- Layout de referencia: panel de marca (radar animado + ticker) / panel de
+  contenido — sin cambios, solo colores.
+- Logo oficial (horizontal) incrustado directamente desde el archivo real, no
+  reconstruido. Favicon actualizado al logosímbolo/isotipo solo (antes era el
+  logo horizontal completo).
 - Autenticación: usuario/contraseña (ver sección 3).
 
-**Logo de SITTI recibido** — isotipo circular con las letras "T" e "i" estilizadas, más wordmark "sitti" en minúsculas. Se recibieron **dos variantes**: vertical (apilada, útil para login/splash) y horizontal (isotipo + wordmark en línea, útil para navbar/header).
-
-**Paleta de color inferida del logo (a confirmar con hex exactos si existe manual de marca):**
-- Azul marino/índigo oscuro — wordmark "sitti"
-- Naranja — parte del anillo circular y una de las letras estilizadas
-- Amarillo/dorado — parte superior del anillo circular
-- Turquesa/verde azulado — parte inferior derecha del anillo circular
-
-**Pendiente:**
-- ¿Existe manual de marca formal (hex exactos, tipografía oficial, usos permitidos del logo)?
-- ¿Referencias de otras apps/dashboards cuyo estilo te guste?
-- Si no hay manual, se puede extraer paleta exacta directamente del archivo del logo cuando estemos maquetando.
+**Logo de SITTI** — isotipo circular con las letras "T" e "i" estilizadas, más
+wordmark "sitti" en minúsculas. Se recibieron **dos variantes**: vertical
+(apilada, útil para login/splash) y horizontal (isotipo + wordmark en línea,
+útil para navbar/header) — coincide exacto con el logosímbolo del manual
+(pág. 22).
 
 ## 10. Roadmap propuesto
 

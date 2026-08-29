@@ -45,19 +45,19 @@ export default async function GerenciasPage() {
       <div className="panorama-grande">
         <KpiStrip
           kpis={[
-            { label: "Gerencias visibles", valor: numero(gerencias.length), color: "#242868" },
+            { label: "Gerencias visibles", valor: numero(gerencias.length), color: "#33357E" },
             {
               label: "Gerencia líder",
               valor: lider?.nombre ?? "—",
               cap: lider ? `${numero(lider.total)} tickets · ${porcentaje((lider.total / total) * 100)} del total` : undefined,
-              color: lider?.color ?? "#2FAFA0",
+              color: lider?.color ?? "#3FA9AC",
             },
-            { label: "Áreas con actividad", valor: numero(areas.length), color: "#F6A623" },
+            { label: "Áreas con actividad", valor: numero(areas.length), color: "#F7A82C" },
             {
               label: "Tickets en rojo",
               valor: numero(tickets.filter((t) => t.ttrIncumplido || t.ttfrIncumplido).length),
               cap: `${porcentaje(100 - r.cumplimientoTtr)} del TTR fuera de meta`,
-              color: "#F1592A",
+              color: "#EC623B",
               alerta: true,
             },
           ]}
@@ -76,7 +76,7 @@ export default async function GerenciasPage() {
               titulo={g.nombre}
               total={g.total}
               proporcion={(g.total / total) * 100}
-              color={g.color ?? "#242868"}
+              color={g.color ?? "#33357E"}
               etiqueta={`${porcentaje((g.total / total) * 100)} del total`}
               pie={`${numero(g.pendientes)} pendientes · ${porcentaje(g.cumplimientoTtr)} cumplimiento TTR`}
             />

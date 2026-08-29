@@ -3,34 +3,36 @@
 /*
  * Sistema visual de SITTI.
  *
- * La paleta y la tipografía vienen del prototipo de login APROBADO
- * (sección 9 del doc de requisitos). No se cambian sin hablarlo con Alexis:
- * el login aprobado es la referencia de todo el resto de la app.
+ * La paleta y la tipografía vienen del Manual de Marca oficial (29 ago 2026).
+ * Antes venían de una aproximación hecha en el prototipo de login sin acceso
+ * al manual real — ver CLAUDE.md §2.3 regla 11 para el detalle del cambio.
  */
 
 @theme {
-  --color-navy: #242868;
-  --color-navy-deep: #181b4a;
-  --color-orange: #f1592a;
-  --color-gold: #f6a623;
-  --color-teal: #2fafa0;
+  --color-navy: #33357e;
+  --color-navy-deep: #191b2b;
+  --color-orange: #ec623b;
+  --color-gold: #f7a82c;
+  --color-teal: #3fa9ac;
+  --color-magenta: #961e65;
   --color-bg: #f7f8fb;
   --color-ink: #1b1d3a;
   --color-ink-soft: #6b6e8c;
   --color-line: #e4e5f0;
   --color-danger: #d64545;
 
-  --font-display: var(--fuente-display), "Space Grotesk", sans-serif;
-  --font-sans: var(--fuente-cuerpo), Inter, sans-serif;
+  --font-display: var(--fuente-display), "Fredoka", sans-serif;
+  --font-sans: var(--fuente-cuerpo), Lato, sans-serif;
   --font-mono: var(--fuente-mono), "IBM Plex Mono", monospace;
 }
 
 :root {
-  --navy: #242868;
-  --navy-deep: #181b4a;
-  --orange: #f1592a;
-  --gold: #f6a623;
-  --teal: #2fafa0;
+  --navy: #33357e;
+  --navy-deep: #191b2b;
+  --orange: #ec623b;
+  --gold: #f7a82c;
+  --teal: #3fa9ac;
+  --magenta: #961e65;
   --bg: #f7f8fb;
   --ink: #1b1d3a;
   --ink-soft: #6b6e8c;
@@ -228,7 +230,7 @@ body {
 .text-input:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(36, 40, 104, 0.1);
+  box-shadow: 0 0 0 3px rgba(51, 53, 126, 0.1);
 }
 
 .submit-btn {
@@ -402,7 +404,7 @@ body {
 .maplibregl-popup-content {
   border-radius: 10px;
   padding: 0;
-  box-shadow: 0 10px 28px rgba(24, 27, 74, 0.16);
+  box-shadow: 0 10px 28px rgba(25, 27, 43, 0.16);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -497,8 +499,8 @@ body {
   padding: 3px 8px;
   border-radius: 6px;
   font-weight: 500;
-  background: rgba(47, 175, 160, 0.12);
-  color: #1e8479;
+  background: rgba(63, 169, 172, 0.12);
+  color: #2a8185;
   white-space: nowrap;
 }
 .tarjeta-nivel h3 {
@@ -719,7 +721,7 @@ body {
 .filtro-campo input:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(36, 40, 104, 0.1);
+  box-shadow: 0 0 0 3px rgba(51, 53, 126, 0.1);
 }
 .filtros-pie {
   display: flex;
@@ -798,23 +800,23 @@ body {
 
 :root {
   --card-translucido: rgba(255, 255, 255, 0.9);
-  --nav-activo-bg: rgba(36, 40, 104, 0.08);
+  --nav-activo-bg: rgba(51, 53, 126, 0.08);
   --hover-suave: var(--bg);
-  --tag-bg: rgba(47, 175, 160, 0.12);
-  --tag-texto: #1e8479;
-  --sombra-panel: rgba(24, 27, 74, 0.08);
-  --sombra-menu: rgba(24, 27, 74, 0.12);
-  --aviso-bg: rgba(246, 166, 35, 0.1);
-  --aviso-borde: rgba(246, 166, 35, 0.32);
-  --aviso-texto: #8a5c05;
-  --aviso-texto-fuerte: #6f4a04;
+  --tag-bg: rgba(63, 169, 172, 0.12);
+  --tag-texto: #2a8185;
+  --sombra-panel: rgba(25, 27, 43, 0.08);
+  --sombra-menu: rgba(25, 27, 43, 0.12);
+  --aviso-bg: rgba(247, 168, 44, 0.1);
+  --aviso-borde: rgba(247, 168, 44, 0.32);
+  --aviso-texto: #946105;
+  --aviso-texto-fuerte: #794f04;
   --error-texto: #a52f2f;
   --mapa-filtro: none;
 }
 
 [data-tema="oscuro"] {
-  --navy: #7A82E0;
-  --navy-deep: #0E1030;
+  --navy: #9C9FE3;
+  --navy-deep: #0B0C15;
   --bg: #0F1130;
   --card: #191C45;
   --ink: #EDEEF7;
@@ -823,16 +825,16 @@ body {
   --red: #FF6B6B;
 
   --card-translucido: rgba(25, 28, 69, 0.92);
-  --nav-activo-bg: rgba(122, 130, 224, 0.16);
-  --hover-suave: rgba(122, 130, 224, 0.07);
-  --tag-bg: rgba(47, 175, 160, 0.18);
-  --tag-texto: #6FE0CF;
+  --nav-activo-bg: rgba(156, 159, 227, 0.16);
+  --hover-suave: rgba(156, 159, 227, 0.07);
+  --tag-bg: rgba(63, 169, 172, 0.18);
+  --tag-texto: #83D9D9;
   --sombra-panel: rgba(0, 0, 0, 0.45);
   --sombra-menu: rgba(0, 0, 0, 0.55);
-  --aviso-bg: rgba(246, 166, 35, 0.12);
-  --aviso-borde: rgba(246, 166, 35, 0.35);
-  --aviso-texto: #F0C577;
-  --aviso-texto-fuerte: #F6A623;
+  --aviso-bg: rgba(247, 168, 44, 0.12);
+  --aviso-borde: rgba(247, 168, 44, 0.35);
+  --aviso-texto: #F1C880;
+  --aviso-texto-fuerte: #F7A82C;
   --error-texto: #FF9A9A;
 
   /*
@@ -891,7 +893,7 @@ body {
 [data-tema="oscuro"] .text-input:focus,
 [data-tema="oscuro"] .filtro-campo select:focus,
 [data-tema="oscuro"] .filtro-campo input:focus {
-  box-shadow: 0 0 0 3px rgba(122, 130, 224, 0.22);
+  box-shadow: 0 0 0 3px rgba(156, 159, 227, 0.22);
 }
 [data-tema="oscuro"] .submit-btn,
 [data-tema="oscuro"] .btn-primario,
@@ -901,13 +903,13 @@ body {
 }
 [data-tema="oscuro"] .submit-btn:hover:not(:disabled),
 [data-tema="oscuro"] .btn-primario:hover {
-  background: #9AA1EC;
+  background: #BCBEEF;
 }
 [data-tema="oscuro"] .tablero-conteo {
   color: #0F1130;
 }
 [data-tema="oscuro"] .tablero-card {
-  background: rgba(122, 130, 224, 0.08);
+  background: rgba(156, 159, 227, 0.08);
 }
 [data-tema="oscuro"] .filtro-campo select,
 [data-tema="oscuro"] .filtro-campo input {
@@ -1028,12 +1030,12 @@ body {
   box-shadow: 0 10px 28px var(--sombra-menu);
 }
 .sh-refrescar-aviso.ok {
-  background: rgba(47, 175, 160, 0.12);
-  border: 1px solid rgba(47, 175, 160, 0.4);
-  color: #1e8479;
+  background: rgba(63, 169, 172, 0.12);
+  border: 1px solid rgba(63, 169, 172, 0.4);
+  color: #2a8185;
 }
 [data-tema="oscuro"] .sh-refrescar-aviso.ok {
-  color: #6fe0cf;
+  color: #83d9d9;
 }
 .sh-refrescar-aviso.error {
   background: rgba(214, 69, 69, 0.1);

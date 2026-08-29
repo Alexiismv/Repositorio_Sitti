@@ -64,7 +64,7 @@
   border-radius: 50%;
   background: var(--navy);
   border: 10px solid #fff;
-  box-shadow: 0 8px 32px rgba(24, 27, 74, 0.35);
+  box-shadow: 0 8px 32px rgba(25, 27, 43, 0.35);
   transition:
     background 0.15s ease,
     inset 0.15s ease;
@@ -258,7 +258,7 @@
 .mp-spark .barra {
   width: 100%;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(180deg, var(--teal), rgba(47, 175, 160, 0.3));
+  background: linear-gradient(180deg, var(--teal), rgba(63, 169, 172, 0.3));
   min-height: 2px;
 }
 .mp-spark-ejes {
@@ -467,8 +467,8 @@
    que puede venir de un hover pasajero) de "lo dejé seleccionado" (fijo). */
 .mp-pin.fijo .mp-pin-nucleo {
   box-shadow:
-    0 8px 32px rgba(24, 27, 74, 0.35),
-    0 0 0 12px rgba(241, 89, 42, 0.35);
+    0 8px 32px rgba(25, 27, 43, 0.35),
+    0 0 0 12px rgba(236, 98, 59, 0.35);
 }
 
 /* Teselas en oscuro — ver la explicación de `--mapa-filtro` en globals.css. */

@@ -44,9 +44,9 @@ export function DocumentoPdfPersonas({ datos }: { datos: DatosPdfPersonas }) {
 
         <Kpis
           items={[
-            { label: "Personas con tickets", valor: personas.length.toLocaleString("es-CO"), color: "#242868" },
-            { label: "Carga promedio", valor: promedioCarga.toLocaleString("es-CO"), cap: "Tickets 2026 por persona", color: "#2FAFA0" },
-            { label: "Persona con más carga", valor: masCargada?.nombre ?? "—", cap: masCargada ? `${masCargada.total} tickets` : undefined, color: "#F6A623" },
+            { label: "Personas con tickets", valor: personas.length.toLocaleString("es-CO"), color: "#33357E" },
+            { label: "Carga promedio", valor: promedioCarga.toLocaleString("es-CO"), cap: "Tickets 2026 por persona", color: "#3FA9AC" },
+            { label: "Persona con más carga", valor: masCargada?.nombre ?? "—", cap: masCargada ? `${masCargada.total} tickets` : undefined, color: "#F7A82C" },
             { label: `Estancados (${diasEstancadoUmbral}+ días)`, valor: r.estancados.toLocaleString("es-CO"), color: "#D64545" },
           ]}
         />
