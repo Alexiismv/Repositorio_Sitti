@@ -72,6 +72,14 @@ export function PanelSede({
           <div className="v" style={{ color: detalle.pendientes ? "var(--red)" : undefined }}>
             {numero(detalle.pendientes)}
           </div>
+          {detalle.pendientes > 0 && (
+            <Link
+              href={esConsolidado ? "/reportes?estado=pendientes" : `/reportes?estado=pendientes&sede=${detalle.slug}`}
+              className="mp-kpi-link"
+            >
+              Ver tickets →
+            </Link>
+          )}
         </div>
         <div className="mp-kpi">
           <div className="l">Tipo más solicitado</div>
