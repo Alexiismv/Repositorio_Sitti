@@ -21,6 +21,8 @@ export interface Kpi {
   label: string;
   valor: string;
   cap?: string;
+  /** Si viene, el cap se muestra como enlace hacia ahí. */
+  capHref?: string;
   color?: string;
   /** Pinta el valor en rojo — reservado para métricas fuera de meta. */
   alerta?: boolean;
@@ -57,7 +59,14 @@ export function KpiStrip({ kpis }: { kpis: Kpi[] }) {
           >
             {k.valor}
           </div>
-          {k.cap && <div className="cap">{k.cap}</div>}
+          {k.cap &&
+            (k.capHref ? (
+              <Link href={k.capHref} className="cap cap-link">
+                {k.cap}
+              </Link>
+            ) : (
+              <div className="cap">{k.cap}</div>
+            ))}
         </div>
       ))}
     </div>

@@ -103,6 +103,15 @@ export function MapaSedes({
       setListo(true);
     });
 
+    // Clic en zona vacía del lienzo: vuelve a "Todas". Los marcadores de
+    // MapLibre son elementos DOM aparte (no viven dentro del canvas), así que
+    // un clic sobre un pin nunca dispara este evento — solo se activa cuando
+    // el clic cae fuera de cualquier pin.
+    m.on("click", () => {
+      setFijada(TODAS);
+      setEnHover(null);
+    });
+
     // Red de seguridad: si el evento `load` no llega (red corporativa que
     // bloquea las teselas de OpenStreetMap, proxy que las traga, WebGL
     // deshabilitado), sin esto el usuario se queda mirando "Cargando mapa…"
@@ -193,7 +202,7 @@ export function MapaSedes({
       `;
 
       const fijar = () => {
-        setFijada(sede.slug);
+        setFijada((actual) => (actual === sede.slug ? TODAS : sede.slug));
         setEnHover(null);
       };
 

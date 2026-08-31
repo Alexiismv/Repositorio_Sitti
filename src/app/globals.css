@@ -164,6 +164,15 @@ body {
   color: var(--ink-soft);
   margin-top: 6px;
 }
+.kpi .cap-link {
+  display: inline-block;
+  text-decoration: none;
+  cursor: pointer;
+}
+.kpi .cap-link:hover {
+  color: var(--accent, var(--navy));
+  text-decoration: underline;
+}
 
 /*
  * "Panorama" de /gerencias: letra más grande a pedido de Alexis (28 ago

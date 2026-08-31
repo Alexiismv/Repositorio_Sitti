@@ -29,6 +29,7 @@ export function filtrosDesdeSearchParams(sp: ReportesSearchParams): Filtros {
     desde: uno(sp.desde) ? `${uno(sp.desde)}T00:00:00.000Z` : undefined,
     hasta: uno(sp.hasta) ? `${uno(sp.hasta)}T23:59:59.999Z` : undefined,
     soloIncumplidos: uno(sp.rojo) === "1",
+    soloEstancados: uno(sp.estancado) === "1",
   };
 }
 
@@ -53,6 +54,7 @@ export function describirFiltros(sp: ReportesSearchParams): string {
   if (desde) partes.push(`Desde ${desde}`);
   if (hasta) partes.push(`Hasta ${hasta}`);
   if (uno(sp.rojo) === "1") partes.push("Solo tickets en rojo");
+  if (uno(sp.estancado) === "1") partes.push("Solo estancados (5+ días sin movimiento)");
 
   return partes.length ? partes.join(" · ") : "Sin filtros — todos los tickets visibles para el usuario";
 }

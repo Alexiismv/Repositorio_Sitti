@@ -13,7 +13,15 @@
 import { ticketsDemo, type Ticket } from "@/lib/demo/generador";
 import { DEMO_MODE } from "@/lib/modo";
 import { puedeVer, type Sesion } from "@/lib/auth/tipos";
-import { ALIAS_AREA, AREAS, PROYECTOS, SEDES, type CategoriaEstado, type Prioridad } from "@/lib/catalogo";
+import {
+  ALIAS_AREA,
+  AREAS,
+  DIAS_ESTANCADO_DEFAULT,
+  PROYECTOS,
+  SEDES,
+  type CategoriaEstado,
+  type Prioridad,
+} from "@/lib/catalogo";
 import { conCliente } from "@/lib/db";
 
 export interface Filtros {
@@ -32,6 +40,8 @@ export interface Filtros {
   estado?: "todos" | "pendientes" | "resueltos";
   /** Solo tickets que ya incumplieron TTR o TTFR (el "en rojo"). */
   soloIncumplidos?: boolean;
+  /** Solo tickets abiertos sin movimiento hace DIAS_ESTANCADO_DEFAULT+ días. */
+  soloEstancados?: boolean;
 }
 
 // Se re-exporta para no tocar los ~10 módulos que ya lo importan desde acá.
@@ -82,6 +92,10 @@ function cumpleFiltros(t: Ticket, f: Filtros): boolean {
   }
   if (f.estado === "resueltos" && t.categoriaEstado !== "resuelto") return false;
   if (f.soloIncumplidos && !(t.ttrIncumplido || t.ttfrIncumplido)) return false;
+  if (f.soloEstancados) {
+    const abierto = t.categoriaEstado !== "resuelto" && t.categoriaEstado !== "cancelado";
+    if (!(abierto && t.diasSinActualizar >= DIAS_ESTANCADO_DEFAULT)) return false;
+  }
 
   return true;
 }
