@@ -82,6 +82,17 @@ export function resumen(tickets: Ticket[], diasEstancado = DIAS_ESTANCADO_DEFAUL
 
 const redondear = (n: number) => Math.round(n * 10) / 10;
 
+/**
+ * Semáforo AGREGADO — no confundir con `semaforo()` más abajo, que es por
+ * ticket individual (rojo si incumplió, amarillo si va cerca del límite).
+ * Este clasifica un % de cumplimiento de un grupo entero (una prioridad, un
+ * indicador). Cortes: verde ≥90%, amarillo ≥80%, rojo <80% — los mismos que
+ * ya usa el resto del panel para marcar "en rojo si <80".
+ */
+export function semaforoDeCumplimiento(cumplimiento: number): "verde" | "amarillo" | "rojo" {
+  return cumplimiento >= 90 ? "verde" : cumplimiento >= 80 ? "amarillo" : "rojo";
+}
+
 /** Cumplimiento de TTR desagregado por prioridad, cada una contra su propia meta. */
 export interface TtrPorPrioridad {
   prioridad: Prioridad;
@@ -106,7 +117,7 @@ export function cumplimientoTtrPorPrioridad(tickets: Ticket[]): TtrPorPrioridad[
       metaHoras,
       promedioHoras,
       cumplimiento,
-      semaforo: cumplimiento >= 90 ? "verde" : cumplimiento >= 70 ? "amarillo" : "rojo",
+      semaforo: semaforoDeCumplimiento(cumplimiento),
     };
   });
 }

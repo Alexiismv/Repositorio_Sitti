@@ -15,6 +15,7 @@ import {
   porSede,
   porSemana,
   resumen,
+  semaforoDeCumplimiento,
 } from "@/lib/metricas";
 import { detalleConsolidado, detallePorSede } from "@/lib/sedes-detalle";
 
@@ -151,7 +152,12 @@ export default async function PanelGeneral() {
                 <tr>
                   <td>TTFR — primera respuesta</td>
                   <td className="num">{r.ttfrPromedioHoras.toLocaleString("es-CO")} h</td>
-                  <td className="num" style={{ color: r.cumplimientoTtfr < 80 ? "var(--red)" : undefined }}>
+                  <td className="num">
+                    <span
+                      aria-hidden="true"
+                      className={`semaforo ${semaforoDeCumplimiento(r.cumplimientoTtfr)}`}
+                      style={{ marginRight: 6 }}
+                    />
                     {porcentaje(r.cumplimientoTtfr)}
                   </td>
                 </tr>
@@ -162,22 +168,7 @@ export default async function PanelGeneral() {
                     </td>
                     <td className="num">{p.promedioHoras.toLocaleString("es-CO")} h</td>
                     <td className="num">
-                      <span
-                        aria-hidden="true"
-                        style={{
-                          display: "inline-block",
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          marginRight: 6,
-                          background:
-                            p.semaforo === "verde"
-                              ? "#3FA9AC"
-                              : p.semaforo === "amarillo"
-                                ? "#F7A82C"
-                                : "var(--red)",
-                        }}
-                      />
+                      <span aria-hidden="true" className={`semaforo ${p.semaforo}`} style={{ marginRight: 6 }} />
                       {porcentaje(p.cumplimiento)}
                     </td>
                   </tr>
