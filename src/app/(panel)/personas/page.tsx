@@ -64,18 +64,18 @@ export default async function PersonasPage() {
 
       <KpiStrip
         kpis={[
-          { label: "Personas con tickets", valor: numero(personas.length), color: "#242868" },
+          { label: "Personas con tickets", valor: numero(personas.length), color: "#33357E" },
           {
             label: "Carga promedio",
             valor: numero(promedioCarga),
             cap: "Tickets 2026 por persona",
-            color: "#2FAFA0",
+            color: "#3FA9AC",
           },
           {
             label: "Persona con más carga",
             valor: masCargada?.nombre ?? "—",
             cap: masCargada ? `${numero(masCargada.total)} tickets` : undefined,
-            color: "#F6A623",
+            color: "#F7A82C",
           },
           {
             label: `Estancados (${DIAS_ESTANCADO_DEFAULT}+ días)`,
@@ -109,7 +109,7 @@ export default async function PersonasPage() {
           <h4>Carga total</h4>
           <div className="panel-sub">Top 10 por volumen de tickets asignados</div>
           <GraficaComparativa
-            datos={personas.slice(0, 10).map((p) => ({ nombre: p.nombre, total: p.total, color: "#242868" }))}
+            datos={personas.slice(0, 10).map((p) => ({ nombre: p.nombre, total: p.total, color: "#33357E" }))}
             altura={Math.max(160, Math.min(personas.length, 10) * 38)}
           />
         </div>

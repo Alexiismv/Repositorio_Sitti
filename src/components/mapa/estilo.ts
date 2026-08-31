@@ -79,6 +79,6 @@ export function estiloMapa(tema: Tema): string | StyleSpecification {
  */
 export function coloresSilueta(tema: Tema) {
   return tema === "oscuro"
-    ? { relleno: "#7A82E0", opacidadRelleno: 0.1, borde: "#7A82E0", opacidadBorde: 0.7 }
-    : { relleno: "#242868", opacidadRelleno: 0.06, borde: "#242868", opacidadBorde: 0.55 };
+    ? { relleno: "#9C9FE3", opacidadRelleno: 0.1, borde: "#9C9FE3", opacidadBorde: 0.7 }
+    : { relleno: "#33357E", opacidadRelleno: 0.06, borde: "#33357E", opacidadBorde: 0.55 };
 }

@@ -75,8 +75,8 @@ export function paletaDe(tema: Tema) {
         texto: "#EDEEF7",
         superficie: "#1B1F4A",
         borde: "#2E3366",
-        serieA: "#8B92E8",
-        serieB: "#3FD0BE",
+        serieA: "#ADB0EB",
+        serieB: "#56C4C6",
       }
     : {
         rejilla: "#E4E5F0",
@@ -84,8 +84,8 @@ export function paletaDe(tema: Tema) {
         texto: "#1B1D3A",
         superficie: "#FFFFFF",
         borde: "#E4E5F0",
-        serieA: "#242868",
-        serieB: "#2FAFA0",
+        serieA: "#33357E",
+        serieB: "#3FA9AC",
       };
 }
 

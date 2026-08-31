@@ -2,6 +2,11 @@
  * Login — prototipo APROBADO por Alexis (sección 9 del doc de requisitos).
  * Panel de marca con radar animado + ticker a la izquierda, formulario a la derecha.
  * Las clases van prefijadas `lg-` porque este archivo se carga global.
+ *
+ * Layout, radar y ticker siguen congelados. La PALETA es la excepción: Alexis
+ * autorizó puntualmente actualizarla al Manual de Marca oficial (29 ago 2026,
+ * ver CLAUDE.md §2.3 regla 11) — hereda igual que el resto de la app de las
+ * variables de globals.css, no se tocó el layout ni las animaciones.
  */
 
 .lg-wrap {
@@ -29,8 +34,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 15%, rgba(246, 166, 35, 0.18), transparent 40%),
-    radial-gradient(circle at 15% 85%, rgba(47, 175, 160, 0.16), transparent 45%);
+    radial-gradient(circle at 20% 15%, rgba(247, 168, 44, 0.18), transparent 40%),
+    radial-gradient(circle at 15% 85%, rgba(63, 169, 172, 0.16), transparent 45%);
   pointer-events: none;
 }
 
@@ -280,7 +285,7 @@
 }
 .lg-password-toggle:hover {
   color: var(--navy);
-  background: rgba(36, 40, 104, 0.06);
+  background: rgba(51, 53, 126, 0.06);
 }
 .lg-password-toggle:focus-visible {
   outline: 2px solid var(--navy);

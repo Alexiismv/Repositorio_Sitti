@@ -50,7 +50,7 @@ function useEstilos() {
     rejilla: p.rejilla,
     serieA: p.serieA,
     serieB: p.serieB,
-    cursor: { fill: tema === "oscuro" ? "rgba(122,130,224,.10)" : "rgba(36,40,104,.05)" },
+    cursor: { fill: tema === "oscuro" ? "rgba(156,159,227,.10)" : "rgba(51,53,126,.05)" },
     leyenda: {
       fontSize: 11.5,
       fontFamily: "var(--font-sans)",
@@ -235,7 +235,7 @@ export function GraficaTtrVsMeta({
         />
         <Bar isAnimationActive={false} dataKey="tickets" name="Tickets" radius={[3, 3, 0, 0]}>
           {datos.map((d, i) => (
-            <Cell key={i} fill={d.incumple ? "#D64545" : "#2FAFA0"} />
+            <Cell key={i} fill={d.incumple ? "#D64545" : "#3FA9AC"} />
           ))}
         </Bar>
       </BarChart>

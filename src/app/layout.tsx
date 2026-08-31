@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Inter, Space_Grotesk } from "next/font/google";
+import { Fredoka, IBM_Plex_Mono, Lato } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -7,19 +7,25 @@ import { ProveedorTema, SCRIPT_TEMA, TEMA_POR_DEFECTO } from "@/components/tema"
 
 import "./globals.css";
 
-// Tipografía confirmada en la sección 9: Space Grotesk (display) + Inter (cuerpo)
-// + IBM Plex Mono (datos/etiquetas). Se sirven self-hosted vía next/font para que
-// la app funcione aunque el servidor no tenga salida a fonts.googleapis.com.
-const display = Space_Grotesk({
+// Tipografía del Manual de Marca oficial (29 ago 2026): Magdelin (títulos) +
+// Lato (cuerpo/web) + Arial Nova (office, no aplica acá). Magdelin no tiene
+// archivo de licencia disponible para web, así que se aproxima con Fredoka
+// (geométrica, redondeada, mismo peso amistoso que se ve en los títulos del
+// manual) — ver CLAUDE.md §2.3 regla 11. Se sirven self-hosted vía next/font
+// para que la app funcione aunque el servidor no tenga salida a
+// fonts.googleapis.com. Lato no tiene pesos 500/600 en Google Fonts (solo
+// 100/300/400/700/900) — se usa 400/700, el navegador matchea el más cercano
+// para cualquier font-weight intermedio pedido en CSS.
+const display = Fredoka({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
   variable: "--fuente-display",
   display: "swap",
 });
 
-const cuerpo = Inter({
+const cuerpo = Lato({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "700"],
   variable: "--fuente-cuerpo",
   display: "swap",
 });
@@ -46,7 +52,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#181B4A",
+  themeColor: "#191B2B",
   width: "device-width",
   initialScale: 1,
 };

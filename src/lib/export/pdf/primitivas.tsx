@@ -10,11 +10,11 @@
 import { StyleSheet, Text, View } from "@react-pdf/renderer";
 
 export const COLOR = {
-  navy: "#242868",
-  navyDeep: "#181B4A",
-  orange: "#F1592A",
-  gold: "#F6A623",
-  teal: "#2FAFA0",
+  navy: "#33357E",
+  navyDeep: "#191B2B",
+  orange: "#EC623B",
+  gold: "#F7A82C",
+  teal: "#3FA9AC",
   ink: "#1B1D3A",
   inkSoft: "#6B6E8C",
   linea: "#E4E5F0",

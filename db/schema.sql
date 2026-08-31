@@ -30,7 +30,7 @@ CREATE SCHEMA IF NOT EXISTS auth;
 CREATE TABLE IF NOT EXISTS catalogo.gerencias (
   slug   text PRIMARY KEY,
   nombre text NOT NULL,
-  color  text NOT NULL DEFAULT '#242868'
+  color  text NOT NULL DEFAULT '#33357E'
 );
 
 CREATE TABLE IF NOT EXISTS catalogo.areas (

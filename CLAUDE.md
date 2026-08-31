@@ -96,10 +96,22 @@ Estas reglas existen porque romperlas ya costaría retrabajo o daño real.
 
 ### 2.3 Sobre el diseño
 
-11. **El login está APROBADO y congelado.** Paleta, tipografía, radar animado y
-    ticker no se tocan sin que Alexis lo pida. Es la referencia visual de toda
-    la app. Paleta: navy `#242868`, navy profundo `#181B4A`, naranja `#F1592A`,
-    dorado `#F6A623`, turquesa `#2FAFA0`, fondo `#F7F8FB`.
+11. **El login está APROBADO y congelado.** Layout, radar animado y ticker no
+    se tocan sin que Alexis lo pida. Es la referencia visual de toda la app.
+    Paleta (Manual de Marca oficial, actualizada 29 ago 2026): navy `#33357E`,
+    navy profundo `#191B2B`, naranja `#EC623B`, dorado `#F7A82C`, turquesa
+    `#3FA9AC`, fondo `#F7F8FB`, magenta secundario `#961E65` (definido como
+    variable, sin aplicar todavía en ningún componente). Tipografía: Fredoka
+    (títulos, aproximación libre de Magdelin — no hay archivo de licencia
+    disponible) y Lato (cuerpo/web, la oficial del manual).
+
+    > **Excepción puntual (29 ago 2026):** Alexis autorizó actualizar la
+    > paleta del login al Manual de Marca oficial junto con el resto de la
+    > app — la única vez que esta regla se salta. Layout, radar y ticker NO
+    > se tocaron, solo los colores (heredan de las mismas variables de
+    > `globals.css` que usa el resto del panel). Ver también el favicon:
+    > pasó del logo horizontal completo al logosímbolo/isotipo solo
+    > (`src/app/icon.png`, recortado de `public/logo-sitti.png`).
 12. **El mapa se activa con HOVER, no con clic.** Fue una corrección explícita
     de Alexis sobre el prototipo original. En pantallas sin hover real (móvil,
     tablet) vale el tap — se detecta con `matchMedia("(hover: hover)")`, no por

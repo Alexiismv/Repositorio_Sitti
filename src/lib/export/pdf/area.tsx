@@ -57,9 +57,9 @@ export function DocumentoPdfArea({ datos }: { datos: DatosPdfArea }) {
         <Kpis
           items={[
             { label: "Tickets 2026", valor: r.total.toLocaleString("es-CO"), color: gerenciaColor },
-            { label: "Pendientes", valor: r.pendientes.toLocaleString("es-CO"), color: "#F1592A" },
+            { label: "Pendientes", valor: r.pendientes.toLocaleString("es-CO"), color: "#EC623B" },
             { label: `Estancados (${diasEstancadoUmbral}+ días)`, valor: estancadosCount.toLocaleString("es-CO"), color: "#D64545" },
-            { label: "Cumplimiento TTR", valor: `${Math.round(r.cumplimientoTtr)}%`, color: r.cumplimientoTtr >= 90 ? "#2FAFA0" : "#F6A623" },
+            { label: "Cumplimiento TTR", valor: `${Math.round(r.cumplimientoTtr)}%`, color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C" },
           ]}
         />
 
