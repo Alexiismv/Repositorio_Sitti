@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS jira_cache.tickets_raw (
   proyecto             text,                      -- project
   fecha_creacion       timestamptz,               -- created
   persona_asignada     text,                      -- assignee
+  persona_informadora  text,                      -- reporter (el cliente/ciudadano que crea el ticket)
   estado_ticket        text,                      -- status (literal de Jira)
   prioridad            text,                      -- priority
   fecha_cierre         timestamptz,               -- resolutiondate
@@ -122,6 +123,14 @@ CREATE INDEX IF NOT EXISTS ix_tickets_proyecto ON jira_cache.tickets_raw (proyec
 -- "0 tickets" y todo el mundo creería que se cayó el sistema.
 CREATE TABLE IF NOT EXISTS jira_cache.tickets_staging
   (LIKE jira_cache.tickets_raw INCLUDING ALL);
+
+-- `CREATE TABLE IF NOT EXISTS` no altera una tabla ya existente. En una base
+-- que se aplicó antes de que `persona_informadora` existiera, estos ALTER son
+-- lo que de verdad la agregan — en las dos tablas, porque el swap completo
+-- (§ arriba) exige que `tickets_raw` y `tickets_staging` tengan las mismas
+-- columnas. Seguro correrlos de nuevo (columna ya creada -> no-op).
+ALTER TABLE jira_cache.tickets_raw     ADD COLUMN IF NOT EXISTS persona_informadora text;
+ALTER TABLE jira_cache.tickets_staging ADD COLUMN IF NOT EXISTS persona_informadora text;
 
 -- Bitácora del ETL. Alimenta el sello de "Sync dd/mm, HH:MM" del topbar y
 -- permite darse cuenta de que Jira lleva rato caído — algo que con un sync
