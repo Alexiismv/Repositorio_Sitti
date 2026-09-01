@@ -177,8 +177,8 @@ body {
 /*
  * "Panorama" de /gerencias: letra más grande a pedido de Alexis (28 ago
  * 2026) para que los 4 KPIs se lean mejor. Escopeado a esta sección — el
- * resto de los KpiStrip de la app (Panel General, detalle de gerencia/área)
- * se quedan en el tamaño base de `.kpi`.
+ * resto de los KpiStrip de la app (detalle de gerencia/área) se queda en el
+ * tamaño base de `.kpi`.
  */
 .panorama-grande .kpi .label {
   font-size: 14px;
@@ -191,6 +191,11 @@ body {
 }
 .panorama-grande .kpi .cap {
   font-size: 12.5px;
+}
+
+/* Resumen general 2026 del Panel General: el label del KPI al doble del tamaño base. */
+.resumen-general .kpi .label {
+  font-size: 24px;
 }
 
 /* ─────────────── Controles ─────────────── */

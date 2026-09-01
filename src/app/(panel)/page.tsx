@@ -70,38 +70,39 @@ export default async function PanelGeneral() {
 
       <SectionLabel>Resumen general 2026</SectionLabel>
 
-      <KpiStrip
-        kpis={[
-          {
-            label: "Total tickets 2026",
-            valor: numero(r.total),
-            cap: `${sedes.length} sedes · ${gerencias.length} gerencias`,
-            color: "#33357E",
-          },
-          {
-            label: "Pendientes Totales",
-            valor: numero(r.pendientes),
-            cap: `${numero(r.estancados)} sin movimiento hace 5+ días`,
-            capHref: "/reportes?estancado=1",
-            color: "#EC623B",
-            alerta: r.estancados > 0,
-          },
-          {
-            label: "Primera respuesta ticket",
-            valor: `${r.ttfrPromedioHoras.toLocaleString("es-CO")}h`,
-            cap: `Meta: ${META_TTFR_HORAS}h · toda prioridad`,
-            color: r.cumplimientoTtfr >= 90 ? "#3FA9AC" : "#F7A82C",
-            alerta: r.cumplimientoTtfr < 80,
-          },
-          {
-            label: "Tiempo Resolución Ticket",
-            valor: `${r.ttrPromedioHoras.toLocaleString("es-CO")}h`,
-            cap: "Meta por prioridad · Alta 4h · Media 8h · Baja 24h",
-            color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C",
-            alerta: r.cumplimientoTtr < 80,
-          },
-        ]}
-      />
+      <div className="resumen-general">
+        <KpiStrip
+          kpis={[
+            {
+              label: "Total tickets 2026",
+              valor: numero(r.total),
+              cap: `${sedes.length} sedes · ${gerencias.length} gerencias`,
+              color: "#33357E",
+            },
+            {
+              label: "Pendientes totales",
+              valor: numero(r.pendientes),
+              cap: `${numero(r.estancados)} sin movimiento hace 5+ días`,
+              capHref: "/reportes?estancado=1",
+              color: "#EC623B",
+              alerta: r.estancados > 0,
+            },
+            {
+              label: "Primera respuesta ticket",
+              valor: `${r.ttfrPromedioHoras.toLocaleString("es-CO")}h`,
+              cap: `Meta: ${META_TTFR_HORAS}h · toda prioridad`,
+              color: r.cumplimientoTtfr >= 90 ? "#3FA9AC" : "#F7A82C",
+              alerta: r.cumplimientoTtfr < 80,
+            },
+            {
+              label: "Tiempo resolución ticket",
+              valor: `${r.ttrPromedioHoras.toLocaleString("es-CO")}h`,
+              color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C",
+              alerta: r.cumplimientoTtr < 80,
+            },
+          ]}
+        />
+      </div>
 
       <SectionLabel>Mapa de sedes</SectionLabel>
       <MapaSedes sedes={detallesSede} consolidado={consolidado} />
