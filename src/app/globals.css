@@ -193,9 +193,15 @@ body {
   font-size: 12.5px;
 }
 
-/* Resumen general 2026 del Panel General: el label del KPI al doble del tamaño base. */
+/*
+ * Resumen general 2026 del Panel General: label del KPI más grande que el
+ * base (12px). 24px (el doble exacto) partía "Primera respuesta ticket" y
+ * "Tiempo resolución ticket" en dos líneas dentro de la tarjeta de 4
+ * columnas — verificado en vivo: dejan de partirse a los 21.5px. Se deja en
+ * 20px para tener margen y que no dependa de un redondeo de píxel exacto.
+ */
 .resumen-general .kpi .label {
-  font-size: 24px;
+  font-size: 20px;
 }
 
 /* ─────────────── Controles ─────────────── */
