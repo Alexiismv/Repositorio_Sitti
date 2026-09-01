@@ -161,6 +161,7 @@ interface FilaVTicket {
   fecha_cierre: Date | null;
   fecha_actualizacion: Date;
   persona_asignada: string | null;
+  persona_informadora: string | null;
   estado_ticket: string;
   categoria_estado: CategoriaEstado;
   prioridad: Prioridad;
@@ -189,6 +190,7 @@ function mapearFila(f: FilaVTicket): Ticket {
     fechaCierre: f.fecha_cierre?.toISOString() ?? null,
     fechaActualizacion: f.fecha_actualizacion.toISOString(),
     personaAsignada: f.persona_asignada ?? "(Sin asignar)",
+    informador: f.persona_informadora ?? "(Sin dato)",
     estadoTicket: f.estado_ticket,
     categoriaEstado: f.categoria_estado,
     prioridad: f.prioridad,
@@ -218,8 +220,8 @@ async function obtenerTicketsDesdeDB(): Promise<Ticket[]> {
   return conCliente(async (cliente) => {
     const r = await cliente.query<FilaVTicket>(
       `SELECT clave, titulo_ticket, proyecto, fecha_creacion, fecha_cierre, fecha_actualizacion,
-              persona_asignada, estado_ticket, categoria_estado, prioridad, tipo_incidencia,
-              tipo_requerimiento, sede, area_efectiva, comentarios,
+              persona_asignada, persona_informadora, estado_ticket, categoria_estado, prioridad,
+              tipo_incidencia, tipo_requerimiento, sede, area_efectiva, comentarios,
               ttfr_horas, ttr_horas, ttfr_incumplido, ttr_incumplido, dias_sin_actualizar
        FROM jira_cache.v_tickets
        ORDER BY fecha_creacion ASC`,

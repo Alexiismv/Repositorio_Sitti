@@ -196,6 +196,8 @@ export interface Ticket {
   fechaCierre: string | null; // ISO
   fechaActualizacion: string; // ISO
   personaAsignada: string;
+  /** Quien creó el ticket (el ciudadano/cliente), no quien lo resuelve. */
+  informador: string;
   estadoTicket: string; // literal de Jira
   categoriaEstado: CategoriaEstado; // normalizado para el tablero
   prioridad: Prioridad;
@@ -326,6 +328,10 @@ function generarTicketsDeArea(area: (typeof AREAS)[number]): Ticket[] {
       fechaCierre: fechaCierre ? fechaCierre.toISOString() : null,
       fechaActualizacion: actualizacionEfectiva.toISOString(),
       personaAsignada: equipo[Math.floor(rng() * equipo.length)],
+      // A diferencia del equipo (3-6 personas fijas por área), el informador
+      // se sortea sobre TODO el pool de nombres: son ciudadanos distintos,
+      // no un equipo fijo — así no se repiten solo 3-6 nombres para miles de tickets.
+      informador: NOMBRES[Math.floor(rng() * NOMBRES.length)],
       estadoTicket,
       categoriaEstado: categoria,
       prioridad,

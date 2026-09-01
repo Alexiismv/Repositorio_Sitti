@@ -166,6 +166,7 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
                       <tr>
                         <th>Ticket</th>
                         <th>Asignado a</th>
+                        <th>Informador</th>
                         <th className="num">Sin mover</th>
                       </tr>
                     </thead>
@@ -176,6 +177,7 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
                             {t.clave}
                           </td>
                           <td>{t.personaAsignada}</td>
+                          <td>{t.informador}</td>
                           <td className="num" style={{ color: "var(--red)", fontWeight: 600 }}>
                             {t.diasSinActualizar} d
                           </td>
