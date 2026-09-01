@@ -23,6 +23,7 @@ export interface DatosPdfArea {
 const colEstancados: ColumnaTabla<Ticket>[] = [
   { header: "Ticket", ancho: 1, render: (t) => t.clave },
   { header: "Asignado a", ancho: 2, render: (t) => t.personaAsignada },
+  { header: "Informador", ancho: 2, render: (t) => t.informador },
   { header: "Sin mover", ancho: 1, alinearDerecha: true, render: (t) => `${t.diasSinActualizar} d` },
 ];
 

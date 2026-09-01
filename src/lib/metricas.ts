@@ -20,6 +20,7 @@ import {
   META_TTR_HORAS,
   SEDES,
   type CategoriaEstado,
+  type Prioridad,
 } from "@/lib/catalogo";
 import { fechaCorte, type Ticket } from "@/lib/demo/generador";
 
@@ -80,6 +81,46 @@ export function resumen(tickets: Ticket[], diasEstancado = DIAS_ESTANCADO_DEFAUL
 }
 
 const redondear = (n: number) => Math.round(n * 10) / 10;
+
+/**
+ * Semáforo AGREGADO — no confundir con `semaforo()` más abajo, que es por
+ * ticket individual (rojo si incumplió, amarillo si va cerca del límite).
+ * Este clasifica un % de cumplimiento de un grupo entero (una prioridad, un
+ * indicador). Cortes: verde ≥90%, amarillo ≥80%, rojo <80% — los mismos que
+ * ya usa el resto del panel para marcar "en rojo si <80".
+ */
+export function semaforoDeCumplimiento(cumplimiento: number): "verde" | "amarillo" | "rojo" {
+  return cumplimiento >= 90 ? "verde" : cumplimiento >= 80 ? "amarillo" : "rojo";
+}
+
+/** Cumplimiento de TTR desagregado por prioridad, cada una contra su propia meta. */
+export interface TtrPorPrioridad {
+  prioridad: Prioridad;
+  metaHoras: number;
+  promedioHoras: number;
+  /** % de tickets de esa prioridad que cumplió su meta. */
+  cumplimiento: number;
+  semaforo: "verde" | "amarillo" | "rojo";
+}
+
+export function cumplimientoTtrPorPrioridad(tickets: Ticket[]): TtrPorPrioridad[] {
+  return (["Alta", "Media", "Baja"] as Prioridad[]).map((prioridad) => {
+    const grupo = tickets.filter((t) => t.prioridad === prioridad && t.ttrHoras !== null);
+    const metaHoras = META_TTR_HORAS[prioridad];
+    const ok = grupo.filter((t) => !t.ttrIncumplido).length;
+    const cumplimiento = grupo.length ? Math.round((ok / grupo.length) * 100) : 0;
+    const promedioHoras = grupo.length
+      ? redondear(grupo.reduce((a, t) => a + (t.ttrHoras ?? 0), 0) / grupo.length)
+      : 0;
+    return {
+      prioridad,
+      metaHoras,
+      promedioHoras,
+      cumplimiento,
+      semaforo: semaforoDeCumplimiento(cumplimiento),
+    };
+  });
+}
 
 // ─────────────────────────────────────────────────────────────
 // Series temporales

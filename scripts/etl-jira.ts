@@ -49,9 +49,14 @@ async function main() {
     console.log(JSON.stringify(f.customfield_10044, null, 2));
     console.log("\ncustomfield_10043 (TTR) llega así:");
     console.log(JSON.stringify(f.customfield_10043, null, 2));
+    console.log("\nreporter (Informador) llega así:");
+    console.log(JSON.stringify(f.reporter, null, 2));
     console.log(
       "\n→ Si `parsearSla()` (en src/lib/etl/jira.ts) no interpreta bien esa forma,\n" +
-        "  ajústala y anota el hallazgo en docs/REQUISITOS.md § 7 y en CLAUDE.md § 9.\n",
+        "  ajústala y anota el hallazgo en docs/REQUISITOS.md § 7 y en CLAUDE.md § 9.\n" +
+        "→ `texto()` toma `displayName` de `reporter` — si necesitas el correo del\n" +
+        "  cliente en vez del nombre, revisa si viene `emailAddress` en el objeto\n" +
+        "  de arriba y ajusta `informador` en `normalizar()`.\n",
     );
 
     console.log("─── Normalizado (primeros 3) ───");

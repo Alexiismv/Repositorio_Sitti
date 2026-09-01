@@ -20,6 +20,7 @@ const CAMPOS = [
   "created",
   "updated",
   "assignee",
+  "reporter", // Informador: quien crea el ticket (el cliente/ciudadano), no quien lo resuelve
   "status",
   "priority",
   "resolutiondate",
@@ -44,6 +45,8 @@ export interface TicketNormalizado {
   proyecto: string | null;
   fechaCreacion: string | null;
   personaAsignada: string | null;
+  /** Quien creó el ticket (el cliente/ciudadano que reporta), no quien lo resuelve. */
+  informador: string | null;
   estadoTicket: string;
   prioridad: Prioridad;
   fechaCierre: string | null;
@@ -310,6 +313,7 @@ export function normalizar(issue: IssueJira): TicketNormalizado {
     proyecto,
     fechaCreacion: texto(f.created),
     personaAsignada: texto(f.assignee),
+    informador: texto(f.reporter),
     estadoTicket: (texto(f.status) ?? "").toUpperCase(),
     prioridad,
     fechaCierre: texto(f.resolutiondate),

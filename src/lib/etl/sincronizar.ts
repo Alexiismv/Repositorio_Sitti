@@ -47,16 +47,16 @@ export const DIAS_INCREMENTAL = 3;
 
 const COLUMNAS = [
   "clave", "titulo_ticket", "proyecto", "fecha_creacion", "persona_asignada",
-  "estado_ticket", "prioridad", "fecha_cierre", "fecha_actualizacion", "tipo_incidencia",
-  "tipo_requerimiento", "sede", "dependencia_smm", "area", "comentarios",
+  "persona_informadora", "estado_ticket", "prioridad", "fecha_cierre", "fecha_actualizacion",
+  "tipo_incidencia", "tipo_requerimiento", "sede", "dependencia_smm", "area", "comentarios",
   "ttfr_raw", "ttr_raw", "ttfr_horas", "ttr_horas", "ttfr_incumplido",
 ] as const;
 
 function valoresDe(t: TicketNormalizado): unknown[] {
   return [
     t.clave, t.tituloTicket, t.proyecto, t.fechaCreacion, t.personaAsignada,
-    t.estadoTicket, t.prioridad, t.fechaCierre, t.fechaActualizacion, t.tipoIncidencia,
-    t.tipoRequerimiento, t.sede, t.dependenciaSmm, t.area, t.comentarios,
+    t.informador, t.estadoTicket, t.prioridad, t.fechaCierre, t.fechaActualizacion,
+    t.tipoIncidencia, t.tipoRequerimiento, t.sede, t.dependenciaSmm, t.area, t.comentarios,
     JSON.stringify(t.ttfrRaw), JSON.stringify(t.ttrRaw), t.ttfrHoras, t.ttrHoras, t.ttfrIncumplido,
   ];
 }

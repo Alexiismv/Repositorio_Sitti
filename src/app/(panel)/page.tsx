@@ -8,7 +8,15 @@ import { veTodo } from "@/lib/auth/tipos";
 import { META_TTFR_HORAS } from "@/lib/catalogo";
 import { obtenerTickets } from "@/lib/data/provider";
 import { numero, porcentaje } from "@/lib/formato";
-import { porGerencia, porMes, porSede, porSemana, resumen } from "@/lib/metricas";
+import {
+  cumplimientoTtrPorPrioridad,
+  porGerencia,
+  porMes,
+  porSede,
+  porSemana,
+  resumen,
+  semaforoDeCumplimiento,
+} from "@/lib/metricas";
 import { detalleConsolidado, detallePorSede } from "@/lib/sedes-detalle";
 
 export const metadata = { title: "Panel General · SITTI" };
@@ -62,37 +70,39 @@ export default async function PanelGeneral() {
 
       <SectionLabel>Resumen general 2026</SectionLabel>
 
-      <KpiStrip
-        kpis={[
-          {
-            label: "Total tickets 2026",
-            valor: numero(r.total),
-            cap: `${sedes.length} sedes · ${gerencias.length} gerencias`,
-            color: "#33357E",
-          },
-          {
-            label: "Pendientes Totales",
-            valor: numero(r.pendientes),
-            cap: `${numero(r.estancados)} sin movimiento hace 5+ días`,
-            color: "#EC623B",
-            alerta: r.estancados > 0,
-          },
-          {
-            label: `Cumplimiento TTFR (${META_TTFR_HORAS}h)`,
-            valor: porcentaje(r.cumplimientoTtfr),
-            cap: "Meta: responder en 4h, toda prioridad",
-            color: r.cumplimientoTtfr >= 90 ? "#3FA9AC" : "#F7A82C",
-            alerta: r.cumplimientoTtfr < 80,
-          },
-          {
-            label: "Cumplimiento TTR",
-            valor: porcentaje(r.cumplimientoTtr),
-            cap: "Meta por prioridad · Alta 4h · Media 8h · Baja 24h",
-            color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C",
-            alerta: r.cumplimientoTtr < 80,
-          },
-        ]}
-      />
+      <div className="resumen-general">
+        <KpiStrip
+          kpis={[
+            {
+              label: "Total tickets 2026",
+              valor: numero(r.total),
+              cap: `${sedes.length} sedes · ${gerencias.length} gerencias`,
+              color: "#33357E",
+            },
+            {
+              label: "Pendientes totales",
+              valor: numero(r.pendientes),
+              cap: `${numero(r.estancados)} sin movimiento hace 5+ días`,
+              capHref: "/reportes?estancado=1",
+              color: "#EC623B",
+              alerta: r.estancados > 0,
+            },
+            {
+              label: "Primera respuesta ticket",
+              valor: `${r.ttfrPromedioHoras.toLocaleString("es-CO")}h`,
+              cap: `Meta: ${META_TTFR_HORAS}h · toda prioridad`,
+              color: r.cumplimientoTtfr >= 90 ? "#3FA9AC" : "#F7A82C",
+              alerta: r.cumplimientoTtfr < 80,
+            },
+            {
+              label: "Tiempo resolución ticket",
+              valor: `${r.ttrPromedioHoras.toLocaleString("es-CO")}h`,
+              color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C",
+              alerta: r.cumplimientoTtr < 80,
+            },
+          ]}
+        />
+      </div>
 
       <SectionLabel>Mapa de sedes</SectionLabel>
       <MapaSedes sedes={detallesSede} consolidado={consolidado} />
@@ -143,17 +153,27 @@ export default async function PanelGeneral() {
                 <tr>
                   <td>TTFR — primera respuesta</td>
                   <td className="num">{r.ttfrPromedioHoras.toLocaleString("es-CO")} h</td>
-                  <td className="num" style={{ color: r.cumplimientoTtfr < 80 ? "var(--red)" : undefined }}>
+                  <td className="num">
+                    <span
+                      aria-hidden="true"
+                      className={`semaforo ${semaforoDeCumplimiento(r.cumplimientoTtfr)}`}
+                      style={{ marginRight: 6 }}
+                    />
                     {porcentaje(r.cumplimientoTtfr)}
                   </td>
                 </tr>
-                <tr>
-                  <td>TTR — resolución</td>
-                  <td className="num">{r.ttrPromedioHoras.toLocaleString("es-CO")} h</td>
-                  <td className="num" style={{ color: r.cumplimientoTtr < 80 ? "var(--red)" : undefined }}>
-                    {porcentaje(r.cumplimientoTtr)}
-                  </td>
-                </tr>
+                {cumplimientoTtrPorPrioridad(tickets).map((p) => (
+                  <tr key={p.prioridad}>
+                    <td>
+                      TTR — {p.prioridad} (meta {p.metaHoras}h)
+                    </td>
+                    <td className="num">{p.promedioHoras.toLocaleString("es-CO")} h</td>
+                    <td className="num">
+                      <span aria-hidden="true" className={`semaforo ${p.semaforo}`} style={{ marginRight: 6 }} />
+                      {porcentaje(p.cumplimiento)}
+                    </td>
+                  </tr>
+                ))}
                 <tr>
                   <td>Resueltos</td>
                   <td className="num">{numero(r.resueltos)}</td>

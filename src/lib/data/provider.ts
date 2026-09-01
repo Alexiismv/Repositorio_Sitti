@@ -13,7 +13,15 @@
 import { ticketsDemo, type Ticket } from "@/lib/demo/generador";
 import { DEMO_MODE } from "@/lib/modo";
 import { puedeVer, type Sesion } from "@/lib/auth/tipos";
-import { ALIAS_AREA, AREAS, PROYECTOS, SEDES, type CategoriaEstado, type Prioridad } from "@/lib/catalogo";
+import {
+  ALIAS_AREA,
+  AREAS,
+  DIAS_ESTANCADO_DEFAULT,
+  PROYECTOS,
+  SEDES,
+  type CategoriaEstado,
+  type Prioridad,
+} from "@/lib/catalogo";
 import { conCliente } from "@/lib/db";
 
 export interface Filtros {
@@ -32,6 +40,8 @@ export interface Filtros {
   estado?: "todos" | "pendientes" | "resueltos";
   /** Solo tickets que ya incumplieron TTR o TTFR (el "en rojo"). */
   soloIncumplidos?: boolean;
+  /** Solo tickets abiertos sin movimiento hace DIAS_ESTANCADO_DEFAULT+ días. */
+  soloEstancados?: boolean;
 }
 
 // Se re-exporta para no tocar los ~10 módulos que ya lo importan desde acá.
@@ -82,6 +92,10 @@ function cumpleFiltros(t: Ticket, f: Filtros): boolean {
   }
   if (f.estado === "resueltos" && t.categoriaEstado !== "resuelto") return false;
   if (f.soloIncumplidos && !(t.ttrIncumplido || t.ttfrIncumplido)) return false;
+  if (f.soloEstancados) {
+    const abierto = t.categoriaEstado !== "resuelto" && t.categoriaEstado !== "cancelado";
+    if (!(abierto && t.diasSinActualizar >= DIAS_ESTANCADO_DEFAULT)) return false;
+  }
 
   return true;
 }
@@ -147,6 +161,7 @@ interface FilaVTicket {
   fecha_cierre: Date | null;
   fecha_actualizacion: Date;
   persona_asignada: string | null;
+  persona_informadora: string | null;
   estado_ticket: string;
   categoria_estado: CategoriaEstado;
   prioridad: Prioridad;
@@ -175,6 +190,7 @@ function mapearFila(f: FilaVTicket): Ticket {
     fechaCierre: f.fecha_cierre?.toISOString() ?? null,
     fechaActualizacion: f.fecha_actualizacion.toISOString(),
     personaAsignada: f.persona_asignada ?? "(Sin asignar)",
+    informador: f.persona_informadora ?? "(Sin dato)",
     estadoTicket: f.estado_ticket,
     categoriaEstado: f.categoria_estado,
     prioridad: f.prioridad,
@@ -204,8 +220,8 @@ async function obtenerTicketsDesdeDB(): Promise<Ticket[]> {
   return conCliente(async (cliente) => {
     const r = await cliente.query<FilaVTicket>(
       `SELECT clave, titulo_ticket, proyecto, fecha_creacion, fecha_cierre, fecha_actualizacion,
-              persona_asignada, estado_ticket, categoria_estado, prioridad, tipo_incidencia,
-              tipo_requerimiento, sede, area_efectiva, comentarios,
+              persona_asignada, persona_informadora, estado_ticket, categoria_estado, prioridad,
+              tipo_incidencia, tipo_requerimiento, sede, area_efectiva, comentarios,
               ttfr_horas, ttr_horas, ttfr_incumplido, ttr_incumplido, dias_sin_actualizar
        FROM jira_cache.v_tickets
        ORDER BY fecha_creacion ASC`,

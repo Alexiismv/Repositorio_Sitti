@@ -46,6 +46,7 @@ export function TablaTickets({
               {mostrarArea && <th>Área</th>}
               <th>Sede</th>
               <th>Asignado a</th>
+              <th>Informador</th>
               <th>Estado</th>
               <th>Prioridad</th>
               <th className="num">TTFR</th>
@@ -89,6 +90,7 @@ export function TablaTickets({
                   {mostrarArea && <td style={{ whiteSpace: "nowrap" }}>{t.area}</td>}
                   <td style={{ whiteSpace: "nowrap" }}>{t.sede}</td>
                   <td style={{ whiteSpace: "nowrap" }}>{t.personaAsignada}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{t.informador}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     <span className="mono" style={{ fontSize: 10.5 }}>
                       {t.estadoTicket}
