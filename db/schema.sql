@@ -243,7 +243,17 @@ CREATE INDEX IF NOT EXISTS ix_error_fecha ON auth.error_log (ocurrido_en DESC);
 -- tabla cruda y filtras por `area`, todos los tickets de "Mesa de ayuda SMM"
 -- desaparecen en silencio — y ese proyecto es de los que más volumen mueve.
 
-CREATE OR REPLACE VIEW jira_cache.v_tickets AS
+-- `DROP` + `CREATE` y no `CREATE OR REPLACE`: Postgres exige que un
+-- `CREATE OR REPLACE VIEW` conserve el nombre de cada columna existente en su
+-- misma posición ordinal. Como esta vista expande `t.*`, cada vez que
+-- `tickets_raw` gana una columna nueva (vía `ALTER TABLE ADD COLUMN`, que
+-- siempre la agrega al final de la tabla real) el `REPLACE` falla con
+-- "cannot change name of view column" porque las columnas calculadas
+-- (`area_efectiva` en adelante) se corren un lugar. `DROP` evita ese problema
+-- de raíz — es seguro porque es una vista de solo lectura, no hay datos que
+-- perder.
+DROP VIEW IF EXISTS jira_cache.v_tickets;
+CREATE VIEW jira_cache.v_tickets AS
 SELECT
   t.*,
   CASE
