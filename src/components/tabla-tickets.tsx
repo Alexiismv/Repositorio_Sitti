@@ -20,10 +20,13 @@ export function TablaTickets({
   tickets,
   limite = 50,
   mostrarArea = false,
+  mostrarSla = true,
 }: {
   tickets: Ticket[];
   limite?: number;
   mostrarArea?: boolean;
+  /** TTFR, TTR, días abierto y comentarios. En reportes se ocultan: es una vista de detalle, no de SLA. */
+  mostrarSla?: boolean;
 }) {
   const visibles = tickets.slice(0, limite);
 
@@ -49,10 +52,14 @@ export function TablaTickets({
               <th>Informador</th>
               <th>Estado</th>
               <th>Prioridad</th>
-              <th className="num">TTFR</th>
-              <th className="num">TTR</th>
-              <th className="num">Días abierto</th>
-              <th className="num">Coment.</th>
+              {mostrarSla && (
+                <>
+                  <th className="num">TTFR</th>
+                  <th className="num">TTR</th>
+                  <th className="num">Días abierto</th>
+                  <th className="num">Coment.</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -97,21 +104,25 @@ export function TablaTickets({
                     </span>
                   </td>
                   <td>{t.prioridad}</td>
-                  <td className="num" style={{ color: t.ttfrIncumplido ? "var(--red)" : undefined }}>
-                    {horas(t.ttfrHoras)}
-                  </td>
-                  <td className="num" style={{ color: t.ttrIncumplido ? "var(--red)" : undefined }}>
-                    {horas(t.ttrHoras)}
-                  </td>
-                  <td
-                    className="num"
-                    style={{ color: !cerrado && t.diasSinActualizar >= 5 ? "var(--red)" : undefined }}
-                  >
-                    {cerrado ? "—" : numero(diasAbierto(t))}
-                  </td>
-                  <td className="num" style={{ fontWeight: t.comentarios >= 12 ? 600 : undefined }}>
-                    {numero(t.comentarios)}
-                  </td>
+                  {mostrarSla && (
+                    <>
+                      <td className="num" style={{ color: t.ttfrIncumplido ? "var(--red)" : undefined }}>
+                        {horas(t.ttfrHoras)}
+                      </td>
+                      <td className="num" style={{ color: t.ttrIncumplido ? "var(--red)" : undefined }}>
+                        {horas(t.ttrHoras)}
+                      </td>
+                      <td
+                        className="num"
+                        style={{ color: !cerrado && t.diasSinActualizar >= 5 ? "var(--red)" : undefined }}
+                      >
+                        {cerrado ? "—" : numero(diasAbierto(t))}
+                      </td>
+                      <td className="num" style={{ fontWeight: t.comentarios >= 12 ? 600 : undefined }}>
+                        {numero(t.comentarios)}
+                      </td>
+                    </>
+                  )}
                 </tr>
               );
             })}
