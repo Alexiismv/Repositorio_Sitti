@@ -743,6 +743,36 @@ body {
   border-color: var(--navy);
   box-shadow: 0 0 0 3px rgba(51, 53, 126, 0.1);
 }
+.filtro-contador {
+  color: var(--navy);
+  font-weight: 700;
+}
+.filtro-checklist {
+  max-height: 132px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  padding: 4px 2px;
+}
+.filtro-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.filtro-checklist-item:hover {
+  background: var(--bg);
+}
+.filtro-checklist-item input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--navy);
+  flex-shrink: 0;
+}
 .filtros-pie {
   display: flex;
   align-items: center;

@@ -79,6 +79,23 @@ Estas reglas existen porque romperlas ya costaría retrabajo o daño real.
    tickets" y la gente cree que se cayó todo.
 5. **Rojo = fuera de meta. Punto.** No uses rojo como color de categoría en
    ninguna gráfica: si lo haces, pierde su significado de alerta.
+6. **Área es hija de Gerencia — es jerarquía real, no una etiqueta suelta.**
+   Cada fila de `AREAS` en `catalogo.ts` trae su `gerencia` (el padre); esa es
+   la ÚNICA fuente de verdad de qué área pertenece a qué gerencia, y de ahí
+   sale también la tabla `catalogo.areas` en Postgres (`scripts/apply-schema.ts`
+   siembra `gerencia_slug` desde este mismo campo). Cualquier UI que permita
+   elegir Gerencia y Área **tiene que blindar la combinación**: la lista de
+   Áreas ofrecida debe filtrarse por la Gerencia ya elegida (relación
+   padre→hijo), para que no se pueda armar un filtro imposible como
+   Gerencia="Operación Contravencional" + Área="Conexión de Soluciones" —
+   ese cruce da cero tickets siempre, porque esa Área no pertenece a esa
+   Gerencia. Una Gerencia sí puede tener varias Áreas marcadas a la vez (los
+   filtros de `/reportes` son multi-selección de Área desde el 2 sep 2026).
+   **Mapeo Área→Gerencia corregido (2 sep 2026):** `radicacion`, `cad` y
+   `digitalizacion` estaban mal clasificadas bajo "Operación Contravencional"
+   — Alexis confirmó que las tres son de **Jurídica**. Corregido en
+   `catalogo.ts`; si tocas ese archivo o escribes un ETL/seed nuevo, no
+   reintroduzcas el error viejo.
 
 ### 2.2 Sobre seguridad
 

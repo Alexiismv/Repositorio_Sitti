@@ -68,12 +68,18 @@ operativa en `CLAUDE.md` §7.3. Para cualquier cambio futuro a `DEMO_MODE` o
 | Gerencia | Áreas que agrupa | Volumen 2026 (recalculado) |
 |---|---|---:|
 | **Experiencia de Servicio** | Servicio, Experiencia de Servicio, Gestión de Notificaciones | **3,665** |
-| **Operación Contravencional** | Aseguramiento Contravencional, Radicación, Fotodetección, CAD, Aseguramiento Contractual | **3,171** |
-| **Jurídica** | Gestión Legal, Gestión Jurídica de Cobro | **1,035** |
+| **Operación Contravencional** | Aseguramiento Contravencional, Fotodetección, Aseguramiento Contractual | **2,358** |
+| **Jurídica** | Gestión Legal, Gestión Jurídica de Cobro, Radicación, CAD, Digitalización | **1,849** |
 | **Financiera** | Cartera, Financiera | **911** |
 | **Conexión de Soluciones** | Conexión de Soluciones | **28** |
 | **Experiencia y Bienestar** | Experiencia y Bienestar | **4** |
-| *(sin gerencia)* | Otras, *(sin nombre)*, Gerencia General, Digitalización | 224 |
+| *(sin gerencia)* | Otras, *(sin nombre)*, Gerencia General | 223 |
+
+> ⚠️ **Corrección (2 sep 2026):** Radicación, CAD y Digitalización estaban mal
+> clasificadas bajo Operación Contravencional (y Digitalización, además, bajo
+> "sin gerencia" antes de eso). Alexis confirmó que las tres son de
+> **Jurídica**. Tabla y subtotales de arriba ya reflejan el mapeo correcto —
+> ver también `CLAUDE.md` §2.1 punto 6.
 
 ⚠️ **Cambio importante respecto al prototipo ya construido:** el ranking de gerencias que se ve hoy en `sitti-gerencias-prototipo.html` (Operación Contravencional #1 con 1,981; Jurídica #2; Experiencia de Servicio #3 con solo 276) **ya no es correcto**. Con el mapeo real, **Experiencia de Servicio pasa a ser la gerencia de mayor volumen** (3,665, porque ahora incluye "Servicio", la ex-área individual más grande), seguida de cerca por Operación Contravencional (3,171). Hay que actualizar las tarjetas, las barras de proporción y el detalle de Nivel 2 con estos números reales.
 
@@ -100,7 +106,7 @@ operativa en `CLAUDE.md` §7.3. Para cualquier cambio futuro a `DEMO_MODE` o
 | 1 | Servicio | 3,214 | Experiencia de Servicio |
 | 2 | Aseguramiento Contravencional | 1,981 | Operación Contravencional |
 | 3 | Gestión Legal | 997 | Jurídica |
-| 4 | Radicación | 773 | Operación Contravencional |
+| 4 | Radicación | 773 | Jurídica |
 | 5 | Cartera | 689 | Financiera |
 | 6 | Fotodetección | 350 | Operación Contravencional |
 | 7 | Experiencia de Servicio | 276 | Experiencia de Servicio |
@@ -108,13 +114,13 @@ operativa en `CLAUDE.md` §7.3. Para cualquier cambio futuro a `DEMO_MODE` o
 | 9 | Gestión de Notificaciones | 175 | Experiencia de Servicio |
 | 10 | Otras | 124 | *(sin gerencia)* |
 | 11 | *(sin nombre — pendiente de identificar origen)* | 97 | *(sin gerencia)* |
-| 12 | CAD | 40 | Operación Contravencional |
+| 12 | CAD | 40 | Jurídica |
 | 13 | Gestión Jurídica de Cobro | 38 | Jurídica |
 | 14 | Conexión de Soluciones | 28 | Conexión de Soluciones |
 | 15 | Aseguramiento Contractual | 27 | Operación Contravencional |
 | 16 | Experiencia y Bienestar | 4 | Experiencia y Bienestar |
 | 17 | Gerencia General | 2 | *(sin gerencia)* |
-| 18 | Digitalización | 1 | *(sin gerencia)* |
+| 18 | Digitalización | 1 | Jurídica |
 
 ## 5. Dashboards y visualización
 

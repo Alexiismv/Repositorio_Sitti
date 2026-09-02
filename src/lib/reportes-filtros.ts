@@ -15,10 +15,20 @@ export type ReportesSearchParams = Record<string, string | string[] | undefined>
 const uno = (v: string | string[] | undefined): string | undefined =>
   Array.isArray(v) ? v[0] : v || undefined;
 
+/**
+ * A diferencia de `uno()`, no se queda solo con el primer valor: Área permite
+ * marcar varias a la vez (ver `filtros.tsx`), así que un `?area=x&area=y` en
+ * la URL tiene que traducirse a las dos, no perder la segunda.
+ */
+const varios = (v: string | string[] | undefined): string[] | undefined => {
+  const lista = (Array.isArray(v) ? v : v ? [v] : []).filter((x) => x.trim());
+  return lista.length ? lista : undefined;
+};
+
 export function filtrosDesdeSearchParams(sp: ReportesSearchParams): Filtros {
   return {
     gerencias: uno(sp.gerencia) ? [uno(sp.gerencia)!] : undefined,
-    areas: uno(sp.area) ? [uno(sp.area)!] : undefined,
+    areas: varios(sp.area),
     sedes: uno(sp.sede) ? [uno(sp.sede)!] : undefined,
     personas: uno(sp.persona) ? [uno(sp.persona)!] : undefined,
     tiposRequerimiento: uno(sp.tipo) ? [uno(sp.tipo)!] : undefined,
@@ -37,7 +47,7 @@ export function filtrosDesdeSearchParams(sp: ReportesSearchParams): Filtros {
 export function describirFiltros(sp: ReportesSearchParams): string {
   const partes: string[] = [];
   const g = uno(sp.gerencia);
-  const a = uno(sp.area);
+  const areas = varios(sp.area);
   const s = uno(sp.sede);
   const p = uno(sp.persona);
   const t = uno(sp.tipo);
@@ -46,7 +56,7 @@ export function describirFiltros(sp: ReportesSearchParams): string {
   const hasta = uno(sp.hasta);
 
   if (g) partes.push(`Gerencia: ${gerenciaPorSlug(g)?.nombre ?? g}`);
-  if (a) partes.push(`Área: ${areaPorSlug(a)?.nombre ?? a}`);
+  if (areas) partes.push(`Área: ${areas.map((a) => areaPorSlug(a)?.nombre ?? a).join(", ")}`);
   if (s) partes.push(`Sede: ${sedePorSlug(s)?.nombre ?? s}`);
   if (p) partes.push(`Persona: ${p}`);
   if (t) partes.push(`Tipo: ${t}`);

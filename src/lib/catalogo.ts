@@ -56,7 +56,10 @@ export const AREAS: Area[] = [
   { slug: "servicio", nombre: "Servicio", gerencia: "experiencia-de-servicio", volumen2026: 3214 },
   { slug: "aseguramiento-contravencional", nombre: "Aseguramiento Contravencional", gerencia: "operacion-contravencional", volumen2026: 1981 },
   { slug: "gestion-legal", nombre: "Gestión Legal", gerencia: "juridica", volumen2026: 997 },
-  { slug: "radicacion", nombre: "Radicación", gerencia: "operacion-contravencional", volumen2026: 773 },
+  // Corregido por Alexis (2 sep 2026): Radicación es de Jurídica, no de
+  // Operación Contravencional (ver nota junto a "cad" y "digitalizacion" más
+  // abajo — mismo error, misma corrección).
+  { slug: "radicacion", nombre: "Radicación", gerencia: "juridica", volumen2026: 773 },
   { slug: "cartera", nombre: "Cartera", gerencia: "financiera", volumen2026: 689 },
   { slug: "fotodeteccion", nombre: "Fotodetección", gerencia: "operacion-contravencional", volumen2026: 350 },
   { slug: "experiencia-de-servicio", nombre: "Experiencia de Servicio", gerencia: "experiencia-de-servicio", volumen2026: 276 },
@@ -68,15 +71,20 @@ export const AREAS: Area[] = [
   // alguien la vuelve a elegir, el ETL necesita dónde aterrizarla.
   { slug: "otras", nombre: "Otras", gerencia: "sin-gerencia", volumen2026: 0 },
   { slug: "sin-nombre", nombre: "(Sin nombre — origen por identificar)", gerencia: "sin-gerencia", volumen2026: 97 },
-  { slug: "cad", nombre: "CAD", gerencia: "operacion-contravencional", volumen2026: 40 },
+  // Corregido por Alexis (2 sep 2026): CAD es de Jurídica, no de Operación
+  // Contravencional — quedó mal clasificada junto con "radicacion" y
+  // "digitalizacion" (mismo error en las tres).
+  { slug: "cad", nombre: "CAD", gerencia: "juridica", volumen2026: 40 },
   { slug: "gestion-juridica-de-cobro", nombre: "Gestión Jurídica de Cobro", gerencia: "juridica", volumen2026: 38 },
   { slug: "conexion-de-soluciones", nombre: "Conexión de Soluciones", gerencia: "conexion-de-soluciones", volumen2026: 28 },
   { slug: "aseguramiento-contractual", nombre: "Aseguramiento Contractual", gerencia: "operacion-contravencional", volumen2026: 27 },
   { slug: "experiencia-y-bienestar", nombre: "Experiencia y Bienestar", gerencia: "experiencia-y-bienestar", volumen2026: 4 },
   { slug: "gerencia-general", nombre: "Gerencia General", gerencia: "sin-gerencia", volumen2026: 2 },
-  // Confirmado por Alexis (25 ago 2026): Digitalización pertenece a Operación
-  // Contravencional, no a "sin gerencia".
-  { slug: "digitalizacion", nombre: "Digitalización", gerencia: "operacion-contravencional", volumen2026: 1 },
+  // Confirmado por Alexis (25 ago 2026) que era de Operación Contravencional
+  // y no de "sin gerencia" — y corregido de nuevo por Alexis (2 sep 2026):
+  // en realidad es de Jurídica. Ver CLAUDE.md §2.1 para el detalle completo
+  // de esta reclasificación (Radicación, CAD y Digitalización, las tres).
+  { slug: "digitalizacion", nombre: "Digitalización", gerencia: "juridica", volumen2026: 1 },
 
   // Dependencias de "Mesa de ayuda SMM" (customfield_11698) — confirmado por
   // Alexis (25 ago 2026) que forman su propia gerencia, "SMM/ESU", y no
