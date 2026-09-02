@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { AREAS, GERENCIAS, SEDES, TIPOS_REQUERIMIENTO } from "@/lib/catalogo";
 
@@ -31,8 +31,28 @@ export function FiltrosReporte({ personas }: { personas: string[] }) {
 
   const [gerenciaSel, setGerenciaSel] = useState(valor("gerencia"));
   const [areasSel, setAreasSel] = useState<string[]>(params.getAll("area"));
+  const [areaAbierta, setAreaAbierta] = useState(false);
+  const areaRef = useRef<HTMLDivElement>(null);
 
   const areasDisponibles = gerenciaSel ? AREAS.filter((a) => a.gerencia === gerenciaSel) : AREAS;
+
+  const areaResumen =
+    areasSel.length === 0
+      ? "Todas"
+      : areasSel.length === 1
+        ? (AREAS.find((a) => a.slug === areasSel[0])?.nombre ?? areasSel[0])
+        : `${areasSel.length} áreas seleccionadas`;
+
+  // Cierra el desplegable de Área al hacer clic fuera — el mismo
+  // comportamiento que un <select> nativo.
+  useEffect(() => {
+    if (!areaAbierta) return;
+    function alClicFuera(e: MouseEvent) {
+      if (areaRef.current && !areaRef.current.contains(e.target as Node)) setAreaAbierta(false);
+    }
+    document.addEventListener("mousedown", alClicFuera);
+    return () => document.removeEventListener("mousedown", alClicFuera);
+  }, [areaAbierta]);
 
   function cambiarGerencia(slug: string) {
     setGerenciaSel(slug);
@@ -52,8 +72,13 @@ export function FiltrosReporte({ personas }: { personas: string[] }) {
     const datos = new FormData(form);
     const nuevos = new URLSearchParams();
     for (const [k, v] of datos.entries()) {
+      // "area" se arma aparte desde `areasSel`, no desde el form: los
+      // checkboxes solo existen en el DOM mientras el desplegable está
+      // abierto, así que FormData no puede depender de ellos.
+      if (k === "area") continue;
       if (typeof v === "string" && v.trim()) nuevos.append(k, v);
     }
+    for (const slug of areasSel) nuevos.append("area", slug);
     iniciar(() => router.push(`/reportes?${nuevos.toString()}`));
   }
 
@@ -83,24 +108,39 @@ export function FiltrosReporte({ personas }: { personas: string[] }) {
           </select>
         </div>
 
-        <div className="filtro-campo">
-          <label htmlFor="f-area">
-            Área {areasSel.length > 0 && <span className="filtro-contador">({areasSel.length})</span>}
-          </label>
-          <div id="f-area" className="filtro-checklist">
-            {areasDisponibles.map((a) => (
-              <label key={a.slug} className="filtro-checklist-item">
-                <input
-                  type="checkbox"
-                  name="area"
-                  value={a.slug}
-                  checked={areasSel.includes(a.slug)}
-                  onChange={() => alternarArea(a.slug)}
-                />
-                {a.nombre}
+        <div className="filtro-campo filtro-campo-area" ref={areaRef}>
+          <label htmlFor="f-area-btn">Área</label>
+          <button
+            type="button"
+            id="f-area-btn"
+            className="filtro-desplegable-trigger"
+            aria-haspopup="listbox"
+            aria-expanded={areaAbierta}
+            onClick={() => setAreaAbierta((v) => !v)}
+          >
+            <span>{areaResumen}</span>
+            <span className="filtro-desplegable-flecha" aria-hidden="true">
+              ▾
+            </span>
+          </button>
+          {areaAbierta && (
+            <div className="filtro-checklist filtro-checklist-flotante" role="listbox">
+              <label className="filtro-checklist-item">
+                <input type="checkbox" checked={areasSel.length === 0} onChange={() => setAreasSel([])} />
+                Todas
               </label>
-            ))}
-          </div>
+              {areasDisponibles.map((a) => (
+                <label key={a.slug} className="filtro-checklist-item">
+                  <input
+                    type="checkbox"
+                    checked={areasSel.includes(a.slug)}
+                    onChange={() => alternarArea(a.slug)}
+                  />
+                  {a.nombre}
+                </label>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="filtro-campo">
