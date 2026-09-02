@@ -418,8 +418,23 @@
 }
 
 /*
- * El mapa estira para acompañar al panel de detalle, que suele ser más alto.
- * Sin esto queda un hueco vacío debajo del mapa que se lee como algo roto.
+ * El panel de detalle es más alto que el mapa cuando su contenido crece
+ * (más tickets en las listas, etc.): la tarjeta del mapa se estira para
+ * acompañarlo y así no queda un hueco vacío debajo, pero el LIENZO del mapa
+ * (donde viven los pines) se queda en una altura fija.
+ *
+ * Es a propósito que no sea `flex: 1`: si el lienzo creciera con la tarjeta,
+ * el alto del mapa terminaría dependiendo de cuánto contenido tiene el panel
+ * de la sede activa — y ese contenido cambia con el propio hover. Eso arma un
+ * bucle: hover activa una sede -> su panel es más corto -> el mapa se encoge
+ * -> MapLibre reposiciona los pines -> el cursor queda fuera del pin -> se
+ * dispara el mouseleave -> vuelve la vista consolidada (panel más alto) -> el
+ * mapa recupera su alto -> el pin regresa bajo el cursor -> vuelve a
+ * activarse. El caso más visible era el pin de "Poblado": su panel de detalle
+ * es notablemente más corto que el de "Todas las sedes", así que el encogido
+ * era grande y el mapa entero parpadeaba en bucle. Con el lienzo a altura
+ * fija, el tamaño del mapa — y por lo tanto la posición de los pines — ya no
+ * depende del contenido del panel de detalle.
  */
 .mp-wrap {
   align-items: stretch;
@@ -429,12 +444,13 @@
   flex-direction: column;
 }
 .mp-lienzo {
-  flex: 1;
+  height: 520px;
   min-height: 520px;
-  height: auto;
+  flex: none;
 }
 @media (max-width: 980px) {
   .mp-lienzo {
+    height: 380px;
     min-height: 380px;
   }
 }
@@ -491,11 +507,14 @@
 }
 
 /* El lienzo vive en su propia caja para que el overlay de carga se limite al
-   mapa y no tape la barra de selección de sede. */
+   mapa y no tape la barra de selección de sede.
+   Altura fija, no `flex: 1`: ver la nota junto a `.mp-lienzo` sobre por qué el
+   lienzo no puede depender del alto del panel de detalle. */
 .mp-lienzo-caja {
   position: relative;
-  flex: 1;
+  flex: none;
   display: flex;
+  height: 520px;
   min-height: 520px;
 }
 .mp-lienzo-caja .mp-cargando {
@@ -503,6 +522,7 @@
 }
 @media (max-width: 980px) {
   .mp-lienzo-caja {
+    height: 380px;
     min-height: 380px;
   }
 }
