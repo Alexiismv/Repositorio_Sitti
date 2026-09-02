@@ -793,9 +793,9 @@ body {
 }
 .filtro-checklist-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
-  padding: 7px 10px;
+  padding: 10px 12px;
   font-size: 13px;
   color: var(--ink);
   cursor: pointer;
@@ -803,12 +803,38 @@ body {
 .filtro-checklist-item:hover {
   background: var(--bg);
 }
+/* Checkbox propio, no el nativo del navegador: el nativo se renderiza muy
+   chico y pegado al texto sin importar cuánto gap se le dé alrededor. */
 .filtro-checklist-item input {
-  width: 14px;
-  height: 14px;
-  margin: 2px 0 0;
-  accent-color: var(--navy);
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border-radius: 6px;
+  background: var(--line);
   flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.filtro-checklist-item input:checked {
+  background: var(--navy);
+}
+.filtro-checklist-item input:checked::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 4px;
+  width: 6px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.filtro-checklist-item input:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
 }
 .filtros-pie {
   display: flex;
