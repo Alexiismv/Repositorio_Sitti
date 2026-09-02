@@ -793,9 +793,9 @@ body {
 }
 .filtro-checklist-item {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 9px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 7px 9px;
   font-size: 13px;
   color: var(--ink);
   cursor: pointer;
@@ -806,6 +806,7 @@ body {
 .filtro-checklist-item input {
   width: 14px;
   height: 14px;
+  margin: 2px 0 0;
   accent-color: var(--navy);
   flex-shrink: 0;
 }
