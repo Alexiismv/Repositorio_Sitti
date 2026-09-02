@@ -794,8 +794,8 @@ body {
 .filtro-checklist-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 7px 9px;
+  gap: 16px;
+  padding: 7px 10px;
   font-size: 13px;
   color: var(--ink);
   cursor: pointer;
