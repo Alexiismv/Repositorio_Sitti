@@ -811,6 +811,8 @@ body {
   width: 22px;
   height: 22px;
   margin: 0;
+  padding: 0;
+  border: none;
   border-radius: 6px;
   background: var(--line);
   flex-shrink: 0;
@@ -1029,6 +1031,15 @@ body {
   background: var(--card);
   color: var(--ink);
   color-scheme: dark;
+}
+/* La regla de arriba tiene más especificidad que `.filtro-checklist-item
+   input` (por el atributo `[data-tema]`) y le ganaba el fondo, dejando el
+   checkbox como un simple contorno en vez de un cuadro relleno. */
+[data-tema="oscuro"] .filtro-checklist-item input {
+  background: var(--line);
+}
+[data-tema="oscuro"] .filtro-checklist-item input:checked {
+  background: var(--navy);
 }
 
 /* ---- Botón de tema en el topbar ---- */
