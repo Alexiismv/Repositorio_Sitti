@@ -796,7 +796,7 @@ body {
   align-items: center;
   gap: 16px;
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: 11.5px;
   color: var(--ink);
   cursor: pointer;
 }
