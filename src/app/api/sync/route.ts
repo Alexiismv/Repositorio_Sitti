@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { leerSesion } from "@/lib/auth/sesion";
+import { puedeUsarAccion } from "@/lib/auth/tipos";
 import { DEMO_MODE } from "@/lib/data/provider";
 import { hayCredencialesJira } from "@/lib/etl/jira";
 import { DIAS_INCREMENTAL, sincronizar, type ModoSync } from "@/lib/etl/sincronizar";
@@ -30,11 +31,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   }
 
-  // Un coordinador consulta; sincronizar le pega a un sistema externo y
-  // reescribe la tabla que todos ven. Eso se limita a quien tiene alcance total.
-  if (sesion.rol !== "gerente" && sesion.rol !== "administrador") {
+  // Sincronizar le pega a un sistema externo y reescribe la tabla que todos
+  // ven. Eso se limita a quien tenga la acción "sincronizar" habilitada en
+  // Panel General (perfiles Administrador y Gerente la traen por defecto).
+  if (!puedeUsarAccion(sesion, "panel-general", "sincronizar")) {
     return NextResponse.json(
-      { error: "Solo un Gerente o el Administrador pueden sincronizar." },
+      { error: "No tienes permiso para sincronizar con Jira." },
       { status: 403 },
     );
   }

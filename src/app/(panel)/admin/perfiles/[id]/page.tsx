@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { SectionLabel } from "@/components/ui";
 import { obtenerPerfil } from "@/lib/auth/perfiles-servicio";
 import { leerSesion } from "@/lib/auth/sesion";
-import { ROL_LABEL } from "@/lib/auth/tipos";
+import { puedeVerPantalla } from "@/lib/auth/tipos";
 import { DEMO_MODE } from "@/lib/data/provider";
 
 import { FormularioPerfil } from "./formulario";
@@ -15,13 +15,13 @@ export default async function PerfilFormPage({ params }: { params: Promise<{ id:
   const sesion = await leerSesion();
   if (!sesion) redirect("/login");
 
-  if (sesion.rol !== "administrador") {
+  if (!puedeVerPantalla(sesion, "admin-perfiles")) {
     return (
       <div className="sh-page-head">
         <h1>Sin acceso</h1>
         <p>
-          La gestión de perfiles es exclusiva del rol Administrador. Tu rol actual es{" "}
-          <strong>{ROL_LABEL[sesion.rol]}</strong>.
+          La gestión de perfiles requiere un permiso que no tienes asignado. Pídeselo a un
+          administrador.
         </p>
       </div>
     );

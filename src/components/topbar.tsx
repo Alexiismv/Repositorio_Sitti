@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { ROL_LABEL, iniciales, puedeVerPersonas, type Sesion } from "@/lib/auth/tipos";
+import { iniciales, puedeUsarAccion, puedeVerPantalla, type Sesion } from "@/lib/auth/tipos";
 import { BotonTema } from "@/components/tema";
 import { BotonRefrescar } from "@/components/boton-refrescar";
 
@@ -50,13 +50,9 @@ export function Topbar({
   const enlaces = [
     ...ENLACES_BASE,
     ENLACE_REPORTES,
-    ...(puedeVerPersonas(sesion) ? [ENLACE_PERSONAS] : []),
-    ...(sesion.rol === "administrador"
-      ? [
-          { href: "/admin/usuarios", label: "Usuarios" },
-          { href: "/admin/perfiles", label: "Perfiles" },
-        ]
-      : []),
+    ...(puedeVerPantalla(sesion, "personas") ? [ENLACE_PERSONAS] : []),
+    ...(puedeVerPantalla(sesion, "admin-usuarios") ? [{ href: "/admin/usuarios", label: "Usuarios" }] : []),
+    ...(puedeVerPantalla(sesion, "admin-perfiles") ? [{ href: "/admin/perfiles", label: "Perfiles" }] : []),
   ];
 
   async function salir() {
@@ -87,9 +83,7 @@ export function Topbar({
         Sync {ultimaSync}
       </div>
 
-      <BotonRefrescar
-        puedeSincronizar={sesion.rol === "gerente" || sesion.rol === "administrador"}
-      />
+      <BotonRefrescar puedeSincronizar={puedeUsarAccion(sesion, "panel-general", "sincronizar")} />
 
       <BotonTema />
 
@@ -100,7 +94,7 @@ export function Topbar({
             {sesion.nombre}
           </span>
           <span className="rol" style={{ display: "block" }}>
-            {ROL_LABEL[sesion.rol]}
+            {sesion.perfiles.length > 0 ? sesion.perfiles.join(" · ") : "Sin perfil asignado"}
           </span>
         </span>
       </button>
@@ -111,15 +105,15 @@ export function Topbar({
             <div style={{ fontSize: 13.5, fontWeight: 600 }}>{sesion.nombre}</div>
             <div className="correo">{sesion.email}</div>
           </div>
-          {sesion.rol === "administrador" && (
-            <>
-              <Link href="/admin/usuarios" onClick={() => setAbierto(false)}>
-                Gestión de usuarios
-              </Link>
-              <Link href="/admin/perfiles" onClick={() => setAbierto(false)}>
-                Gestión de perfiles
-              </Link>
-            </>
+          {puedeVerPantalla(sesion, "admin-usuarios") && (
+            <Link href="/admin/usuarios" onClick={() => setAbierto(false)}>
+              Gestión de usuarios
+            </Link>
+          )}
+          {puedeVerPantalla(sesion, "admin-perfiles") && (
+            <Link href="/admin/perfiles" onClick={() => setAbierto(false)}>
+              Gestión de perfiles
+            </Link>
           )}
           <Link href="/cambiar-password" onClick={() => setAbierto(false)}>
             Cambiar mi contraseña

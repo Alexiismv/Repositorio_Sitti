@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-import { COOKIE_SESION } from "@/lib/auth/sesion";
+import { COOKIE_CAMBIO_PENDIENTE, COOKIE_SESION } from "@/lib/auth/sesion";
 import { claveSecreta, haySecretoUtilizable } from "@/lib/auth/clave";
 
 /**
@@ -23,11 +23,52 @@ import { claveSecreta, haySecretoUtilizable } from "@/lib/auth/clave";
  */
 const RUTAS_PUBLICAS = new Set(["/login", "/api/auth/login"]);
 
+/**
+ * Únicas rutas que un usuario con `debe_cambiar_password = true` puede tocar
+ * antes de definir contraseña nueva (spec 1.3, flujo de restablecimiento).
+ * Cualquier otra ruta lo devuelve a `/cambio-password-obligatorio` — la
+ * sesión que trae (`sitti_cambio_pendiente`) no decodifica como `Sesion` real
+ * (sin `permisos`/`rol`), así que un intento de pegarle directo a otro API
+ * route de todos modos no tendría con qué autorizarse.
+ */
+const RUTAS_PERMITIDAS_CON_CAMBIO_PENDIENTE = new Set([
+  "/cambio-password-obligatorio",
+  "/api/auth/completar-cambio-obligatorio",
+  "/api/auth/logout",
+]);
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (RUTAS_PUBLICAS.has(pathname)) {
     return NextResponse.next();
+  }
+
+  // Estado "cambio de contraseña obligatorio" — se resuelve ANTES que la
+  // sesión completa y sin tocar Postgres (solo decodifica un segundo JWT,
+  // Edge-safe). Si por algún bug llegaran a coexistir las dos cookies, esta
+  // prevalece: es el estado más restrictivo.
+  const tokenPendiente = req.cookies.get(COOKIE_CAMBIO_PENDIENTE)?.value;
+  if (tokenPendiente && haySecretoUtilizable()) {
+    try {
+      await jwtVerify(tokenPendiente, claveSecreta(), { algorithms: ["HS256"] });
+
+      if (RUTAS_PERMITIDAS_CON_CAMBIO_PENDIENTE.has(pathname)) {
+        return NextResponse.next();
+      }
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { error: "Debes completar el cambio de contraseña obligatorio primero." },
+          { status: 403 },
+        );
+      }
+      const url = req.nextUrl.clone();
+      url.pathname = "/cambio-password-obligatorio";
+      url.search = "";
+      return NextResponse.redirect(url);
+    } catch {
+      // Vencida o alterada: se ignora y sigue como si no existiera.
+    }
   }
 
   const token = req.cookies.get(COOKIE_SESION)?.value;

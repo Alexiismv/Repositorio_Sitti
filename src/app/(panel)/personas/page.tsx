@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { GraficaComparativa } from "@/components/charts";
 import { ExportarEnlaces, KpiStrip, SectionLabel } from "@/components/ui";
 import { leerSesion } from "@/lib/auth/sesion";
-import { puedeVerPersonas } from "@/lib/auth/tipos";
+import { puedeVerPantalla } from "@/lib/auth/tipos";
 import { DIAS_ESTANCADO_DEFAULT } from "@/lib/catalogo";
 import { obtenerTickets } from "@/lib/data/provider";
 import { numero, porcentaje } from "@/lib/formato";
@@ -27,7 +27,7 @@ export default async function PersonasPage() {
 
   // Doble barrera: el enlace solo aparece en el topbar si hay permiso, pero la
   // página también se defiende sola por si alguien escribe la URL a mano.
-  if (!puedeVerPersonas(sesion)) {
+  if (!puedeVerPantalla(sesion, "personas")) {
     return (
       <div className="sh-page-head">
         <h1>Sin acceso</h1>

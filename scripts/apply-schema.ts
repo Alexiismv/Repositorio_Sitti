@@ -14,7 +14,7 @@
 
 import { readFileSync } from "node:fs";
 
-import { ACCIONES, PANTALLAS, PANTALLA_ACCION, WIDGETS } from "../src/lib/auth/modulos";
+import { ACCESO_PERSONAS, ACCESO_POR_ROL, ACCIONES, PANTALLAS, PANTALLA_ACCION, WIDGETS } from "../src/lib/auth/modulos";
 import { AREAS, GERENCIAS, PROYECTOS, SEDES } from "../src/lib/catalogo";
 import { conectar } from "./db";
 import type { Client } from "pg";
@@ -45,28 +45,29 @@ const PERFILES_PUENTE: {
   {
     nombre: "Gerente",
     descripcion: "Acceso operativo total: ve todas las gerencias, áreas y sedes. No administra usuarios ni perfiles.",
-    pantallas: ["panel-general", "gerencias", "areas", "reportes"],
-    acciones: {
-      "panel-general": ["ver", "sincronizar"],
-      gerencias: ["ver"],
-      areas: ["ver"],
-      reportes: ["ver", "exportar"],
-    },
-    widgets: WIDGETS.map((w) => w.slug),
+    ...ACCESO_POR_ROL.gerente,
   },
   {
     nombre: "Coordinador",
     descripcion: "Acceso operativo recortado por sede/área asignada. No sincroniza con Jira ni administra usuarios.",
-    pantallas: ["panel-general", "gerencias", "areas", "reportes"],
-    acciones: {
-      "panel-general": ["ver"],
-      gerencias: ["ver"],
-      areas: ["ver"],
-      reportes: ["ver", "exportar"],
-    },
-    widgets: WIDGETS.map((w) => w.slug),
+    ...ACCESO_POR_ROL.coordinador,
   },
 ];
+
+/**
+ * Perfil auxiliar que reemplaza al viejo flag `auth.usuarios.ver_personas`
+ * (permiso suelto, por usuario, no derivado del rol). `migrarVerPersonas()`
+ * se lo asigna a todo usuario que tuviera ese flag en `true` y no haya
+ * ganado ya acceso a "Personas" por otro de sus perfiles — así nadie pierde
+ * un acceso que ya tenía al apagarse el flag en la Fase 4 de la migración.
+ */
+const PERFIL_ACCESO_PERSONAS = {
+  nombre: "Acceso a Personas",
+  descripcion: 'Solo agrega la pantalla "Personas" — pensado para sumarlo a otro perfil, no para usarlo solo.',
+  ...ACCESO_PERSONAS,
+};
+
+const PERFILES_NO_SISTEMA = [...PERFILES_PUENTE, PERFIL_ACCESO_PERSONAS];
 
 /**
  * Siembra el catálogo de pantallas/acciones/widgets, el perfil "Administrador"
@@ -134,7 +135,7 @@ async function sembrarPerfiles(cliente: Client): Promise<void> {
       [adminId],
     );
 
-    for (const puente of PERFILES_PUENTE) {
+    for (const puente of PERFILES_NO_SISTEMA) {
       const r = await cliente.query<{ id: string }>(
         `INSERT INTO auth.perfiles (nombre, descripcion, activo, es_sistema)
          VALUES ($1, $2, true, false)
@@ -211,6 +212,74 @@ async function migrarUsuariosSinPerfil(cliente: Client): Promise<void> {
   );
 }
 
+/**
+ * A todo usuario con `ver_personas = true` que NO tenga ya acceso a la
+ * pantalla "personas" a través de alguno de sus perfiles, le asigna el
+ * perfil auxiliar "Acceso a Personas" — para que apagar el flag legado en la
+ * Fase 4 no le quite a nadie un acceso que ya tenía. Segura de re-correr:
+ * si ya tiene acceso (por este perfil o por otro), no hace nada.
+ */
+async function migrarVerPersonas(cliente: Client): Promise<void> {
+  const accesoPersonas = await cliente.query<{ id: string }>(
+    `SELECT id FROM auth.perfiles WHERE nombre = $1`,
+    [PERFIL_ACCESO_PERSONAS.nombre],
+  );
+  const perfilId = accesoPersonas.rows[0]?.id;
+  if (!perfilId) return; // no debería pasar: se siembra en sembrarPerfiles()
+
+  const usuarios = await cliente.query<{ id: string; email: string }>(
+    `SELECT u.id, u.email
+     FROM auth.usuarios u
+     WHERE u.ver_personas
+       AND NOT EXISTS (
+         SELECT 1
+         FROM auth.usuario_perfil up
+         JOIN auth.perfil_pantalla pp ON pp.perfil_id = up.perfil_id
+         WHERE up.usuario_id = u.id AND pp.pantalla_slug = 'personas'
+       )`,
+  );
+
+  for (const u of usuarios.rows) {
+    await cliente.query(
+      `INSERT INTO auth.usuario_perfil (usuario_id, perfil_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [u.id, perfilId],
+    );
+  }
+
+  console.log(`→ Acceso a Personas migrado: ${usuarios.rows.length} usuario(s) con \`ver_personas=true\` sin ese acceso vía perfil.`);
+}
+
+/**
+ * `veTodo()` (src/lib/auth/tipos.ts) dejó de mirar `rol` — ahora solo mira si
+ * existe una fila comodín `('*','*')` en `usuario_permiso`. Antes, esa
+ * visibilidad total salía GRATIS con `rol IN ('gerente','administrador')`;
+ * para que nadie pierda alcance de datos al completarse la Fase 4, todo
+ * usuario cuyo `rol` actual sea uno de esos dos recibe la fila comodín si no
+ * la tiene. `scripts/seed-demo.ts` ya hace esto mismo para el administrador
+ * inicial — acá se generaliza a cualquier usuario existente.
+ */
+async function migrarComodinDeDatos(cliente: Client): Promise<void> {
+  const usuarios = await cliente.query<{ id: string; email: string }>(
+    `SELECT u.id, u.email
+     FROM auth.usuarios u
+     WHERE u.rol IN ('gerente', 'administrador')
+       AND NOT EXISTS (
+         SELECT 1 FROM auth.usuario_permiso up
+         WHERE up.usuario_id = u.id AND up.sede_slug = '*' AND up.area_slug = '*'
+       )`,
+  );
+
+  for (const u of usuarios.rows) {
+    await cliente.query(
+      `INSERT INTO auth.usuario_permiso (usuario_id, sede_slug, area_slug) VALUES ($1, '*', '*')
+       ON CONFLICT DO NOTHING`,
+      [u.id],
+    );
+  }
+
+  console.log(`→ Comodín de datos ('*','*') migrado: ${usuarios.rows.length} usuario(s) gerente/administrador sin él.`);
+}
+
 async function main() {
   const cliente = await conectar();
   console.log("→ Conectado a la base de datos");
@@ -278,10 +347,12 @@ async function main() {
 
     await sembrarPerfiles(cliente);
     console.log(
-      `→ Perfiles sembrados: Administrador (acceso total) · ${PERFILES_PUENTE.map((p) => p.nombre).join(" · ")}`,
+      `→ Perfiles sembrados: Administrador (acceso total) · ${PERFILES_NO_SISTEMA.map((p) => p.nombre).join(" · ")}`,
     );
 
     await migrarUsuariosSinPerfil(cliente);
+    await migrarVerPersonas(cliente);
+    await migrarComodinDeDatos(cliente);
 
     console.log("\n✅ Listo. Siguiente paso: crear el usuario administrador");
     console.log('   npm run db:seed -- --admin-email tu.usuario --admin-password "..."');

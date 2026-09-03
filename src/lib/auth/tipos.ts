@@ -38,20 +38,38 @@ export interface Usuario {
   /**
    * Acceso a la pestaña Personas. Es un permiso explícito por usuario, no
    * derivado del rol ni del área: un gerente o coordinador no la ve por
-   * defecto, solo quien Alexis marque acá. El administrador la ve siempre
-   * (ver `puedeVerPersonas`).
+   * defecto, solo quien Alexis marque acá. El administrador la ve siempre.
+   *
+   * Este campo solo existe en `Usuario` (el modelo de las cuentas demo, ver
+   * `usuarios-demo.ts`). Las cuentas reales lo reemplazaron por el perfil
+   * auxiliar "Acceso a Personas" — ver `puedeVerPantalla(sesion, "personas")`.
    */
   verPersonas: boolean;
 }
 
-/** Lo que viaja firmado dentro de la cookie de sesión. Nada sensible acá. */
+/**
+ * Lo que viaja firmado dentro de la cookie de sesión. Nada sensible acá.
+ *
+ * Desde la Fase 4 de la migración a perfiles, `rol` YA NO viaja acá — la
+ * autorización real (qué pantallas/acciones/gráficos ve este usuario) sale
+ * de `pantallas`/`acciones`/`widgets`, calculados en el login como la UNIÓN
+ * de todos los perfiles asignados (ver `construirSesion()` en
+ * `src/lib/auth/construir-sesion.ts`). `permisos` (sede/área) sigue siendo
+ * un eje aparte: decide qué DATOS ve, no qué pantallas.
+ */
 export interface Sesion {
   sub: string;
   email: string;
   nombre: string;
-  rol: Rol;
   permisos: Permiso[];
-  verPersonas: boolean;
+  /** Nombres de los perfiles asignados — solo para mostrar en el topbar. */
+  perfiles: string[];
+  /** Slugs de pantalla visibles (unión de todos los perfiles asignados). */
+  pantallas: string[];
+  /** pantalla_slug -> [accion_slug, ...] habilitadas para este usuario. */
+  acciones: Record<string, string[]>;
+  /** Slugs de gráficos/widgets visibles. */
+  widgets: string[];
 }
 
 /**
@@ -91,18 +109,37 @@ export function iniciales(nombre: string): string {
     .join("");
 }
 
-/** El gerente y el administrador ven todo; el coordinador, solo lo asignado. */
-export function veTodo(sesion: Pick<Sesion, "rol" | "permisos">): boolean {
-  if (sesion.rol === "gerente" || sesion.rol === "administrador") return true;
+/**
+ * ¿Ve todas las sedes/áreas sin recorte? Antes lo decidía el enum `rol`
+ * (gerente/administrador = todo); ahora es puramente de datos: existe una
+ * fila comodín `('*','*')` en `usuario_permiso`. Quien deba ver todo
+ * necesita esa fila asignada explícitamente — `scripts/apply-schema.ts` la
+ * sincroniza automáticamente para todo usuario cuyos perfiles asignados
+ * incluyan "Administrador" o "Gerente" (ver `sincronizarComodinDeDatos` en
+ * `src/lib/auth/usuarios-servicio.ts`), igual que ya hacía
+ * `scripts/seed-demo.ts` para el administrador inicial.
+ */
+export function veTodo(sesion: Pick<Sesion, "permisos">): boolean {
   return sesion.permisos.some((p) => p.sede === "*" && p.area === "*");
 }
 
-/**
- * ¿Puede ver la pestaña Personas? El administrador siempre; cualquier otro
- * rol solo si tiene el permiso `verPersonas` asignado explícitamente.
- */
-export function puedeVerPersonas(sesion: Pick<Sesion, "rol" | "verPersonas">): boolean {
-  return sesion.rol === "administrador" || sesion.verPersonas === true;
+/** ¿Esta pantalla está entre las que el perfil (o unión de perfiles) del usuario habilita? */
+export function puedeVerPantalla(sesion: Pick<Sesion, "pantallas">, pantallaSlug: string): boolean {
+  return sesion.pantallas.includes(pantallaSlug);
+}
+
+/** ¿Esta acción, dentro de esta pantalla, está habilitada para el usuario? */
+export function puedeUsarAccion(
+  sesion: Pick<Sesion, "acciones">,
+  pantallaSlug: string,
+  accionSlug: string,
+): boolean {
+  return sesion.acciones[pantallaSlug]?.includes(accionSlug) ?? false;
+}
+
+/** ¿Este gráfico/widget está habilitado para el usuario? */
+export function puedeVerWidget(sesion: Pick<Sesion, "widgets">, widgetSlug: string): boolean {
+  return sesion.widgets.includes(widgetSlug);
 }
 
 /**
@@ -111,7 +148,7 @@ export function puedeVerPersonas(sesion: Pick<Sesion, "rol" | "verPersonas">): b
  * el proveedor de datos vuelve a aplicarlo antes de devolver tickets).
  */
 export function puedeVer(
-  sesion: Pick<Sesion, "rol" | "permisos">,
+  sesion: Pick<Sesion, "permisos">,
   sedeSlug: string,
   areaSlug: string,
 ): boolean {

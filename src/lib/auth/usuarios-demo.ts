@@ -1,4 +1,5 @@
-import type { Usuario } from "@/lib/auth/tipos";
+import { ACCESO_PERSONAS, ACCESO_POR_ROL, accesoTotal, unirAccesos } from "@/lib/auth/modulos";
+import type { Sesion, Usuario } from "@/lib/auth/tipos";
 
 /**
  * Usuarios de DEMO.
@@ -67,4 +68,26 @@ export function buscarUsuarioDemo(usuario: string, password: string): UsuarioDem
   );
   if (!encontrado || !encontrado.activo) return null;
   return encontrado.password === password ? encontrado : null;
+}
+
+/**
+ * Traduce una cuenta demo al nuevo formato de `Sesion` (Fase 4: pantallas por
+ * perfil, no por `rol`). Las cuentas demo no viven en Postgres y por lo tanto
+ * no tienen perfiles reales que consultar — se les da el mismo acceso
+ * "puente" que `scripts/apply-schema.ts` siembra para Gerente/Coordinador
+ * (fuente única: `ACCESO_POR_ROL` en `src/lib/auth/modulos.ts`), y el
+ * administrador demo recibe acceso total igual que el perfil "Administrador"
+ * real. `verPersonas` se traduce sumando `ACCESO_PERSONAS`, igual que la
+ * migración hace con las cuentas reales que tenían ese flag.
+ */
+export function sesionDesdeUsuarioDemo(u: UsuarioDemo): Omit<Sesion, "sub" | "email" | "nombre" | "permisos"> {
+  const base = u.rol === "administrador" ? accesoTotal() : ACCESO_POR_ROL[u.rol];
+  const { pantallas, acciones, widgets } = u.verPersonas ? unirAccesos(base, ACCESO_PERSONAS) : base;
+
+  return {
+    perfiles: [u.rol],
+    pantallas,
+    acciones,
+    widgets,
+  };
 }

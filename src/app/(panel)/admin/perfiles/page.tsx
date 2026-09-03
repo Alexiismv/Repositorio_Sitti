@@ -4,29 +4,25 @@ import { redirect } from "next/navigation";
 import { SectionLabel } from "@/components/ui";
 import { listarPerfiles } from "@/lib/auth/perfiles-servicio";
 import { leerSesion } from "@/lib/auth/sesion";
-import { ROL_LABEL } from "@/lib/auth/tipos";
+import { puedeVerPantalla } from "@/lib/auth/tipos";
 import { DEMO_MODE } from "@/lib/data/provider";
 
 import { TablaPerfiles } from "./tabla";
 
 export const metadata = { title: "Gestión de perfiles · SITTI" };
 
-/**
- * Listado de perfiles (spec 3.2). Gate interino por `rol === "administrador"`
- * — el propio sistema de perfiles todavía no se usa para autorización de sí
- * mismo (eso llega en la Fase 4 de la migración).
- */
+/** Listado de perfiles (spec 3.2). Gate por la pantalla `admin-perfiles`. */
 export default async function PerfilesPage() {
   const sesion = await leerSesion();
   if (!sesion) redirect("/login");
 
-  if (sesion.rol !== "administrador") {
+  if (!puedeVerPantalla(sesion, "admin-perfiles")) {
     return (
       <div className="sh-page-head">
         <h1>Sin acceso</h1>
         <p>
-          La gestión de perfiles es exclusiva del rol Administrador. Tu rol actual es{" "}
-          <strong>{ROL_LABEL[sesion.rol]}</strong>.
+          La gestión de perfiles requiere un permiso que no tienes asignado. Pídeselo a un
+          administrador.
         </p>
       </div>
     );

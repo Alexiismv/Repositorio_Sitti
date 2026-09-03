@@ -78,3 +78,81 @@ export const WIDGETS: Widget[] = [
   { slug: "grafica-comparativa", pantalla: "reportes", nombre: "Comparativa por área/sede", orden: 1 },
   { slug: "ttr-vs-meta", pantalla: "reportes", nombre: "TTR vs. meta de SLA", orden: 2 },
 ];
+
+export interface AccesoPerfil {
+  pantallas: string[];
+  /** pantalla_slug -> [accion_slug, ...] */
+  acciones: Record<string, string[]>;
+  widgets: string[];
+}
+
+/** Acceso total: todas las pantallas/acciones/widgets que haya en este archivo. */
+export function accesoTotal(): AccesoPerfil {
+  return {
+    pantallas: PANTALLAS.map((p) => p.slug),
+    acciones: { ...PANTALLA_ACCION },
+    widgets: WIDGETS.map((w) => w.slug),
+  };
+}
+
+const PANTALLAS_OPERATIVAS = ["panel-general", "gerencias", "areas", "reportes"];
+const WIDGETS_OPERATIVOS = WIDGETS.map((w) => w.slug);
+
+/**
+ * Acceso "puente" que reproduce lo que daba el enum `rol` legado —
+ * fuente única para sembrar los perfiles Gerente/Coordinador
+ * (`scripts/apply-schema.ts`) y para las 3 cuentas demo en memoria
+ * (`src/lib/auth/usuarios-demo.ts`), que no viven en Postgres y por lo
+ * tanto no tienen perfiles reales que consultar.
+ */
+export const ACCESO_POR_ROL: Record<"gerente" | "coordinador", AccesoPerfil> = {
+  gerente: {
+    pantallas: PANTALLAS_OPERATIVAS,
+    acciones: {
+      "panel-general": ["ver", "sincronizar"],
+      gerencias: ["ver"],
+      areas: ["ver"],
+      reportes: ["ver", "exportar"],
+    },
+    widgets: WIDGETS_OPERATIVOS,
+  },
+  coordinador: {
+    pantallas: PANTALLAS_OPERATIVAS,
+    acciones: {
+      "panel-general": ["ver"],
+      gerencias: ["ver"],
+      areas: ["ver"],
+      reportes: ["ver", "exportar"],
+    },
+    widgets: WIDGETS_OPERATIVOS,
+  },
+};
+
+/** Acceso a la pantalla Personas — lo que antes daba el flag `ver_personas`. */
+export const ACCESO_PERSONAS: AccesoPerfil = {
+  pantallas: ["personas"],
+  acciones: { personas: ["ver", "exportar"] },
+  widgets: [],
+};
+
+/** Une varios `AccesoPerfil` en uno solo (pantallas/acciones/widgets sin duplicados). */
+export function unirAccesos(...accesos: AccesoPerfil[]): AccesoPerfil {
+  const pantallas = new Set<string>();
+  const widgets = new Set<string>();
+  const acciones: Record<string, Set<string>> = {};
+
+  for (const acc of accesos) {
+    for (const p of acc.pantallas) pantallas.add(p);
+    for (const w of acc.widgets) widgets.add(w);
+    for (const [pantalla, accs] of Object.entries(acc.acciones)) {
+      const set = (acciones[pantalla] ??= new Set());
+      for (const a of accs) set.add(a);
+    }
+  }
+
+  return {
+    pantallas: [...pantallas],
+    widgets: [...widgets],
+    acciones: Object.fromEntries(Object.entries(acciones).map(([p, s]) => [p, [...s]])),
+  };
+}

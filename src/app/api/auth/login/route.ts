@@ -2,22 +2,12 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { crearSesion } from "@/lib/auth/sesion";
-import type { Permiso, Rol } from "@/lib/auth/tipos";
-import { buscarUsuarioDemo } from "@/lib/auth/usuarios-demo";
+import { construirSesion } from "@/lib/auth/construir-sesion";
+import { crearSesion, crearSesionPendiente } from "@/lib/auth/sesion";
+import { buscarUsuarioDemo, sesionDesdeUsuarioDemo } from "@/lib/auth/usuarios-demo";
 import { conCliente } from "@/lib/db";
 import { DEMO_MODE } from "@/lib/data/provider";
 import { registrarAuditoria } from "@/lib/logs";
-
-interface FilaUsuario {
-  id: string;
-  email: string;
-  nombre: string;
-  password_hash: string;
-  rol: Rol;
-  activo: boolean;
-  ver_personas: boolean;
-}
 
 /**
  * Hash señuelo, coste 12 — el mismo de las contraseñas reales.
@@ -29,8 +19,18 @@ interface FilaUsuario {
  */
 const HASH_SENUELO = "$2b$12$6jJ09aR1OBG2LqqPz8aWVOGNmw7ZTwml3zS9b48VQspk2tLZu.JfS";
 
+interface FilaCredencial {
+  id: string;
+  email: string;
+  password_hash: string;
+  debe_cambiar_password: boolean;
+}
+
 /**
- * Login contra Postgres: `auth.usuarios` + `auth.usuario_permiso`.
+ * Verifica credenciales contra Postgres. Ya NO arma la `Sesion` acá: desde
+ * la Fase 4 de la migración a perfiles, eso es trabajo de `construirSesion()`
+ * (una sola vez, después de decidir que no hay cambio de contraseña
+ * pendiente) — `autenticarPostgres` solo confirma quién es y si puede pasar.
  *
  * `SELECT *` está prohibido en tablas con datos de personas (CLAUDE.md § 2.2
  * regla 10) — se enumeran columnas explícitas, sin traer `password_hash` más
@@ -39,17 +39,10 @@ const HASH_SENUELO = "$2b$12$6jJ09aR1OBG2LqqPz8aWVOGNmw7ZTwml3zS9b48VQspk2tLZu.J
 async function autenticarPostgres(
   usuario: string,
   password: string,
-): Promise<{
-  id: string;
-  email: string;
-  nombre: string;
-  rol: Rol;
-  permisos: Permiso[];
-  verPersonas: boolean;
-} | null> {
+): Promise<{ id: string; email: string; debeCambiarPassword: boolean } | null> {
   return conCliente(async (cliente) => {
-    const r = await cliente.query<FilaUsuario>(
-      `SELECT id, email, nombre, password_hash, rol, activo, ver_personas
+    const r = await cliente.query<FilaCredencial>(
+      `SELECT id, email, password_hash, debe_cambiar_password
        FROM auth.usuarios
        WHERE lower(email) = lower($1) AND activo`,
       [usuario.trim()],
@@ -73,19 +66,7 @@ async function autenticarPostgres(
     const coincide = await bcrypt.compare(password, fila.password_hash);
     if (!coincide) return null;
 
-    const permisosRes = await cliente.query<{ sede_slug: string; area_slug: string }>(
-      `SELECT sede_slug, area_slug FROM auth.usuario_permiso WHERE usuario_id = $1`,
-      [fila.id],
-    );
-
-    return {
-      id: fila.id,
-      email: fila.email,
-      nombre: fila.nombre,
-      rol: fila.rol,
-      permisos: permisosRes.rows.map((p) => ({ sede: p.sede_slug, area: p.area_slug })),
-      verPersonas: fila.ver_personas,
-    };
+    return { id: fila.id, email: fila.email, debeCambiarPassword: fila.debe_cambiar_password };
   });
 }
 
@@ -112,34 +93,55 @@ export async function POST(req: Request) {
   // Primera IP de la cadena: la del cliente. Vercel la pone en x-forwarded-for.
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
 
-  const encontrado = DEMO_MODE
-    ? buscarUsuarioDemo(usuario, password)
-    : await autenticarPostgres(usuario, password);
+  if (DEMO_MODE) {
+    const demo = buscarUsuarioDemo(usuario, password);
+    if (!demo) {
+      await registrarAuditoria({ accion: "login_fallido", actor: usuario, detalle: "Credenciales inválidas", ip });
+      return NextResponse.json({ error: "Usuario o contraseña incorrectos." }, { status: 401 });
+    }
 
-  if (!encontrado) {
-    await registrarAuditoria({
-      accion: "login_fallido",
-      actor: usuario,
-      detalle: "Credenciales inválidas",
-      ip,
+    await crearSesion({
+      sub: demo.id,
+      email: demo.email,
+      nombre: demo.nombre,
+      permisos: demo.permisos,
+      ...sesionDesdeUsuarioDemo(demo),
     });
+    await registrarAuditoria({ accion: "login_exitoso", actor: demo.email, detalle: `perfil_demo=${demo.rol}`, ip });
+    return NextResponse.json({ ok: true });
+  }
+
+  const encontrado = await autenticarPostgres(usuario, password);
+  if (!encontrado) {
+    await registrarAuditoria({ accion: "login_fallido", actor: usuario, detalle: "Credenciales inválidas", ip });
     // Mensaje deliberadamente genérico: no revelamos si el usuario existe.
     return NextResponse.json({ error: "Usuario o contraseña incorrectos." }, { status: 401 });
   }
 
-  await crearSesion({
-    sub: encontrado.id,
-    email: encontrado.email,
-    nombre: encontrado.nombre,
-    rol: encontrado.rol,
-    permisos: encontrado.permisos,
-    verPersonas: encontrado.verPersonas,
-  });
+  if (encontrado.debeCambiarPassword) {
+    await crearSesionPendiente({ sub: encontrado.id, email: encontrado.email });
+    await registrarAuditoria({
+      accion: "login_cambio_pendiente",
+      actor: encontrado.email,
+      detalle: "Contraseña por defecto: se exige cambio antes de dar acceso",
+      ip,
+    });
+    return NextResponse.json({ ok: true, cambioPendiente: true });
+  }
 
+  const sesion = await construirSesion(encontrado.id);
+  if (!sesion) {
+    // No debería pasar: el usuario se acaba de autenticar contra esta misma
+    // fila. Si pasa (borrado concurrente entre el SELECT y acá), es un 500
+    // limpio, no una sesión a medio construir.
+    return NextResponse.json({ error: "No se pudo iniciar sesión." }, { status: 500 });
+  }
+
+  await crearSesion(sesion);
   await registrarAuditoria({
     accion: "login_exitoso",
-    actor: encontrado.email,
-    detalle: `rol=${encontrado.rol}`,
+    actor: sesion.email,
+    detalle: `perfiles=${sesion.perfiles.join(",") || "(ninguno)"}`,
     ip,
   });
 
