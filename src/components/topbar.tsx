@@ -50,8 +50,8 @@ export function Topbar({
   const enlaces = [
     ...ENLACES_BASE,
     ...(puedeVerPersonas(sesion) ? [ENLACE_PERSONAS] : []),
-    ENLACE_REPORTES,
     ...(sesion.rol === "administrador" ? [{ href: "/admin/usuarios", label: "Usuarios" }] : []),
+    ENLACE_REPORTES,
   ];
 
   async function salir() {
