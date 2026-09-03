@@ -795,8 +795,8 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 12px;
-  font-size: 11.5px;
+  padding: 10px 8px;
+  font-size: 11px;
   color: var(--ink);
   cursor: pointer;
 }
