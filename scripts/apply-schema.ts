@@ -14,8 +14,202 @@
 
 import { readFileSync } from "node:fs";
 
+import { ACCIONES, PANTALLAS, PANTALLA_ACCION, WIDGETS } from "../src/lib/auth/modulos";
 import { AREAS, GERENCIAS, PROYECTOS, SEDES } from "../src/lib/catalogo";
 import { conectar } from "./db";
+import type { Client } from "pg";
+
+/** Nombre del perfil puente que hereda el acceso de cada `rol` legado. */
+const PERFIL_POR_ROL: Record<string, string> = {
+  administrador: "Administrador",
+  gerente: "Gerente",
+  coordinador: "Coordinador",
+};
+
+/**
+ * Perfiles puente "Gerente" y "Coordinador" — reproducen el acceso que hoy da
+ * el enum `rol`, para que la migración a perfiles (Fase 4) no deje a nadie
+ * sin acceso. Son perfiles NORMALES (no `es_sistema`), editables por un
+ * administrador desde `/admin/perfiles` una vez creados.
+ *
+ * "Administrador" no está acá: se siembra aparte con acceso TOTAL (sección
+ * de abajo), automáticamente igualado a todo lo que haya en `modulos.ts`.
+ */
+const PERFILES_PUENTE: {
+  nombre: string;
+  descripcion: string;
+  pantallas: string[];
+  acciones: Record<string, string[]>;
+  widgets: string[];
+}[] = [
+  {
+    nombre: "Gerente",
+    descripcion: "Acceso operativo total: ve todas las gerencias, áreas y sedes. No administra usuarios ni perfiles.",
+    pantallas: ["panel-general", "gerencias", "areas", "reportes"],
+    acciones: {
+      "panel-general": ["ver", "sincronizar"],
+      gerencias: ["ver"],
+      areas: ["ver"],
+      reportes: ["ver", "exportar"],
+    },
+    widgets: WIDGETS.map((w) => w.slug),
+  },
+  {
+    nombre: "Coordinador",
+    descripcion: "Acceso operativo recortado por sede/área asignada. No sincroniza con Jira ni administra usuarios.",
+    pantallas: ["panel-general", "gerencias", "areas", "reportes"],
+    acciones: {
+      "panel-general": ["ver"],
+      gerencias: ["ver"],
+      areas: ["ver"],
+      reportes: ["ver", "exportar"],
+    },
+    widgets: WIDGETS.map((w) => w.slug),
+  },
+];
+
+/**
+ * Siembra el catálogo de pantallas/acciones/widgets, el perfil "Administrador"
+ * (con acceso total, recalculado en cada corrida) y los perfiles puente
+ * Gerente/Coordinador. Todo idempotente: `ON CONFLICT DO NOTHING/UPDATE`.
+ */
+async function sembrarPerfiles(cliente: Client): Promise<void> {
+  await cliente.query("BEGIN");
+  try {
+    for (const p of PANTALLAS) {
+      await cliente.query(
+        `INSERT INTO auth.pantallas (slug, nombre, orden) VALUES ($1, $2, $3)
+         ON CONFLICT (slug) DO UPDATE SET nombre = EXCLUDED.nombre, orden = EXCLUDED.orden`,
+        [p.slug, p.nombre, p.orden],
+      );
+    }
+    for (const a of ACCIONES) {
+      await cliente.query(
+        `INSERT INTO auth.acciones (slug, nombre) VALUES ($1, $2)
+         ON CONFLICT (slug) DO UPDATE SET nombre = EXCLUDED.nombre`,
+        [a.slug, a.nombre],
+      );
+    }
+    for (const [pantalla, acciones] of Object.entries(PANTALLA_ACCION)) {
+      for (const accion of acciones) {
+        await cliente.query(
+          `INSERT INTO auth.pantalla_accion (pantalla_slug, accion_slug) VALUES ($1, $2)
+           ON CONFLICT DO NOTHING`,
+          [pantalla, accion],
+        );
+      }
+    }
+    for (const w of WIDGETS) {
+      await cliente.query(
+        `INSERT INTO auth.widgets (slug, pantalla_slug, nombre, orden) VALUES ($1, $2, $3, $4)
+         ON CONFLICT (slug) DO UPDATE
+           SET pantalla_slug = EXCLUDED.pantalla_slug, nombre = EXCLUDED.nombre, orden = EXCLUDED.orden`,
+        [w.slug, w.pantalla, w.nombre, w.orden],
+      );
+    }
+
+    // "Administrador": perfil de sistema con acceso TOTAL, recalculado cada
+    // vez — así una pantalla/acción/widget nuevo se le suma solo, sin tocar
+    // SQL a mano.
+    const admin = await cliente.query<{ id: string }>(
+      `INSERT INTO auth.perfiles (nombre, descripcion, activo, es_sistema)
+       VALUES ('Administrador', 'Acceso total al sistema: todas las pantallas, acciones y gráficos.', true, true)
+       ON CONFLICT (nombre) DO UPDATE SET es_sistema = true, activo = true
+       RETURNING id`,
+    );
+    const adminId = admin.rows[0].id;
+    await cliente.query(
+      `INSERT INTO auth.perfil_pantalla (perfil_id, pantalla_slug)
+       SELECT $1, slug FROM auth.pantallas ON CONFLICT DO NOTHING`,
+      [adminId],
+    );
+    await cliente.query(
+      `INSERT INTO auth.perfil_pantalla_accion (perfil_id, pantalla_slug, accion_slug)
+       SELECT $1, pantalla_slug, accion_slug FROM auth.pantalla_accion ON CONFLICT DO NOTHING`,
+      [adminId],
+    );
+    await cliente.query(
+      `INSERT INTO auth.perfil_widget (perfil_id, widget_slug)
+       SELECT $1, slug FROM auth.widgets ON CONFLICT DO NOTHING`,
+      [adminId],
+    );
+
+    for (const puente of PERFILES_PUENTE) {
+      const r = await cliente.query<{ id: string }>(
+        `INSERT INTO auth.perfiles (nombre, descripcion, activo, es_sistema)
+         VALUES ($1, $2, true, false)
+         ON CONFLICT (nombre) DO UPDATE SET descripcion = EXCLUDED.descripcion
+         RETURNING id`,
+        [puente.nombre, puente.descripcion],
+      );
+      const id = r.rows[0].id;
+      for (const slug of puente.pantallas) {
+        await cliente.query(
+          `INSERT INTO auth.perfil_pantalla (perfil_id, pantalla_slug) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+          [id, slug],
+        );
+      }
+      for (const [pantalla, acciones] of Object.entries(puente.acciones)) {
+        for (const accion of acciones) {
+          await cliente.query(
+            `INSERT INTO auth.perfil_pantalla_accion (perfil_id, pantalla_slug, accion_slug)
+             VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+            [id, pantalla, accion],
+          );
+        }
+      }
+      for (const slug of puente.widgets) {
+        await cliente.query(
+          `INSERT INTO auth.perfil_widget (perfil_id, widget_slug) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+          [id, slug],
+        );
+      }
+    }
+
+    await cliente.query("COMMIT");
+  } catch (e) {
+    await cliente.query("ROLLBACK").catch(() => {});
+    throw e;
+  }
+}
+
+/**
+ * A todo usuario existente que NO tenga ninguna fila en `usuario_perfil`, le
+ * asigna el perfil puente que corresponde a su `rol` actual — para que nadie
+ * quede sin acceso el día que Fase 4 deje de leer `rol`. Segura de re-correr:
+ * un usuario que ya tiene perfiles asignados (por el CRUD de Fase 2, por
+ * ejemplo) no se toca.
+ */
+async function migrarUsuariosSinPerfil(cliente: Client): Promise<void> {
+  const usuarios = await cliente.query<{ id: string; email: string; rol: string }>(
+    `SELECT u.id, u.email, u.rol
+     FROM auth.usuarios u
+     WHERE NOT EXISTS (SELECT 1 FROM auth.usuario_perfil up WHERE up.usuario_id = u.id)`,
+  );
+
+  let migrados = 0;
+  for (const u of usuarios.rows) {
+    const nombrePerfil = PERFIL_POR_ROL[u.rol];
+    if (!nombrePerfil) {
+      console.warn(`  ⚠ Usuario ${u.email} tiene rol desconocido "${u.rol}" — no se le asignó perfil.`);
+      continue;
+    }
+    const perfil = await cliente.query<{ id: string }>(`SELECT id FROM auth.perfiles WHERE nombre = $1`, [
+      nombrePerfil,
+    ]);
+    if (!perfil.rows[0]) continue;
+
+    await cliente.query(
+      `INSERT INTO auth.usuario_perfil (usuario_id, perfil_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [u.id, perfil.rows[0].id],
+    );
+    migrados++;
+  }
+
+  console.log(
+    `→ Perfiles migrados desde \`rol\`: ${migrados} usuario(s) de ${usuarios.rows.length} sin perfil previo.`,
+  );
+}
 
 async function main() {
   const cliente = await conectar();
@@ -81,6 +275,14 @@ async function main() {
       `→ Catálogo sembrado: ${GERENCIAS.length} gerencias · ${AREAS.length} áreas · ` +
         `${SEDES.length} sedes · ${PROYECTOS.length} proyectos`,
     );
+
+    await sembrarPerfiles(cliente);
+    console.log(
+      `→ Perfiles sembrados: Administrador (acceso total) · ${PERFILES_PUENTE.map((p) => p.nombre).join(" · ")}`,
+    );
+
+    await migrarUsuariosSinPerfil(cliente);
+
     console.log("\n✅ Listo. Siguiente paso: crear el usuario administrador");
     console.log('   npm run db:seed -- --admin-email tu.usuario --admin-password "..."');
   } catch (e) {

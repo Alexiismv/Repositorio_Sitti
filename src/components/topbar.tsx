@@ -49,9 +49,14 @@ export function Topbar({
 
   const enlaces = [
     ...ENLACES_BASE,
-    ...(puedeVerPersonas(sesion) ? [ENLACE_PERSONAS] : []),
-    ...(sesion.rol === "administrador" ? [{ href: "/admin/usuarios", label: "Usuarios" }] : []),
     ENLACE_REPORTES,
+    ...(puedeVerPersonas(sesion) ? [ENLACE_PERSONAS] : []),
+    ...(sesion.rol === "administrador"
+      ? [
+          { href: "/admin/usuarios", label: "Usuarios" },
+          { href: "/admin/perfiles", label: "Perfiles" },
+        ]
+      : []),
   ];
 
   async function salir() {
@@ -107,9 +112,14 @@ export function Topbar({
             <div className="correo">{sesion.email}</div>
           </div>
           {sesion.rol === "administrador" && (
-            <Link href="/admin/usuarios" onClick={() => setAbierto(false)}>
-              Gestión de usuarios
-            </Link>
+            <>
+              <Link href="/admin/usuarios" onClick={() => setAbierto(false)}>
+                Gestión de usuarios
+              </Link>
+              <Link href="/admin/perfiles" onClick={() => setAbierto(false)}>
+                Gestión de perfiles
+              </Link>
+            </>
           )}
           <Link href="/cambiar-password" onClick={() => setAbierto(false)}>
             Cambiar mi contraseña

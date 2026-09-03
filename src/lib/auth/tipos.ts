@@ -54,6 +54,33 @@ export interface Sesion {
   verPersonas: boolean;
 }
 
+/**
+ * Perfil (rol) del módulo "Gestión de perfiles" — spec Alexis sep 2026.
+ *
+ * Reemplaza al catálogo estático de "Cargo": el campo Cargo del formulario de
+ * usuario consume esta misma tabla (`auth.perfiles`) como dropdown dinámico.
+ * Un usuario puede tener uno o varios perfiles asignados; sus permisos
+ * efectivos son la UNIÓN de los permisos de todos sus perfiles.
+ */
+export interface Perfil {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  activo: boolean;
+  /** true solo para "Administrador": no editable ni eliminable desde la UI. */
+  esSistema: boolean;
+  /** Cuántos usuarios lo tienen asignado — para el listado (spec 3.2). */
+  cantidadUsuarios?: number;
+}
+
+/** Detalle completo de un perfil: sus pantallas, acciones por pantalla y widgets. */
+export interface PerfilDetalle extends Perfil {
+  pantallas: string[];
+  /** pantalla_slug -> [accion_slug, ...] */
+  acciones: Record<string, string[]>;
+  widgets: string[];
+}
+
 /** Iniciales para el avatar del topbar. */
 export function iniciales(nombre: string): string {
   return nombre
