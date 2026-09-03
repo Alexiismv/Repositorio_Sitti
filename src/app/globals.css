@@ -803,6 +803,12 @@ body {
 .filtro-checklist-item:hover {
   background: var(--bg);
 }
+/* Espacio explícito al inicio de CADA nombre de área, además del gap del
+   contenedor flex — mismo valor en todos los ítems del checklist, desde
+   "Todas" hasta el último ("Subsecretaría Técnica"). */
+.filtro-checklist-nombre {
+  margin-left: 10px;
+}
 /* Checkbox propio, no el nativo del navegador: el nativo se renderiza muy
    chico y pegado al texto sin importar cuánto gap se le dé alrededor. */
 .filtro-checklist-item input {

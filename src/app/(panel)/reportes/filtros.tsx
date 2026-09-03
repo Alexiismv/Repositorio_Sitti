@@ -127,7 +127,7 @@ export function FiltrosReporte({ personas }: { personas: string[] }) {
             <div className="filtro-checklist filtro-checklist-flotante" role="listbox">
               <label className="filtro-checklist-item">
                 <input type="checkbox" checked={areasSel.length === 0} onChange={() => setAreasSel([])} />
-                Todas
+                <span className="filtro-checklist-nombre">Todas</span>
               </label>
               {areasDisponibles.map((a) => (
                 <label key={a.slug} className="filtro-checklist-item">
@@ -136,7 +136,7 @@ export function FiltrosReporte({ personas }: { personas: string[] }) {
                     checked={areasSel.includes(a.slug)}
                     onChange={() => alternarArea(a.slug)}
                   />
-                  {a.nombre}
+                  <span className="filtro-checklist-nombre">{a.nombre}</span>
                 </label>
               ))}
             </div>
