@@ -743,6 +743,107 @@ body {
   border-color: var(--navy);
   box-shadow: 0 0 0 3px rgba(51, 53, 126, 0.1);
 }
+.filtro-campo-area {
+  position: relative;
+}
+.filtro-desplegable-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--card);
+  cursor: pointer;
+  text-align: left;
+}
+.filtro-desplegable-trigger:hover {
+  border-color: var(--navy);
+}
+.filtro-desplegable-trigger[aria-expanded="true"] {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(51, 53, 126, 0.1);
+}
+.filtro-desplegable-flecha {
+  color: var(--ink-soft);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.filtro-checklist {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  padding: 4px 2px;
+}
+.filtro-checklist-flotante {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  box-shadow: 0 10px 28px rgba(15, 17, 48, 0.22);
+}
+.filtro-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 8px;
+  font-size: 11px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.filtro-checklist-item:hover {
+  background: var(--bg);
+}
+/* Espacio explícito al inicio de CADA nombre de área, además del gap del
+   contenedor flex — mismo valor en todos los ítems del checklist, desde
+   "Todas" hasta el último ("Subsecretaría Técnica"). */
+.filtro-checklist-nombre {
+  margin-left: 10px;
+}
+/* Checkbox propio, no el nativo del navegador: el nativo se renderiza muy
+   chico y pegado al texto sin importar cuánto gap se le dé alrededor. */
+.filtro-checklist-item input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: var(--line);
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.filtro-checklist-item input:checked {
+  background: var(--navy);
+}
+.filtro-checklist-item input:checked::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 4px;
+  width: 6px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.filtro-checklist-item input:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
 .filtros-pie {
   display: flex;
   align-items: center;
@@ -936,6 +1037,15 @@ body {
   background: var(--card);
   color: var(--ink);
   color-scheme: dark;
+}
+/* La regla de arriba tiene más especificidad que `.filtro-checklist-item
+   input` (por el atributo `[data-tema]`) y le ganaba el fondo, dejando el
+   checkbox como un simple contorno en vez de un cuadro relleno. */
+[data-tema="oscuro"] .filtro-checklist-item input {
+  background: var(--line);
+}
+[data-tema="oscuro"] .filtro-checklist-item input:checked {
+  background: var(--navy);
 }
 
 /* ---- Botón de tema en el topbar ---- */

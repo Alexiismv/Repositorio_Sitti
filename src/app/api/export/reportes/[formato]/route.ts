@@ -26,7 +26,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ formato:
   }
 
   const url = new URL(req.url);
-  const sp = Object.fromEntries(url.searchParams.entries());
+  // `Object.fromEntries(url.searchParams.entries())` se queda solo con el
+  // último valor de cada clave repetida (p. ej. varios `?area=`) — hay que
+  // agruparlos en array para que el archivo exportado filtre igual que la
+  // pantalla que lo generó.
+  const sp: Record<string, string | string[]> = {};
+  for (const clave of new Set(url.searchParams.keys())) {
+    const valores = url.searchParams.getAll(clave);
+    sp[clave] = valores.length > 1 ? valores : valores[0];
+  }
   const filtros = filtrosDesdeSearchParams(sp);
   const tickets = await obtenerTickets(sesion, filtros);
 

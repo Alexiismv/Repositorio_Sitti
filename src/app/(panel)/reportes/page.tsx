@@ -94,6 +94,15 @@ export default async function ReportesPage({ searchParams }: { searchParams: Par
         ]}
       />
 
+      <SectionLabel>Detalle de tickets</SectionLabel>
+
+      <div className="panel">
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+          <BotonesExportar searchParams={sp} />
+        </div>
+        <TablaTickets tickets={tickets} limite={20} mostrarArea mostrarSla={false} />
+      </div>
+
       {r.total > 0 && (
         <>
           <SectionLabel>Cómo se reparte</SectionLabel>
@@ -157,15 +166,6 @@ export default async function ReportesPage({ searchParams }: { searchParams: Par
           </div>
         </>
       )}
-
-      <SectionLabel>Detalle de tickets</SectionLabel>
-
-      <div className="panel">
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
-          <BotonesExportar searchParams={sp} />
-        </div>
-        <TablaTickets tickets={tickets} limite={60} mostrarArea />
-      </div>
     </>
   );
 }

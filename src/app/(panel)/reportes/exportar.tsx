@@ -9,8 +9,11 @@ import type { ReportesSearchParams } from "@/lib/reportes-filtros";
 export function BotonesExportar({ searchParams }: { searchParams: ReportesSearchParams }) {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(searchParams)) {
-    const val = Array.isArray(v) ? v[0] : v;
-    if (val) qs.set(k, val);
+    // Área permite varias a la vez: si se quedara solo con v[0] (como antes),
+    // el Excel/PDF exportado filtraría distinto de lo que se ve en pantalla.
+    for (const val of Array.isArray(v) ? v : [v]) {
+      if (val) qs.append(k, val);
+    }
   }
   const query = qs.toString();
 
