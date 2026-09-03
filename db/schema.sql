@@ -172,6 +172,30 @@ CREATE TABLE IF NOT EXISTS auth.usuarios (
 -- creada -> no-op).
 ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS ver_personas boolean NOT NULL DEFAULT false;
 
+-- Módulo "Administración de usuarios" + "Gestión de perfiles" (spec Alexis,
+-- sep 2026). Campos nuevos de la ficha de usuario — sección 2.1/2.2 de la
+-- spec. `rol` NO se toca todavía: sigue siendo lo que usan login/middleware
+-- hasta que el sistema de perfiles (más abajo) lo reemplace por completo.
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS apellidos text;
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS tipo_documento text;   -- 'CC'|'CE'|'TI'|'PA'|'NIT'
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS numero_documento text;
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS sexo text;            -- 'M'|'F'|'Otro'
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS celular text;         -- opcional, sin validación
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS control_ip boolean NOT NULL DEFAULT false;
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS tipo_usuario text NOT NULL DEFAULT 'interno_sitti'
+  CHECK (tipo_usuario IN ('interno_sitti', 'externo_smm', 'externo_esu'));
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS sede_slug text REFERENCES catalogo.sedes(slug);
+-- true = la próxima vez que este usuario inicie sesión, antes de dejarlo
+-- entrar hay que obligarlo a definir una contraseña nueva (flujo de
+-- restablecimiento del administrador, ver `/cambio-password-obligatorio`).
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS debe_cambiar_password boolean NOT NULL DEFAULT false;
+ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS actualizado_en timestamptz NOT NULL DEFAULT now();
+
+-- Búsqueda de la sección 1.1: "Nombre funcionario o Usuario acceso o Número
+-- de documento" en un solo campo de texto.
+CREATE INDEX IF NOT EXISTS ix_usuarios_busqueda
+  ON auth.usuarios (lower(nombre), lower(coalesce(apellidos, '')), lower(email), numero_documento);
+
 -- Permisos: cada fila es "este usuario ve esta área DENTRO de esta sede".
 --
 -- Es una tupla y no dos listas sueltas (usuario_area + usuario_sede) porque
@@ -187,6 +211,94 @@ CREATE TABLE IF NOT EXISTS auth.usuario_permiso (
   area_slug   text NOT NULL,   -- slug de catalogo.areas, o '*'
   PRIMARY KEY (usuario_id, sede_slug, area_slug)
 );
+
+-- ─────────────────────────────────────────────────────────────
+-- PERFILES — roles con permisos granulares por pantalla/acción/gráfico
+-- (módulo "Gestión de perfiles", spec Alexis sep 2026).
+--
+-- Eje ORTOGONAL a `usuario_permiso` de arriba: `usuario_permiso` decide qué
+-- DATOS ve un usuario (sede/área); esto de acá decide qué PANTALLAS, BOTONES
+-- y GRÁFICOS ve. No se fusionan a propósito — mezclarlos habría obligado a
+-- que cada perfil cargara también con la combinatoria de sede/área, cuando
+-- son dos preguntas distintas ("qué puede hacer" vs "sobre qué datos").
+--
+-- El catálogo de pantallas/acciones/widgets vive como fuente de verdad en
+-- `src/lib/auth/modulos.ts` (mismo patrón que `catalogo.ts` para
+-- gerencias/áreas/sedes) y se siembra acá vía `scripts/apply-schema.ts`.
+-- ─────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS auth.pantallas (
+  slug   text PRIMARY KEY,
+  nombre text NOT NULL,
+  orden  integer NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS auth.acciones (
+  slug   text PRIMARY KEY,
+  nombre text NOT NULL
+);
+
+-- Qué acciones son válidas dentro de cada pantalla (controla los checkboxes
+-- que se ofrecen en el formulario de perfil, sección 3.3.3 de la spec). No
+-- guarda permisos en sí — eso vive en `perfil_pantalla_accion`.
+CREATE TABLE IF NOT EXISTS auth.pantalla_accion (
+  pantalla_slug text NOT NULL REFERENCES auth.pantallas(slug) ON DELETE CASCADE,
+  accion_slug   text NOT NULL REFERENCES auth.acciones(slug)  ON DELETE CASCADE,
+  PRIMARY KEY (pantalla_slug, accion_slug)
+);
+
+CREATE TABLE IF NOT EXISTS auth.widgets (
+  slug          text PRIMARY KEY,
+  pantalla_slug text NOT NULL REFERENCES auth.pantallas(slug) ON DELETE CASCADE,
+  nombre        text NOT NULL,
+  orden         integer NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS auth.perfiles (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nombre         text NOT NULL UNIQUE,
+  descripcion    text,
+  activo         boolean NOT NULL DEFAULT true,
+  -- true SOLO para "Administrador": no se puede editar ni eliminar desde la
+  -- UI (sección 3.5 de la spec: debe tener acceso total siempre).
+  es_sistema     boolean NOT NULL DEFAULT false,
+  creado_en      timestamptz NOT NULL DEFAULT now(),
+  actualizado_en timestamptz NOT NULL DEFAULT now()
+);
+
+-- Pantallas visibles para el perfil.
+CREATE TABLE IF NOT EXISTS auth.perfil_pantalla (
+  perfil_id     uuid NOT NULL REFERENCES auth.perfiles(id)    ON DELETE CASCADE,
+  pantalla_slug text NOT NULL REFERENCES auth.pantallas(slug) ON DELETE CASCADE,
+  PRIMARY KEY (perfil_id, pantalla_slug)
+);
+
+-- Acciones concretas habilitadas por pantalla, para el perfil.
+CREATE TABLE IF NOT EXISTS auth.perfil_pantalla_accion (
+  perfil_id     uuid NOT NULL REFERENCES auth.perfiles(id) ON DELETE CASCADE,
+  pantalla_slug text NOT NULL,
+  accion_slug   text NOT NULL,
+  PRIMARY KEY (perfil_id, pantalla_slug, accion_slug),
+  FOREIGN KEY (pantalla_slug, accion_slug)
+    REFERENCES auth.pantalla_accion (pantalla_slug, accion_slug) ON DELETE CASCADE
+);
+
+-- Widgets/gráficos visibles para el perfil.
+CREATE TABLE IF NOT EXISTS auth.perfil_widget (
+  perfil_id   uuid NOT NULL REFERENCES auth.perfiles(id) ON DELETE CASCADE,
+  widget_slug text NOT NULL REFERENCES auth.widgets(slug) ON DELETE CASCADE,
+  PRIMARY KEY (perfil_id, widget_slug)
+);
+
+-- Relación muchos-a-muchos usuario↔perfil. "Cargo" (formulario de usuario) y
+-- "Perfiles" (columna de la tabla de usuarios) son la MISMA asignación,
+-- mostrada en dos lugares del UI — no hay perfil "principal" vs "secundario".
+CREATE TABLE IF NOT EXISTS auth.usuario_perfil (
+  usuario_id uuid NOT NULL REFERENCES auth.usuarios(id) ON DELETE CASCADE,
+  perfil_id  uuid NOT NULL REFERENCES auth.perfiles(id) ON DELETE CASCADE,
+  PRIMARY KEY (usuario_id, perfil_id)
+);
+CREATE INDEX IF NOT EXISTS ix_usuario_perfil_perfil ON auth.usuario_perfil (perfil_id);
 
 -- Sesiones. El token va en cookie httpOnly, pero se registra acá para poder
 -- REVOCAR un acceso sin esperar a que expire solo (requisito de la sección 3).

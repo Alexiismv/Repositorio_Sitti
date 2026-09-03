@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { Topbar } from "@/components/topbar";
+import { ToastProvider } from "@/components/toast-provider";
 import { leerSesion } from "@/lib/auth/sesion";
 import { DEMO_MODE, ultimaSincronizacion } from "@/lib/data/provider";
 import { formatearFechaCorta } from "@/lib/formato";
@@ -21,7 +22,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const sync = await ultimaSincronizacion();
 
   return (
-    <>
+    <ToastProvider>
       <Topbar sesion={sesion} ultimaSync={formatearFechaCorta(sync.fecha)} />
       <main className="sh-main">
         {DEMO_MODE && (
@@ -37,6 +38,6 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         )}
         {children}
       </main>
-    </>
+    </ToastProvider>
   );
 }
