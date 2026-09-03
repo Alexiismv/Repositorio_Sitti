@@ -88,14 +88,14 @@ export default async function PanelGeneral() {
               alerta: r.estancados > 0,
             },
             {
-              label: "Primera respuesta ticket",
+              label: "Tiempo de primera respuesta",
               valor: `${r.ttfrPromedioHoras.toLocaleString("es-CO")}h`,
               cap: `Meta: ${META_TTFR_HORAS}h · toda prioridad`,
               color: r.cumplimientoTtfr >= 90 ? "#3FA9AC" : "#F7A82C",
               alerta: r.cumplimientoTtfr < 80,
             },
             {
-              label: "Tiempo resolución ticket",
+              label: "Tiempo final de resolución",
               valor: `${r.ttrPromedioHoras.toLocaleString("es-CO")}h`,
               color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C",
               alerta: r.cumplimientoTtr < 80,
