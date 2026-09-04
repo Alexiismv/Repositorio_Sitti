@@ -51,7 +51,7 @@ export default async function PanelGeneral() {
           <span className="dot" /> Panel de Gestión
         </div>
         <h1>Panel General de Gestión de Tickets</h1>
-        <p>
+        <p className="sh-page-head-ancho">
           {alcanceTotal ? (
             <>
               Vista consolidada de toda la operación SITTI a nivel de solicitudes en Jira.
