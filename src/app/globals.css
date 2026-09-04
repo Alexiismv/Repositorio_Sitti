@@ -195,13 +195,13 @@ body {
 
 /*
  * Resumen general 2026 del Panel General: label del KPI más grande que el
- * base (12px). 24px (el doble exacto) partía "Primera respuesta ticket" y
- * "Tiempo resolución ticket" en dos líneas dentro de la tarjeta de 4
- * columnas — verificado en vivo: dejan de partirse a los 21.5px. Se deja en
- * 20px para tener margen y que no dependa de un redondeo de píxel exacto.
+ * base (12px). Los labels se alargaron ("Tiempo de primera respuesta",
+ * "Tiempo final de resolución") y a 20px "Tiempo de primera respuesta"
+ * volvía a partirse/recortarse en la tarjeta de 4 columnas — verificado en
+ * vivo. Baja a 18px, con margen para no depender de un redondeo exacto.
  */
 .resumen-general .kpi .label {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 /* ─────────────── Controles ─────────────── */
@@ -972,15 +972,20 @@ body {
 
 /* ---- Lugares donde el rgba() fijo no sobrevive al cambio de tema ---- */
 
-[data-tema="oscuro"] .sh-link.activo {
+[data-tema="oscuro"] .sh-link.activo,
+[data-tema="oscuro"] .sh-nav-dropdown-menu a.activo {
   background: var(--nav-activo-bg);
 }
 [data-tema="oscuro"] .sh-link:hover,
 [data-tema="oscuro"] .sh-user:hover,
 [data-tema="oscuro"] .sh-menu button:hover,
 [data-tema="oscuro"] .sh-menu a:hover,
+[data-tema="oscuro"] .sh-nav-dropdown-menu a:hover,
 [data-tema="oscuro"] .tabla tbody tr:hover {
   background: var(--hover-suave);
+}
+[data-tema="oscuro"] .sh-nav-dropdown-menu {
+  box-shadow: 0 12px 32px var(--sombra-menu);
 }
 [data-tema="oscuro"] .tn-tag {
   background: var(--tag-bg);
