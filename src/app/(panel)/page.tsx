@@ -54,10 +54,10 @@ export default async function PanelGeneral() {
         <p>
           {alcanceTotal ? (
             <>
-              Vista consolidada 2026 de toda la operación SITTI.
+              Vista consolidada de toda la operación SITTI a nivel de solicitudes en Jira.
               <br />
-              Pasa el mouse sobre una sede del mapa para ver su detalle, o entra a una gerencia
-              para bajar al área y al ticket.
+              Desliza el mouse por el mapa seleccionando una sede para ver su detalle y el impacto a
+              nivel de operación en tickets.
             </>
           ) : (
             <>
