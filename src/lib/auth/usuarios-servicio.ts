@@ -237,7 +237,11 @@ function rolDesdePerfiles(nombresPerfiles: string[]): Rol {
   return "coordinador";
 }
 
-async function sincronizarRolConPerfiles(cliente: PoolClient, usuarioId: string): Promise<void> {
+async function sincronizarRolConPerfiles(
+  cliente: PoolClient,
+  usuarioId: string,
+  sedeSlug: string | null,
+): Promise<void> {
   const r = await cliente.query<{ nombre: string }>(
     `SELECT pf.nombre FROM auth.usuario_perfil up JOIN auth.perfiles pf ON pf.id = up.perfil_id
      WHERE up.usuario_id = $1`,
@@ -264,12 +268,40 @@ async function sincronizarRolConPerfiles(cliente: PoolClient, usuarioId: string)
       [usuarioId],
     );
   }
+
+  /*
+   * Coordinador: el formulario de usuario solo ofrece UNA sede (todas sus
+   * áreas, no un subconjunto), así que ese es el único permiso de datos que
+   * puede salir de acá — se guarda como (sede, '*'). Sin este bloque, un
+   * coordinador recién creado se queda con `usuario_permiso` vacío: entra
+   * bien (sus pantallas/acciones sí salen de los perfiles), pero
+   * `puedeVer()` le niega cada ticket y todo el panel se ve en cero — bug
+   * confirmado el 4 sep 2026 (Katherine Martínez Cano). Se reemplaza
+   * cualquier fila de sede puntual (no la comodín) por la sede actual en
+   * cada guardado, para que un cambio de sede en el formulario mueva
+   * también el permiso. Si más adelante se agrega una pantalla de permisos
+   * más fina (áreas puntuales dentro de la sede), esta función deja de ser
+   * la única fuente de verdad y hay que revisarla.
+   */
+  if (rol === "coordinador") {
+    await cliente.query(`DELETE FROM auth.usuario_permiso WHERE usuario_id = $1 AND sede_slug <> '*'`, [
+      usuarioId,
+    ]);
+    if (sedeSlug) {
+      await cliente.query(
+        `INSERT INTO auth.usuario_permiso (usuario_id, sede_slug, area_slug) VALUES ($1, $2, '*')
+         ON CONFLICT DO NOTHING`,
+        [usuarioId, sedeSlug],
+      );
+    }
+  }
 }
 
 async function reemplazarPerfilesDeUsuario(
   cliente: PoolClient,
   usuarioId: string,
   perfilIds: string[],
+  sedeSlug: string | null,
 ): Promise<void> {
   await cliente.query(`DELETE FROM auth.usuario_perfil WHERE usuario_id = $1`, [usuarioId]);
   for (const perfilId of perfilIds) {
@@ -278,7 +310,7 @@ async function reemplazarPerfilesDeUsuario(
       [usuarioId, perfilId],
     );
   }
-  await sincronizarRolConPerfiles(cliente, usuarioId);
+  await sincronizarRolConPerfiles(cliente, usuarioId, sedeSlug);
 }
 
 /** Todo usuario nuevo nace con la contraseña por defecto y debe cambiarla al primer login (decisión 6 del plan). */
@@ -317,7 +349,7 @@ export async function crearUsuario(datos: DatosUsuario): Promise<string> {
         ],
       );
       const id = r.rows[0].id;
-      await reemplazarPerfilesDeUsuario(cliente, id, datos.perfiles);
+      await reemplazarPerfilesDeUsuario(cliente, id, datos.perfiles, datos.sedeSlug);
       await cliente.query("COMMIT");
       return id;
     } catch (e) {
@@ -361,7 +393,7 @@ export async function actualizarUsuario(id: string, datos: DatosUsuario): Promis
           id,
         ],
       );
-      await reemplazarPerfilesDeUsuario(cliente, id, datos.perfiles);
+      await reemplazarPerfilesDeUsuario(cliente, id, datos.perfiles, datos.sedeSlug);
       await cliente.query("COMMIT");
     } catch (e) {
       await cliente.query("ROLLBACK").catch(() => {});
@@ -375,10 +407,16 @@ export async function asignarPerfiles(usuarioId: string, perfilIds: string[]): P
   return conCliente(async (cliente) => {
     await cliente.query("BEGIN");
     try {
-      const existe = await cliente.query(`SELECT 1 FROM auth.usuarios WHERE id = $1`, [usuarioId]);
+      const existe = await cliente.query<{ sede_slug: string | null }>(
+        `SELECT sede_slug FROM auth.usuarios WHERE id = $1`,
+        [usuarioId],
+      );
       if (!existe.rows[0]) throw new ErrorUsuario("El usuario no existe.");
 
-      await reemplazarPerfilesDeUsuario(cliente, usuarioId, perfilIds);
+      // Este atajo no toca la sede: se lee la ya guardada para que
+      // sincronizarRolConPerfiles() pueda armar el permiso de Coordinador
+      // igual que en crearUsuario/actualizarUsuario.
+      await reemplazarPerfilesDeUsuario(cliente, usuarioId, perfilIds, existe.rows[0].sede_slug);
       await cliente.query("COMMIT");
     } catch (e) {
       await cliente.query("ROLLBACK").catch(() => {});
