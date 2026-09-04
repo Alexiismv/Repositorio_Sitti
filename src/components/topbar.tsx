@@ -89,11 +89,13 @@ export function Topbar({
       </Link>
 
       <nav className="sh-nav" aria-label="Navegación principal">
-        {enlaces.map((e) => (
-          <Link key={e.href} href={e.href} className={`sh-link ${activo(e.href) ? "activo" : ""}`}>
-            {e.label}
-          </Link>
-        ))}
+        <div className="sh-nav-scroll">
+          {enlaces.map((e) => (
+            <Link key={e.href} href={e.href} className={`sh-link ${activo(e.href) ? "activo" : ""}`}>
+              {e.label}
+            </Link>
+          ))}
+        </div>
 
         {enlacesControlAcceso.length > 0 && (
           <div
