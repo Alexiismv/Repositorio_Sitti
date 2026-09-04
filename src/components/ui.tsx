@@ -19,13 +19,15 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export interface Kpi {
   label: string;
-  valor: string;
+  valor?: string;
   cap?: string;
   /** Si viene, el cap se muestra como enlace hacia ahí. */
   capHref?: string;
   color?: string;
   /** Pinta el valor en rojo — reservado para métricas fuera de meta. */
   alerta?: boolean;
+  /** Si viene, reemplaza el valor/cap por completo — para un KPI con desglose propio en vez de un número único. */
+  contenido?: React.ReactNode;
 }
 
 /**
@@ -53,20 +55,24 @@ export function KpiStrip({ kpis }: { kpis: Kpi[] }) {
           style={{ ["--accent" as string]: k.color ?? "var(--navy)" }}
         >
           <div className="label">{k.label}</div>
-          <div
-            className={`val${k.valor.length > 9 ? " sm" : ""}`}
-            style={k.alerta ? { color: "var(--red)" } : undefined}
-          >
-            {k.valor}
-          </div>
-          {k.cap &&
-            (k.capHref ? (
-              <Link href={k.capHref} className="cap cap-link">
-                {k.cap}
-              </Link>
-            ) : (
-              <div className="cap">{k.cap}</div>
-            ))}
+          {k.contenido ?? (
+            <>
+              <div
+                className={`val${(k.valor?.length ?? 0) > 9 ? " sm" : ""}`}
+                style={k.alerta ? { color: "var(--red)" } : undefined}
+              >
+                {k.valor}
+              </div>
+              {k.cap &&
+                (k.capHref ? (
+                  <Link href={k.capHref} className="cap cap-link">
+                    {k.cap}
+                  </Link>
+                ) : (
+                  <div className="cap">{k.cap}</div>
+                ))}
+            </>
+          )}
         </div>
       ))}
     </div>

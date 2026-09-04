@@ -96,9 +96,27 @@ export default async function PanelGeneral() {
             },
             {
               label: "Tiempo final de resolución",
-              valor: `${r.ttrPromedioHoras.toLocaleString("es-CO")}h`,
               color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C",
-              alerta: r.cumplimientoTtr < 80,
+              contenido: (
+                <div className="kpi-ttr-trio">
+                  {/* Baja, Media, Alta — cumplimientoTtrPorPrioridad() ya devuelve
+                      Alta, Media, Baja, así que basta con invertirla. */}
+                  {cumplimientoTtrPorPrioridad(tickets)
+                    .slice()
+                    .reverse()
+                    .map((p) => (
+                      <div key={p.prioridad} className="kpi-ttr-item">
+                        <div
+                          className="kpi-ttr-valor"
+                          style={{ color: p.promedioHoras > p.metaHoras ? "var(--red)" : "var(--teal)" }}
+                        >
+                          {p.promedioHoras.toLocaleString("es-CO")}h
+                        </div>
+                        <div className="kpi-ttr-nombre">{p.prioridad}</div>
+                      </div>
+                    ))}
+                </div>
+              ),
             },
           ]}
         />
