@@ -5,14 +5,10 @@ import { requiereAdmin } from "@/lib/auth/requiere-admin";
 import { registrarAuditoria, registrarError } from "@/lib/logs";
 import { esquemaPerfil } from "@/lib/validacion/perfil";
 
-/**
- * Gestión de perfiles (spec 3.2/3.3). Gate interino por `rol === "administrador"`
- * vía `requiereAdmin()`: el sistema de perfiles todavía no se usa para
- * autorización de sí mismo (eso es Fase 4).
- */
+/** Gestión de perfiles (spec 3.2/3.3). Gate por pantalla `admin-perfiles`. */
 
 export async function GET() {
-  const resultado = await requiereAdmin();
+  const resultado = await requiereAdmin("admin-perfiles");
   if (resultado instanceof NextResponse) return resultado;
 
   const perfiles = await listarPerfiles();
@@ -20,7 +16,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const resultado = await requiereAdmin();
+  const resultado = await requiereAdmin("admin-perfiles", "crear");
   if (resultado instanceof NextResponse) return resultado;
   const sesion = resultado;
 

@@ -45,8 +45,9 @@ export function FormularioLogin({ cuentasDemo }: { cuentasDemo?: CuentaDemo[] })
       body: JSON.stringify({ usuario, password }),
     });
 
+    const cuerpo = await res.json().catch(() => ({}));
+
     if (!res.ok) {
-      const cuerpo = await res.json().catch(() => ({}));
       setError(cuerpo.error ?? "No pudimos iniciar sesión. Intenta de nuevo.");
       return;
     }
@@ -57,8 +58,12 @@ export function FormularioLogin({ cuentasDemo }: { cuentasDemo?: CuentaDemo[] })
     // Cache anterior (el de "sin sesión") y dejar al usuario mirando el login
     // aunque ya esté autenticado. Un login ocurre una vez cada 2 horas: la
     // recarga completa no cuesta nada y elimina toda esa clase de bug.
+    //
+    // `cambioPendiente`: el usuario tiene la contraseña por defecto ("admin",
+    // fijada por un reset del administrador) — recibió una sesión limitada,
+    // no la completa, y debe definir una contraseña nueva antes de entrar.
     iniciarEnvio(() => {
-      window.location.assign("/");
+      window.location.assign(cuerpo.cambioPendiente ? "/cambio-password-obligatorio" : "/");
     });
   }
 

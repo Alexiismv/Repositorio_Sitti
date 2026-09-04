@@ -47,6 +47,57 @@
   font-weight: 600;
 }
 
+.sh-nav-dropdown {
+  position: relative;
+}
+.sh-nav-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+.sh-nav-caret {
+  font-size: 9px;
+  line-height: 1;
+  color: var(--ink-soft);
+  transition: transform 0.15s ease;
+}
+.sh-nav-dropdown.abierto .sh-nav-caret {
+  transform: rotate(180deg);
+}
+.sh-nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(25, 27, 43, 0.12);
+  padding: 6px;
+  min-width: 180px;
+  z-index: 40;
+}
+.sh-nav-dropdown-menu a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+}
+.sh-nav-dropdown-menu a:hover {
+  background: var(--bg);
+}
+.sh-nav-dropdown-menu a.activo {
+  background: rgba(51, 53, 126, 0.08);
+  color: var(--navy);
+  font-weight: 600;
+}
+
 .sh-sync {
   display: flex;
   align-items: center;
@@ -168,6 +219,14 @@
   max-width: 640px;
   line-height: 1.55;
   margin: 0;
+}
+/* Panel General: el texto de "Desliza el mouse..." necesita más ancho que
+   el máximo de 640px de arriba para no partirse en dos líneas — escopeado
+   a este párrafo para no ensanchar el resto de las cabeceras de página.
+   `.sh-page-head p` de arriba pesa elemento+clase; hace falta igualar esa
+   especificidad para que gane. */
+.sh-page-head p.sh-page-head-ancho {
+  max-width: 850px;
 }
 
 .sh-breadcrumb {

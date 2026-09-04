@@ -2,7 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 
 import { leerSesion } from "@/lib/auth/sesion";
-import { puedeVerPersonas } from "@/lib/auth/tipos";
+import { puedeUsarAccion } from "@/lib/auth/tipos";
 import { DIAS_ESTANCADO_DEFAULT } from "@/lib/catalogo";
 import { obtenerTickets } from "@/lib/data/provider";
 import { personasAWorkbook } from "@/lib/export/excel";
@@ -25,7 +25,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ formato:
   if (!sesion) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   }
-  if (!puedeVerPersonas(sesion)) {
+  if (!puedeUsarAccion(sesion, "personas", "exportar")) {
     return NextResponse.json({ error: "No tienes acceso a esta pestaña." }, { status: 403 });
   }
 

@@ -51,13 +51,13 @@ export default async function PanelGeneral() {
           <span className="dot" /> Panel de Gestión
         </div>
         <h1>Panel General de Gestión de Tickets</h1>
-        <p>
+        <p className="sh-page-head-ancho">
           {alcanceTotal ? (
             <>
-              Vista consolidada 2026 de toda la operación SITTI.
+              Vista consolidada de toda la operación SITTI a nivel de solicitudes en Jira.
               <br />
-              Pasa el mouse sobre una sede del mapa para ver su detalle, o entra a una gerencia
-              para bajar al área y al ticket.
+              Desliza el mouse por el mapa seleccionando una sede para ver su detalle y el impacto a
+              nivel de operación en tickets.
             </>
           ) : (
             <>
@@ -88,17 +88,35 @@ export default async function PanelGeneral() {
               alerta: r.estancados > 0,
             },
             {
-              label: "Primera respuesta ticket",
+              label: "Tiempo de primera respuesta",
               valor: `${r.ttfrPromedioHoras.toLocaleString("es-CO")}h`,
               cap: `Meta: ${META_TTFR_HORAS}h · toda prioridad`,
               color: r.cumplimientoTtfr >= 90 ? "#3FA9AC" : "#F7A82C",
               alerta: r.cumplimientoTtfr < 80,
             },
             {
-              label: "Tiempo resolución ticket",
-              valor: `${r.ttrPromedioHoras.toLocaleString("es-CO")}h`,
+              label: "Tiempo final de resolución",
               color: r.cumplimientoTtr >= 90 ? "#3FA9AC" : "#F7A82C",
-              alerta: r.cumplimientoTtr < 80,
+              contenido: (
+                <div className="kpi-ttr-trio">
+                  {/* Baja, Media, Alta — cumplimientoTtrPorPrioridad() ya devuelve
+                      Alta, Media, Baja, así que basta con invertirla. */}
+                  {cumplimientoTtrPorPrioridad(tickets)
+                    .slice()
+                    .reverse()
+                    .map((p) => (
+                      <div key={p.prioridad} className="kpi-ttr-item">
+                        <div
+                          className="kpi-ttr-valor"
+                          style={{ color: p.promedioHoras > p.metaHoras ? "var(--red)" : "var(--teal)" }}
+                        >
+                          {p.promedioHoras.toLocaleString("es-CO")}h
+                        </div>
+                        <div className="kpi-ttr-nombre">{p.prioridad}</div>
+                      </div>
+                    ))}
+                </div>
+              ),
             },
           ]}
         />

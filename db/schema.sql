@@ -174,8 +174,7 @@ ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS ver_personas boolean NOT NULL
 
 -- Módulo "Administración de usuarios" + "Gestión de perfiles" (spec Alexis,
 -- sep 2026). Campos nuevos de la ficha de usuario — sección 2.1/2.2 de la
--- spec. `rol` NO se toca todavía: sigue siendo lo que usan login/middleware
--- hasta que el sistema de perfiles (más abajo) lo reemplace por completo.
+-- spec.
 ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS apellidos text;
 ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS tipo_documento text;   -- 'CC'|'CE'|'TI'|'PA'|'NIT'
 ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS numero_documento text;
@@ -190,6 +189,18 @@ ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS sede_slug text REFERENCES cat
 -- restablecimiento del administrador, ver `/cambio-password-obligatorio`).
 ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS debe_cambiar_password boolean NOT NULL DEFAULT false;
 ALTER TABLE auth.usuarios ADD COLUMN IF NOT EXISTS actualizado_en timestamptz NOT NULL DEFAULT now();
+
+-- Fase 4 de la migración a perfiles: `rol` deja de ser lo que decide la
+-- autorización (login/middleware/topbar ya solo miran `pantallas`/`acciones`
+-- de los perfiles asignados, vía `construirSesion()`). Se afloja el
+-- constraint porque ya no tiene sentido exigir uno de tres valores fijos
+-- para una columna que nadie usa para autorizar — pero la columna se
+-- CONSERVA (no `DROP COLUMN`): sigue siendo un dato histórico útil, y
+-- `usuarios-servicio.ts` la sigue actualizando como reflejo derivado de los
+-- perfiles asignados. Ambas líneas son idempotentes: re-correrlas cuando ya
+-- se aplicaron es no-op.
+ALTER TABLE auth.usuarios ALTER COLUMN rol DROP NOT NULL;
+ALTER TABLE auth.usuarios DROP CONSTRAINT IF EXISTS usuarios_rol_check;
 
 -- Búsqueda de la sección 1.1: "Nombre funcionario o Usuario acceso o Número
 -- de documento" en un solo campo de texto.

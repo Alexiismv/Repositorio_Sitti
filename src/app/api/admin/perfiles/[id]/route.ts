@@ -11,7 +11,7 @@ import { registrarAuditoria, registrarError } from "@/lib/logs";
 import { esquemaPerfil } from "@/lib/validacion/perfil";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const resultado = await requiereAdmin();
+  const resultado = await requiereAdmin("admin-perfiles");
   if (resultado instanceof NextResponse) return resultado;
 
   const { id } = await params;
@@ -22,7 +22,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const resultado = await requiereAdmin();
+  const resultado = await requiereAdmin("admin-perfiles", "editar");
   if (resultado instanceof NextResponse) return resultado;
   const sesion = resultado;
 
@@ -59,7 +59,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const resultado = await requiereAdmin();
+  const resultado = await requiereAdmin("admin-perfiles", "eliminar");
   if (resultado instanceof NextResponse) return resultado;
   const sesion = resultado;
 
