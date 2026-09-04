@@ -28,16 +28,29 @@ export function Topbar({
   const pathname = usePathname();
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
+  const [controlAccesoAbierto, setControlAccesoAbierto] = useState(false);
   const contenedor = useRef<HTMLDivElement>(null);
+  const controlAccesoRef = useRef<HTMLDivElement>(null);
 
-  // Cerrar el menú al hacer clic afuera o con Escape.
+  // Cerrar los menús al hacer clic afuera o con Escape.
   useEffect(() => {
-    if (!abierto) return;
+    if (!abierto && !controlAccesoAbierto) return;
     function fuera(e: MouseEvent) {
-      if (contenedor.current && !contenedor.current.contains(e.target as Node)) setAbierto(false);
+      if (abierto && contenedor.current && !contenedor.current.contains(e.target as Node)) {
+        setAbierto(false);
+      }
+      if (
+        controlAccesoAbierto &&
+        controlAccesoRef.current &&
+        !controlAccesoRef.current.contains(e.target as Node)
+      ) {
+        setControlAccesoAbierto(false);
+      }
     }
     function escape(e: KeyboardEvent) {
-      if (e.key === "Escape") setAbierto(false);
+      if (e.key !== "Escape") return;
+      setAbierto(false);
+      setControlAccesoAbierto(false);
     }
     document.addEventListener("mousedown", fuera);
     document.addEventListener("keydown", escape);
@@ -45,12 +58,17 @@ export function Topbar({
       document.removeEventListener("mousedown", fuera);
       document.removeEventListener("keydown", escape);
     };
-  }, [abierto]);
+  }, [abierto, controlAccesoAbierto]);
 
   const enlaces = [
     ...ENLACES_BASE,
     ENLACE_REPORTES,
     ...(puedeVerPantalla(sesion, "personas") ? [ENLACE_PERSONAS] : []),
+  ];
+
+  // "Control de acceso" agrupa Usuarios y Perfiles en un desplegable propio,
+  // en vez de dos enlaces sueltos en la barra — spec Alexis (sep 2026).
+  const enlacesControlAcceso = [
     ...(puedeVerPantalla(sesion, "admin-usuarios") ? [{ href: "/admin/usuarios", label: "Usuarios" }] : []),
     ...(puedeVerPantalla(sesion, "admin-perfiles") ? [{ href: "/admin/perfiles", label: "Perfiles" }] : []),
   ];
@@ -76,6 +94,46 @@ export function Topbar({
             {e.label}
           </Link>
         ))}
+
+        {enlacesControlAcceso.length > 0 && (
+          <div
+            className={`sh-nav-dropdown ${controlAccesoAbierto ? "abierto" : ""}`}
+            ref={controlAccesoRef}
+            onMouseEnter={() => setControlAccesoAbierto(true)}
+            onMouseLeave={() => setControlAccesoAbierto(false)}
+            onBlur={(e) => {
+              // Foco por teclado (Tab): cierra solo si el foco salió del desplegable entero.
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setControlAccesoAbierto(false);
+            }}
+          >
+            <button
+              type="button"
+              className={`sh-link sh-nav-trigger ${enlacesControlAcceso.some((e) => activo(e.href)) ? "activo" : ""}`}
+              aria-haspopup="true"
+              aria-expanded={controlAccesoAbierto}
+              onFocus={() => setControlAccesoAbierto(true)}
+            >
+              Control de acceso
+              <span className="sh-nav-caret" aria-hidden="true">
+                ▾
+              </span>
+            </button>
+            {controlAccesoAbierto && (
+              <div className="sh-nav-dropdown-menu" role="menu">
+                {enlacesControlAcceso.map((e) => (
+                  <Link
+                    key={e.href}
+                    href={e.href}
+                    className={activo(e.href) ? "activo" : ""}
+                    onClick={() => setControlAccesoAbierto(false)}
+                  >
+                    {e.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </nav>
 
       <div className="sh-sync" title="Última sincronización con Jira (el ETL corre 2 veces al día)">
