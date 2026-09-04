@@ -222,8 +222,10 @@
 }
 /* Panel General: el texto de "Desliza el mouse..." necesita más ancho que
    el máximo de 640px de arriba para no partirse en dos líneas — escopeado
-   a este párrafo para no ensanchar el resto de las cabeceras de página. */
-.sh-page-head-ancho {
+   a este párrafo para no ensanchar el resto de las cabeceras de página.
+   `.sh-page-head p` de arriba pesa elemento+clase; hace falta igualar esa
+   especificidad para que gane. */
+.sh-page-head p.sh-page-head-ancho {
   max-width: 850px;
 }
 
