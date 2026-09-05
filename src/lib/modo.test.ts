@@ -81,3 +81,35 @@ describe("guarda de producción (independiente de la variable DEMO_MODE)", () =>
     expect(resultado).toBe(true);
   });
 });
+
+describe("PERMITIR_DEMO_PUBLICO: llave explícita para saltar la guarda (CLAUDE.md §7.5)", () => {
+  it("DEMO_MODE=true solo, sin la segunda llave, sigue sin activar el modo demo en Vercel", async () => {
+    const resultado = await demoModeCon({
+      NODE_ENV: "development",
+      VERCEL_ENV: "production",
+      DEMO_MODE: "true",
+      PERMITIR_DEMO_PUBLICO: undefined,
+    });
+    expect(resultado).toBe(false);
+  });
+
+  it("con las DOS llaves puestas, el modo demo sí se activa en Vercel", async () => {
+    const resultado = await demoModeCon({
+      NODE_ENV: "development",
+      VERCEL_ENV: "production",
+      DEMO_MODE: "true",
+      PERMITIR_DEMO_PUBLICO: "true",
+    });
+    expect(resultado).toBe(true);
+  });
+
+  it("la segunda llave sola, sin DEMO_MODE=true, no alcanza (DEMO_MODE sigue mandando)", async () => {
+    const resultado = await demoModeCon({
+      NODE_ENV: "development",
+      VERCEL_ENV: "production",
+      DEMO_MODE: "false",
+      PERMITIR_DEMO_PUBLICO: "true",
+    });
+    expect(resultado).toBe(false);
+  });
+});
