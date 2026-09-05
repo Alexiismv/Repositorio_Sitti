@@ -1,0 +1,179 @@
+# Cascada de pruebas — corre en cada PR y en cada deploy de Vercel, y deja un
+# puntaje ponderado (0-100%) con semáforo verde/amarillo/rojo, igual al que
+# usa el propio panel para el cumplimiento de SLA (ver semaforoDeCumplimiento()
+# en src/lib/metricas.ts: verde >=90, amarillo >=80, rojo <80).
+#
+# Etapas, en cascada (cada una corre aunque la anterior haya fallado, para que
+# el reporte final muestre TODO lo que sí se pudo evaluar — pero el gate de la
+# etapa 0 si falla hace que las demás no tengan sentido: build/lint/typecheck
+# rotos ya es rojo automático):
+#
+#   0. Gate       — build + lint + typecheck (bloqueante)
+#   1. Unitarias  — Vitest sobre src/lib (peso 25%)
+#   2. Integración— Playwright contra un servidor local propio en DEMO_MODE=true (peso 25%)
+#   3. E2E        — Playwright multi-rol contra un Preview/Production real (peso 35%)
+#   4. Smoke      — Playwright liviano y sin credenciales contra producción real (peso 15%)
+#
+# Requisitos para que las etapas 3 y 4 corran (si faltan, se excluyen del
+# puntaje y el resto se renormaliza — ver scripts/puntaje-cascada.mjs):
+#   - Variable de repo/entorno o input manual PLAYWRIGHT_BASE_URL: la URL que
+#     HOY tenga DEMO_MODE=true (para las 3 cuentas demo). Ver el comentario en
+#     playwright.config.ts — hoy es Production, pero es una decisión temporal
+#     de Alexis (CLAUDE.md §7.5) que se va a revertir.
+#   - Variable o input PLAYWRIGHT_PROD_URL: la URL con datos reales.
+#
+# Disparo por deploy: asume que el repo tiene conectada la integración nativa
+# de Vercel con GitHub (la que crea eventos `deployment`/`deployment_status`
+# automáticamente al desplegar) — no requiere ningún webhook aparte.
+
+name: Cascada de pruebas
+
+on:
+  pull_request:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: "URL con DEMO_MODE=true para la etapa E2E (si no se da, usa el secret/variable PLAYWRIGHT_BASE_URL)"
+        required: false
+      prod_url:
+        description: "URL con datos reales para la etapa Smoke (si no se da, usa el secret/variable PLAYWRIGHT_PROD_URL)"
+        required: false
+
+jobs:
+  gate:
+    name: "Etapa 0 · build + lint + typecheck"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          DEMO_MODE: "true"
+
+  unitarias:
+    name: "Etapa 1 · Unitarias"
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run test:unit
+        env: { CI: "true" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reporte-unitarias
+          path: reportes-prueba/unitarias.json
+          retention-days: 14
+
+  integracion:
+    name: "Etapa 2 · Integración API"
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run test:integration
+        env: { CI: "true" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reporte-integracion
+          path: reportes-prueba/integracion.json
+          retention-days: 14
+
+  e2e:
+    name: "Etapa 3 · E2E multi-rol"
+    needs: gate
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          CI: "true"
+          PLAYWRIGHT_JSON_OUTPUT: reportes-prueba/e2e.json
+          PLAYWRIGHT_BASE_URL: >-
+            ${{ github.event.inputs.preview_url || vars.PLAYWRIGHT_BASE_URL || github.event.deployment_status.target_url }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reporte-e2e
+          path: reportes-prueba/e2e.json
+          retention-days: 14
+
+  smoke:
+    name: "Etapa 4 · Smoke de producción"
+    needs: gate
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:smoke
+        env:
+          CI: "true"
+          PLAYWRIGHT_JSON_OUTPUT: reportes-prueba/smoke.json
+          PLAYWRIGHT_PROD_URL: ${{ github.event.inputs.prod_url || vars.PLAYWRIGHT_PROD_URL }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reporte-smoke
+          path: reportes-prueba/smoke.json
+          retention-days: 14
+
+  puntaje:
+    name: "Puntaje ponderado"
+    needs: [unitarias, integracion, e2e, smoke]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: reportes-prueba
+          pattern: reporte-*
+          merge-multiple: true
+      - run: node scripts/puntaje-cascada.mjs
+        id: puntaje
+
+      - name: Comentar el resultado en el PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const resumen = process.env.GITHUB_STEP_SUMMARY
+              ? fs.readFileSync(process.env.GITHUB_STEP_SUMMARY, 'utf8')
+              : '(sin resumen)';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: resumen,
+            });
