@@ -14,7 +14,7 @@ test.describe("Smoke de producción — no destructivo, sin credenciales", () =>
   test("/login responde 200 y renderiza el formulario", async ({ page }) => {
     const respuesta = await page.goto("/login");
     expect(respuesta?.status()).toBe(200);
-    await expect(page.getByLabel("Usuario")).toBeVisible();
+    await expect(page.getByLabel("Usuario", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Ingresar" })).toBeVisible();
   });
 

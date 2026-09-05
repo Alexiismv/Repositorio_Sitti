@@ -10,8 +10,8 @@ import { CUENTAS_DEMO, loginComo } from "./helpers";
 test.describe("Login", () => {
   test("credenciales incorrectas muestran el error en pantalla, sin navegar", async ({ page }) => {
     await page.goto("/login");
-    await page.getByLabel("Usuario").fill("no-existe");
-    await page.getByLabel("Contraseña").fill("loquesea");
+    await page.getByLabel("Usuario", { exact: true }).fill("no-existe");
+    await page.getByLabel("Contraseña", { exact: true }).fill("loquesea");
     await page.getByRole("button", { name: "Ingresar" }).click();
 
     await expect(page.getByRole("alert")).toBeVisible();
