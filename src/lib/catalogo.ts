@@ -53,33 +53,33 @@ export interface Area {
 }
 
 export const AREAS: Area[] = [
-  { slug: "servicio", nombre: "Servicio", gerencia: "experiencia-de-servicio", volumen2026: 3214 },
-  { slug: "aseguramiento-contravencional", nombre: "Aseguramiento Contravencional", gerencia: "operacion-contravencional", volumen2026: 1981 },
-  { slug: "gestion-legal", nombre: "Gestión Legal", gerencia: "juridica", volumen2026: 997 },
+  { slug: "servicio", nombre: "Servicio", gerencia: "experiencia-de-servicio", volumen2026: 4632 },
+  { slug: "aseguramiento-contravencional", nombre: "Aseguramiento Contravencional", gerencia: "operacion-contravencional", volumen2026: 2855 },
+  { slug: "gestion-legal", nombre: "Gestión Legal", gerencia: "juridica", volumen2026: 1437 },
   // Corregido por Alexis (2 sep 2026): Radicación es de Jurídica, no de
   // Operación Contravencional (ver nota junto a "cad" y "digitalizacion" más
   // abajo — mismo error, misma corrección).
-  { slug: "radicacion", nombre: "Radicación", gerencia: "juridica", volumen2026: 773 },
-  { slug: "cartera", nombre: "Cartera", gerencia: "financiera", volumen2026: 689 },
-  { slug: "fotodeteccion", nombre: "Fotodetección", gerencia: "operacion-contravencional", volumen2026: 350 },
-  { slug: "experiencia-de-servicio", nombre: "Experiencia de Servicio", gerencia: "experiencia-de-servicio", volumen2026: 276 },
-  { slug: "financiera", nombre: "Financiera", gerencia: "financiera", volumen2026: 222 },
-  { slug: "gestion-de-notificaciones", nombre: "Gestión de Notificaciones", gerencia: "experiencia-de-servicio", volumen2026: 175 },
+  { slug: "radicacion", nombre: "Radicación", gerencia: "juridica", volumen2026: 1114 },
+  { slug: "cartera", nombre: "Cartera", gerencia: "financiera", volumen2026: 993 },
+  { slug: "fotodeteccion", nombre: "Fotodetección", gerencia: "operacion-contravencional", volumen2026: 504 },
+  { slug: "experiencia-de-servicio", nombre: "Experiencia de Servicio", gerencia: "experiencia-de-servicio", volumen2026: 398 },
+  { slug: "financiera", nombre: "Financiera", gerencia: "financiera", volumen2026: 320 },
+  { slug: "gestion-de-notificaciones", nombre: "Gestión de Notificaciones", gerencia: "experiencia-de-servicio", volumen2026: 252 },
   // Reclasificado por Alexis desde la raíz en Jira (25 ago 2026): ya no quedan
   // tickets reales en 2026 con Área = "Otras". Se conserva la fila (no se
   // borra) porque "Otras" sigue siendo una opción seleccionable en Jira — si
   // alguien la vuelve a elegir, el ETL necesita dónde aterrizarla.
   { slug: "otras", nombre: "Otras", gerencia: "sin-gerencia", volumen2026: 0 },
-  { slug: "sin-nombre", nombre: "(Sin nombre — origen por identificar)", gerencia: "sin-gerencia", volumen2026: 97 },
+  { slug: "sin-nombre", nombre: "(Sin nombre — origen por identificar)", gerencia: "sin-gerencia", volumen2026: 140 },
   // Corregido por Alexis (2 sep 2026): CAD es de Jurídica, no de Operación
   // Contravencional — quedó mal clasificada junto con "radicacion" y
   // "digitalizacion" (mismo error en las tres).
-  { slug: "cad", nombre: "CAD", gerencia: "juridica", volumen2026: 40 },
-  { slug: "gestion-juridica-de-cobro", nombre: "Gestión Jurídica de Cobro", gerencia: "juridica", volumen2026: 38 },
-  { slug: "conexion-de-soluciones", nombre: "Conexión de Soluciones", gerencia: "conexion-de-soluciones", volumen2026: 28 },
-  { slug: "aseguramiento-contractual", nombre: "Aseguramiento Contractual", gerencia: "operacion-contravencional", volumen2026: 27 },
-  { slug: "experiencia-y-bienestar", nombre: "Experiencia y Bienestar", gerencia: "experiencia-y-bienestar", volumen2026: 4 },
-  { slug: "gerencia-general", nombre: "Gerencia General", gerencia: "sin-gerencia", volumen2026: 2 },
+  { slug: "cad", nombre: "CAD", gerencia: "juridica", volumen2026: 58 },
+  { slug: "gestion-juridica-de-cobro", nombre: "Gestión Jurídica de Cobro", gerencia: "juridica", volumen2026: 55 },
+  { slug: "conexion-de-soluciones", nombre: "Conexión de Soluciones", gerencia: "conexion-de-soluciones", volumen2026: 40 },
+  { slug: "aseguramiento-contractual", nombre: "Aseguramiento Contractual", gerencia: "operacion-contravencional", volumen2026: 39 },
+  { slug: "experiencia-y-bienestar", nombre: "Experiencia y Bienestar", gerencia: "experiencia-y-bienestar", volumen2026: 6 },
+  { slug: "gerencia-general", nombre: "Gerencia General", gerencia: "sin-gerencia", volumen2026: 3 },
   // Confirmado por Alexis (25 ago 2026) que era de Operación Contravencional
   // y no de "sin gerencia" — y corregido de nuevo por Alexis (2 sep 2026):
   // en realidad es de Jurídica. Ver CLAUDE.md §2.1 para el detalle completo
@@ -89,11 +89,11 @@ export const AREAS: Area[] = [
   // Dependencias de "Mesa de ayuda SMM" (customfield_11698) — confirmado por
   // Alexis (25 ago 2026) que forman su propia gerencia, "SMM/ESU", y no
   // corresponden a ninguna de las 18 áreas de arriba (ver CLAUDE.md § 9 punto 2).
-  { slug: "subsecretaria-seguridad-vial-control", nombre: "Subsecretaría de Seguridad Vial y Control", gerencia: "smm-esu", volumen2026: 2196 },
-  { slug: "subsecretaria-legal", nombre: "Subsecretaría Legal", gerencia: "smm-esu", volumen2026: 70 },
-  { slug: "esu", nombre: "ESU", gerencia: "smm-esu", volumen2026: 27 },
-  { slug: "unidad-administrativa", nombre: "Unidad Administrativa", gerencia: "smm-esu", volumen2026: 13 },
-  { slug: "despacho-legal", nombre: "Despacho Legal", gerencia: "smm-esu", volumen2026: 3 },
+  { slug: "subsecretaria-seguridad-vial-control", nombre: "Subsecretaría de Seguridad Vial y Control", gerencia: "smm-esu", volumen2026: 3165 },
+  { slug: "subsecretaria-legal", nombre: "Subsecretaría Legal", gerencia: "smm-esu", volumen2026: 101 },
+  { slug: "esu", nombre: "ESU", gerencia: "smm-esu", volumen2026: 39 },
+  { slug: "unidad-administrativa", nombre: "Unidad Administrativa", gerencia: "smm-esu", volumen2026: 19 },
+  { slug: "despacho-legal", nombre: "Despacho Legal", gerencia: "smm-esu", volumen2026: 4 },
   // Sin tickets en 2026 todavía, pero es una opción seleccionable en Jira —
   // se conserva la fila para que el ETL sepa dónde aterrizarla si aparece.
   { slug: "subsecretaria-tecnica", nombre: "Subsecretaría Técnica", gerencia: "smm-esu", volumen2026: 0 },
@@ -111,7 +111,16 @@ export const ALIAS_AREA: Record<string, string> = {
   "Gestión Juridica Documental": "Gestión Jurídica de Cobro",
 };
 
-/** 11.223 tickets — la suma de las 24 áreas. Solo alimenta el generador demo (`DEMO_MODE=true`); con datos reales el KPI general sale de la base. */
+/**
+ * ~16.170 tickets — la suma de las 24 áreas. Solo alimenta el generador demo
+ * (`DEMO_MODE=true`); con datos reales el KPI general sale de la base.
+ *
+ * Reescalado por Alexis (4 sep 2026, factor ×1,4409 sobre los valores
+ * originales) para que el mockup que ven las gerencias en producción tenga un
+ * volumen similar al de los datos reales del momento — antes anclaba a
+ * 11.223, un remanente de una foto más vieja del dataset real. Ver CLAUDE.md
+ * §7.5 para el contexto completo de por qué producción corre en modo demo.
+ */
 export const TOTAL_2026 = AREAS.reduce((acc, a) => acc + a.volumen2026, 0);
 
 // ─────────────────────────────────────────────────────────────
