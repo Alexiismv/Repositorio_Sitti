@@ -5,8 +5,10 @@
 .cpo-wrap {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 20px;
   padding: 24px;
   background: var(--bg);
 }
@@ -14,6 +16,13 @@
 .cpo-panel {
   max-width: 440px;
   width: 100%;
+}
+
+.cpo-footer {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
 }
 
 .cpo-panel h1 {

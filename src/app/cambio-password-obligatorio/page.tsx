@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { leerSesionPendiente } from "@/lib/auth/sesion";
+import { PieCopyright } from "@/components/pie-copyright";
 
 import { FormularioCambioObligatorio } from "./formulario";
 import "../(panel)/cambiar-password/cambiar-password.css";
@@ -32,6 +33,9 @@ export default async function CambioPasswordObligatorioPage() {
           nueva para <strong>{pendiente.email}</strong>.
         </p>
         <FormularioCambioObligatorio />
+      </div>
+      <div className="cpo-footer">
+        <PieCopyright />
       </div>
     </div>
   );
