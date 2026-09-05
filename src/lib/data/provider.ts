@@ -64,7 +64,7 @@ const AREA_SIN_NOMBRE = AREAS.find((a) => a.slug === "sin-nombre")!;
  *      de que Alexis defina a qué gerencia mapea cada dependencia) -> "Otras",
  *      para no perder el ticket mientras se define la reclasificación.
  */
-function resolverArea(nombreArea: string | null): { area: string; areaSlug: string; gerenciaSlug: string } {
+export function resolverArea(nombreArea: string | null): { area: string; areaSlug: string; gerenciaSlug: string } {
   if (nombreArea === null) {
     return { area: AREA_SIN_NOMBRE.nombre, areaSlug: AREA_SIN_NOMBRE.slug, gerenciaSlug: AREA_SIN_NOMBRE.gerencia };
   }

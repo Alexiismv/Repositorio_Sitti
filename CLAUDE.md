@@ -571,9 +571,32 @@ pruebas locales — resuélvelo antes de seguir tocando código.
 
 **Decisión de Alexis (4 sep 2026):** mientras se termina de validar el
 proyecto con las gerencias, `repositorio-sitti.vercel.app` (Production)
-corre con `DEMO_MODE=true` en vez de leer `auth.usuarios`/`jira_cache` reales.
-El objetivo es que puedan ver la idea completa de la interfaz sin exponer
+corre en modo demo en vez de leer `auth.usuarios`/`jira_cache` reales. El
+objetivo es que puedan ver la idea completa de la interfaz sin exponer
 datos reales de Jira todavía.
+
+⚠️ **`DEMO_MODE=true` solo no alcanza.** `src/lib/modo.ts` tiene una guarda
+deliberada (`EN_PRODUCCION`, con su propia prueba en `modo.test.ts`) que
+apaga el modo demo en **cualquier** despliegue de Vercel —Production o
+Preview— sin importar `DEMO_MODE`, para que las 3 cuentas demo (contraseña
+documentada acá mismo) nunca queden alcanzables en una URL pública por
+accidente. Confirmado en vivo el 5 sep 2026: con solo `DEMO_MODE=true`,
+producción seguía mostrando datos reales y `demo1234` no autenticaba.
+
+Para saltar esa guarda a propósito hacen falta **las dos variables a la
+vez** en Vercel Production:
+
+| Variable | Valor |
+|---|---|
+| `DEMO_MODE` | `true` |
+| `PERMITIR_DEMO_PUBLICO` | `true` |
+
+Es intencional que sean dos llaves separadas en vez de una: un `DEMO_MODE`
+mal puesto (el mismo patrón del bug de §7.3) ya no basta por sí solo para
+exponer el modo demo en una URL pública — hace falta *además* la variable
+que dice explícitamente "sí quiero esto en Vercel". Después de poner ambas,
+redesplegar (ver el aviso de §7.3: cambiar una env var no actualiza
+deployments ya construidos).
 
 **Qué implica esto, mientras dure:**
 
@@ -596,11 +619,13 @@ datos reales de Jira todavía.
   se sigue verificando que todo funcione con datos de verdad.
 
 **Para revertir esto** (cuando el proyecto pase a producción real con las
-gerencias, ver §7.4): poner `DEMO_MODE=false` en Vercel Production y
-redesplegar (`vercel redeploy <url> --target production` — cambiar una env
-var no actualiza deployments ya construidos, mismo aviso de §7.3). No hace
-falta tocar `DATABASE_URL` de Production ni revertir el reescalado de
-`TOTAL_2026`: ese número solo importa mientras `DEMO_MODE=true`.
+gerencias, ver §7.4): basta con quitar `PERMITIR_DEMO_PUBLICO` de Vercel
+Production (o ponerla en cualquier valor distinto a `"true"`) y redesplegar
+(`vercel redeploy <url> --target production` — cambiar una env var no
+actualiza deployments ya construidos, mismo aviso de §7.3). No hace falta
+tocar `DEMO_MODE`, `DATABASE_URL` de Production, ni revertir el reescalado
+de `TOTAL_2026`: la guarda de `EN_PRODUCCION` vuelve a mandar sola en cuanto
+falte esa variable.
 
 ---
 

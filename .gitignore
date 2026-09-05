@@ -21,3 +21,10 @@ yarn-error.log*
 next-env.d.ts
 .claude/settings.local.json
 .env*
+
+# testing
+reportes-prueba/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
