@@ -548,23 +548,59 @@ Checklist de la transición:
       recuadro de "Excepción vigente ahora" — de aquí en adelante, todo cambio
       se prueba en su Preview Deployment de Vercel (se genera solo al abrir el
       PR) y solo se promueve a producción después de confirmarlo ahí.
-- [ ] **Separa la base de datos.** Crea una rama (branch) de Neon para
-      desarrollo, aparte de la de producción — el plan gratuito de Neon
-      permite varias ramas sin costo:
-      - Pídele a Claude: *"Crea una rama de Neon llamada `desarrollo` a partir
-        de la rama de producción del proyecto sitti-panel, y dame la
-        connection string."* (usa el MCP de Neon, §3.5.2).
-      - El `.env` **local** apunta a esa rama de desarrollo.
-      - La variable `DATABASE_URL` en Vercel (**Production**) sigue apuntando
-        a la rama de producción real — no se toca.
-      - Los *Preview Deployments* de Vercel pueden apuntar a la rama de
-        desarrollo también (o a su propia rama efímera de Neon, si se quiere
-        ir más fino) — pero nunca a la de producción.
+- [x] **Separa la base de datos** (hecho 4 sep 2026). Proyecto Neon "Sitti"
+      (`sweet-glade-38534264`): la rama `production` (`br-dark-sun-ayktgplh`)
+      sigue siendo la real, y se creó `desarrollo` (`br-soft-truth-ay1oq9ts`)
+      como clon aparte para todo lo que no sea la Production de Vercel.
+      - El `.env` **local** ya apunta a `desarrollo`.
+      - `DATABASE_URL` en Vercel **Preview** (la rama `pruebas`, alias
+        `sitti-pruebas.vercel.app`) apunta a `desarrollo`.
+      - `DATABASE_URL` en Vercel **Production** sigue apuntando a
+        `production` (`br-dark-sun-ayktgplh`) — no se tocó.
+      - Pendiente si se quiere ir más fino: una rama efímera de Neon por
+        Preview Deployment en vez de una `desarrollo` compartida.
 - [ ] Confirma que el checklist de §7.3 sigue en verde con estos cambios.
 
 Si llegas a esta sección y el proyecto YA se entregó pero el checklist de
 arriba no está marcado, la base de datos de producción sigue expuesta a
 pruebas locales — resuélvelo antes de seguir tocando código.
+
+---
+
+### 7.5 Producción en modo demo para mostrar el mockup a las gerencias (temporal)
+
+**Decisión de Alexis (4 sep 2026):** mientras se termina de validar el
+proyecto con las gerencias, `repositorio-sitti.vercel.app` (Production)
+corre con `DEMO_MODE=true` en vez de leer `auth.usuarios`/`jira_cache` reales.
+El objetivo es que puedan ver la idea completa de la interfaz sin exponer
+datos reales de Jira todavía.
+
+**Qué implica esto, mientras dure:**
+
+- **El login real deja de funcionar en Production.** Katherine, Alberto,
+  Alexis y cualquier otra cuenta de `auth.usuarios` no pueden entrar ahí —
+  solo las 3 cuentas demo en memoria (`maria.gomez` / `carlos.munera` /
+  `admin`, contraseña `demo1234`, ver §3). Sus cuentas reales siguen intactas
+  en la base — no se tocaron, solo dejaron de usarse mientras Production está
+  en modo demo.
+- **`DATABASE_URL` de Production no cambió** (sigue apuntando a la rama real
+  de Neon, §7.4) — con `DEMO_MODE=true` la app simplemente no la consulta
+  para tickets ni para autenticar. Los datos reales están a salvo y listos
+  para cuando se revierta esto.
+- **El volumen de datos demo se reescaló** (`catalogo.ts`, `TOTAL_2026`) para
+  parecerse al tamaño real del momento (~16.170 tickets) en vez del ancla
+  vieja de 11.223 — para que el mockup no se vea desproporcionadamente chico
+  frente a lo que las gerencias esperan ver.
+- **`pruebas`** (`sitti-pruebas.vercel.app`) sigue con `DEMO_MODE=false`, leyendo
+  datos reales de la rama `desarrollo` de Neon (§7.4) — es el entorno donde
+  se sigue verificando que todo funcione con datos de verdad.
+
+**Para revertir esto** (cuando el proyecto pase a producción real con las
+gerencias, ver §7.4): poner `DEMO_MODE=false` en Vercel Production y
+redesplegar (`vercel redeploy <url> --target production` — cambiar una env
+var no actualiza deployments ya construidos, mismo aviso de §7.3). No hace
+falta tocar `DATABASE_URL` de Production ni revertir el reescalado de
+`TOTAL_2026`: ese número solo importa mientras `DEMO_MODE=true`.
 
 ---
 

@@ -22,8 +22,7 @@ export interface FilaUsuarioListado {
   nombre: string;
   apellidos: string | null;
   email: string;
-  sedeSlug: string | null;
-  sedeNombre: string | null;
+  sedesTexto: string;
   activo: boolean;
   cargoTexto: string;
   perfiles: PerfilResumen[];
@@ -39,7 +38,7 @@ export interface UsuarioDetalle {
   sexo: string | null;
   celular: string | null;
   controlIp: boolean;
-  sedeSlug: string | null;
+  sedesSlugs: string[];
   activo: boolean;
   tipoUsuario: string;
   perfiles: PerfilResumen[];
@@ -88,7 +87,9 @@ export async function listarUsuarios(filtros: FiltrosUsuario = {}): Promise<Resu
     }
     if (filtros.sedeSlug) {
       valores.push(filtros.sedeSlug);
-      condiciones.push(`u.sede_slug = $${valores.length}`);
+      condiciones.push(
+        `EXISTS (SELECT 1 FROM auth.usuario_permiso up WHERE up.usuario_id = u.id AND up.sede_slug = $${valores.length})`,
+      );
     }
     if (filtros.perfilId) {
       valores.push(filtros.perfilId);
@@ -111,23 +112,28 @@ export async function listarUsuarios(filtros: FiltrosUsuario = {}): Promise<Resu
       nombre: string;
       apellidos: string | null;
       email: string;
-      sede_slug: string | null;
-      sede_nombre: string | null;
+      sedes_texto: string | null;
       activo: boolean;
       cargo_texto: string | null;
       total: string;
     }>(
-      `SELECT u.id, u.nombre, u.apellidos, u.email, u.sede_slug, s.nombre AS sede_nombre, u.activo,
+      `SELECT u.id, u.nombre, u.apellidos, u.email, u.activo,
               cargo.cargo_texto,
+              sedes.sedes_texto,
               COUNT(*) OVER() AS total
        FROM auth.usuarios u
-       LEFT JOIN catalogo.sedes s ON s.slug = u.sede_slug
        LEFT JOIN LATERAL (
          SELECT string_agg(pf.nombre, ', ' ORDER BY pf.nombre) AS cargo_texto
          FROM auth.usuario_perfil up
          JOIN auth.perfiles pf ON pf.id = up.perfil_id
          WHERE up.usuario_id = u.id
        ) cargo ON true
+       LEFT JOIN LATERAL (
+         SELECT string_agg(s.nombre, ', ' ORDER BY s.nombre) AS sedes_texto
+         FROM auth.usuario_permiso perm
+         JOIN catalogo.sedes s ON s.slug = perm.sede_slug
+         WHERE perm.usuario_id = u.id AND perm.sede_slug <> '*'
+       ) sedes ON true
        ${where}
        ORDER BY ${ORDEN_SQL[ordenPor]} ${ordenDir}
        LIMIT $${valores.length - 1} OFFSET $${valores.length}`,
@@ -144,8 +150,7 @@ export async function listarUsuarios(filtros: FiltrosUsuario = {}): Promise<Resu
         nombre: f.nombre,
         apellidos: f.apellidos,
         email: f.email,
-        sedeSlug: f.sede_slug,
-        sedeNombre: f.sede_nombre,
+        sedesTexto: f.sedes_texto ?? "Sin sede asignada",
         activo: f.activo,
         cargoTexto: f.cargo_texto ?? "Sin perfil asignado",
         perfiles: perfilesPorUsuario.get(f.id) ?? [],
@@ -177,6 +182,15 @@ async function cargarPerfilesDeUsuarios(
   return mapa;
 }
 
+/** Sedes puntuales (no la comodín '*') asignadas a un usuario vía auth.usuario_permiso. */
+async function cargarSedesDeUsuario(cliente: PoolClient, usuarioId: string): Promise<string[]> {
+  const r = await cliente.query<{ sede_slug: string }>(
+    `SELECT sede_slug FROM auth.usuario_permiso WHERE usuario_id = $1 AND sede_slug <> '*' ORDER BY sede_slug`,
+    [usuarioId],
+  );
+  return r.rows.map((f) => f.sede_slug);
+}
+
 export async function obtenerUsuario(id: string): Promise<UsuarioDetalle | null> {
   return conCliente(async (cliente) => {
     const r = await cliente.query<{
@@ -189,19 +203,21 @@ export async function obtenerUsuario(id: string): Promise<UsuarioDetalle | null>
       sexo: string | null;
       celular: string | null;
       control_ip: boolean;
-      sede_slug: string | null;
       activo: boolean;
       tipo_usuario: string;
     }>(
       `SELECT id, email, nombre, apellidos, tipo_documento, numero_documento, sexo, celular,
-              control_ip, sede_slug, activo, tipo_usuario
+              control_ip, activo, tipo_usuario
        FROM auth.usuarios WHERE id = $1`,
       [id],
     );
     const fila = r.rows[0];
     if (!fila) return null;
 
-    const perfilesPorUsuario = await cargarPerfilesDeUsuarios(cliente, [id]);
+    const [perfilesPorUsuario, sedesSlugs] = await Promise.all([
+      cargarPerfilesDeUsuarios(cliente, [id]),
+      cargarSedesDeUsuario(cliente, id),
+    ]);
 
     return {
       id: fila.id,
@@ -213,7 +229,7 @@ export async function obtenerUsuario(id: string): Promise<UsuarioDetalle | null>
       sexo: fila.sexo,
       celular: fila.celular,
       controlIp: fila.control_ip,
-      sedeSlug: fila.sede_slug,
+      sedesSlugs,
       activo: fila.activo,
       tipoUsuario: fila.tipo_usuario,
       perfiles: perfilesPorUsuario.get(id) ?? [],
@@ -237,7 +253,11 @@ function rolDesdePerfiles(nombresPerfiles: string[]): Rol {
   return "coordinador";
 }
 
-async function sincronizarRolConPerfiles(cliente: PoolClient, usuarioId: string): Promise<void> {
+async function sincronizarRolConPerfiles(
+  cliente: PoolClient,
+  usuarioId: string,
+  sedesSlugs: string[],
+): Promise<void> {
   const r = await cliente.query<{ nombre: string }>(
     `SELECT pf.nombre FROM auth.usuario_perfil up JOIN auth.perfiles pf ON pf.id = up.perfil_id
      WHERE up.usuario_id = $1`,
@@ -264,12 +284,41 @@ async function sincronizarRolConPerfiles(cliente: PoolClient, usuarioId: string)
       [usuarioId],
     );
   }
+
+  /*
+   * Coordinador: el formulario de usuario ofrece varias sedes (todas las
+   * áreas de cada una, no un subconjunto por sede) -- checklist igual al de
+   * Cargo, spec Alexis sep 2026. Cada sede marcada es el único permiso de
+   * datos que puede salir de acá, y se guarda como (sede, '*'). Sin este
+   * bloque, un coordinador recién creado se queda con `usuario_permiso`
+   * vacío: entra bien (sus pantallas/acciones sí salen de los perfiles),
+   * pero `puedeVer()` le niega cada ticket y todo el panel se ve en cero —
+   * bug confirmado el 4 sep 2026 (Katherine Martínez Cano). Se reemplaza
+   * cualquier fila de sede puntual (no la comodín) por el conjunto actual en
+   * cada guardado, para que agregar/quitar una sede en el formulario mueva
+   * también el permiso. Si más adelante se agrega una pantalla de permisos
+   * más fina (áreas puntuales dentro de cada sede), esta función deja de ser
+   * la única fuente de verdad y hay que revisarla.
+   */
+  if (rol === "coordinador") {
+    await cliente.query(`DELETE FROM auth.usuario_permiso WHERE usuario_id = $1 AND sede_slug <> '*'`, [
+      usuarioId,
+    ]);
+    for (const sedeSlug of sedesSlugs) {
+      await cliente.query(
+        `INSERT INTO auth.usuario_permiso (usuario_id, sede_slug, area_slug) VALUES ($1, $2, '*')
+         ON CONFLICT DO NOTHING`,
+        [usuarioId, sedeSlug],
+      );
+    }
+  }
 }
 
 async function reemplazarPerfilesDeUsuario(
   cliente: PoolClient,
   usuarioId: string,
   perfilIds: string[],
+  sedesSlugs: string[],
 ): Promise<void> {
   await cliente.query(`DELETE FROM auth.usuario_perfil WHERE usuario_id = $1`, [usuarioId]);
   for (const perfilId of perfilIds) {
@@ -278,7 +327,7 @@ async function reemplazarPerfilesDeUsuario(
       [usuarioId, perfilId],
     );
   }
-  await sincronizarRolConPerfiles(cliente, usuarioId);
+  await sincronizarRolConPerfiles(cliente, usuarioId, sedesSlugs);
 }
 
 /** Todo usuario nuevo nace con la contraseña por defecto y debe cambiarla al primer login (decisión 6 del plan). */
@@ -297,8 +346,8 @@ export async function crearUsuario(datos: DatosUsuario): Promise<string> {
       const r = await cliente.query<{ id: string }>(
         `INSERT INTO auth.usuarios
            (email, nombre, apellidos, password_hash, rol, activo, tipo_documento, numero_documento,
-            sexo, celular, control_ip, tipo_usuario, sede_slug, debe_cambiar_password)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, true)
+            sexo, celular, control_ip, tipo_usuario, debe_cambiar_password)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
          RETURNING id`,
         [
           datos.email,
@@ -313,11 +362,10 @@ export async function crearUsuario(datos: DatosUsuario): Promise<string> {
           datos.celular,
           datos.controlIp,
           datos.tipoUsuario,
-          datos.sedeSlug,
         ],
       );
       const id = r.rows[0].id;
-      await reemplazarPerfilesDeUsuario(cliente, id, datos.perfiles);
+      await reemplazarPerfilesDeUsuario(cliente, id, datos.perfiles, datos.sedesSlugs);
       await cliente.query("COMMIT");
       return id;
     } catch (e) {
@@ -344,8 +392,8 @@ export async function actualizarUsuario(id: string, datos: DatosUsuario): Promis
         `UPDATE auth.usuarios
          SET email = $1, nombre = $2, apellidos = $3, activo = $4, tipo_documento = $5,
              numero_documento = $6, sexo = $7, celular = $8, control_ip = $9, tipo_usuario = $10,
-             sede_slug = $11, actualizado_en = now()
-         WHERE id = $12`,
+             actualizado_en = now()
+         WHERE id = $11`,
         [
           datos.email,
           datos.nombres,
@@ -357,11 +405,10 @@ export async function actualizarUsuario(id: string, datos: DatosUsuario): Promis
           datos.celular,
           datos.controlIp,
           datos.tipoUsuario,
-          datos.sedeSlug,
           id,
         ],
       );
-      await reemplazarPerfilesDeUsuario(cliente, id, datos.perfiles);
+      await reemplazarPerfilesDeUsuario(cliente, id, datos.perfiles, datos.sedesSlugs);
       await cliente.query("COMMIT");
     } catch (e) {
       await cliente.query("ROLLBACK").catch(() => {});
@@ -378,7 +425,11 @@ export async function asignarPerfiles(usuarioId: string, perfilIds: string[]): P
       const existe = await cliente.query(`SELECT 1 FROM auth.usuarios WHERE id = $1`, [usuarioId]);
       if (!existe.rows[0]) throw new ErrorUsuario("El usuario no existe.");
 
-      await reemplazarPerfilesDeUsuario(cliente, usuarioId, perfilIds);
+      // Este atajo no toca las sedes: se leen las ya guardadas para que
+      // sincronizarRolConPerfiles() pueda armar el permiso de Coordinador
+      // igual que en crearUsuario/actualizarUsuario.
+      const sedesSlugs = await cargarSedesDeUsuario(cliente, usuarioId);
+      await reemplazarPerfilesDeUsuario(cliente, usuarioId, perfilIds, sedesSlugs);
       await cliente.query("COMMIT");
     } catch (e) {
       await cliente.query("ROLLBACK").catch(() => {});

@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Combobox } from "@/components/combobox";
 import { MultiSelectCheckbox } from "@/components/multi-select-checkbox";
 import { Switch } from "@/components/switch";
 import { useToast } from "@/components/toast-provider";
@@ -37,7 +36,7 @@ export function FormularioUsuario({
   const [email, setEmail] = useState(usuario?.email ?? "");
   const [perfilesSel, setPerfilesSel] = useState<string[]>(usuario?.perfiles.map((p) => p.id) ?? []);
   const [controlIp, setControlIp] = useState(usuario?.controlIp ?? false);
-  const [sedeSlug, setSedeSlug] = useState(usuario?.sedeSlug ?? "");
+  const [sedesSel, setSedesSel] = useState<string[]>(usuario?.sedesSlugs ?? []);
   const [activo, setActivo] = useState(usuario?.activo ?? true);
   const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario>((usuario?.tipoUsuario as TipoUsuario) ?? "interno_sitti");
 
@@ -66,7 +65,7 @@ export function FormularioUsuario({
         email: email.trim(),
         perfiles: perfilesSel,
         controlIp,
-        sedeSlug: sedeSlug || undefined,
+        sedesSlugs: sedesSel,
         activo,
         tipoUsuario,
         tipoDocumento: tipoDocumento || undefined,
@@ -140,11 +139,11 @@ export function FormularioUsuario({
 
         <div>
           <label style={ETIQUETA}>Sede</label>
-          <Combobox
-            opciones={sedes.map((s) => ({ valor: s.slug, nombre: s.nombre }))}
-            valor={sedeSlug}
-            onChange={setSedeSlug}
-            etiquetaVacio="Sin sede asignada"
+          <MultiSelectCheckbox
+            opciones={sedes.map((s) => ({ slug: s.slug, nombre: s.nombre }))}
+            seleccionados={sedesSel}
+            onChange={setSedesSel}
+            placeholderTodos="Sin sede asignada"
           />
         </div>
 

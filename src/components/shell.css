@@ -18,10 +18,26 @@
   gap: 4px;
   flex: 1;
   min-width: 0;
+}
+/*
+ * El scroll horizontal de los enlaces vive en este wrapper aparte, no en
+ * `.sh-nav` directamente: `overflow-x: auto` sin `overflow-y` explícito hace
+ * que el navegador compute overflow-y como `auto` también (regla del spec de
+ * CSS), y eso recortaba el menú de "Control de acceso" -- se abría (el
+ * estado cambiaba) pero quedaba invisible, tapado por el propio contenedor
+ * de la barra. Separar el scroll a un hijo deja a `.sh-nav` sin overflow
+ * propio, así el menú (que es hijo de `.sh-nav-dropdown`, hermano de este
+ * wrapper) nunca queda dentro de un contenedor que lo recorte.
+ */
+.sh-nav-scroll {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
-.sh-nav::-webkit-scrollbar {
+.sh-nav-scroll::-webkit-scrollbar {
   display: none;
 }
 
@@ -204,6 +220,16 @@
   max-width: 1220px;
   margin: 0 auto;
   padding: 32px 32px 90px;
+}
+
+.sh-footer {
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 0 32px 28px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
 }
 
 .sh-page-head h1 {

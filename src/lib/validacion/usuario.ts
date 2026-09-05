@@ -9,11 +9,7 @@ export const esquemaUsuario = z.object({
   email: z.string().trim().min(1, "El usuario de acceso es obligatorio.").max(160).email("Correo inválido."),
   perfiles: z.array(z.string()).default([]),
   controlIp: z.boolean().default(false),
-  sedeSlug: z
-    .string()
-    .trim()
-    .optional()
-    .transform((v) => (v ? v : null)),
+  sedesSlugs: z.array(z.string()).default([]),
   activo: z.boolean().default(true),
   tipoUsuario: z.enum(["interno_sitti", "externo_smm", "externo_esu"]).default("interno_sitti"),
 

@@ -119,7 +119,7 @@ export function TablaUsuarios({
                     Perfil
                   </button>
                 </td>
-                <td>{u.sedeNombre ?? "—"}</td>
+                <td>{u.sedesTexto}</td>
                 <td>
                   <span className={`semaforo ${u.activo ? "verde" : "rojo"}`} style={{ marginRight: 6 }} />
                   {u.activo ? "Sí" : "No"}

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { PieCopyright } from "@/components/pie-copyright";
 import { Topbar } from "@/components/topbar";
 import { ToastProvider } from "@/components/toast-provider";
 import { leerSesion } from "@/lib/auth/sesion";
@@ -38,6 +39,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         )}
         {children}
       </main>
+      <footer className="sh-footer">
+        <PieCopyright />
+      </footer>
     </ToastProvider>
   );
 }

@@ -6,6 +6,7 @@ import { DEMO_MODE } from "@/lib/data/provider";
 import { GERENCIAS } from "@/lib/catalogo";
 
 import { USUARIOS_DEMO } from "@/lib/auth/usuarios-demo";
+import { PieCopyright } from "@/components/pie-copyright";
 
 import { FormularioLogin, type CuentaDemo } from "./formulario";
 import "./login.css";
@@ -89,7 +90,10 @@ export default async function LoginPage() {
             ¿Problemas para entrar? <a href="#">Contacta a Mesa de Ayuda SITTI</a>.
           </p>
 
-          <div className="lg-footer">SITTI · Panel de Gestión · Secretaría de Movilidad de Medellín</div>
+          <div className="lg-footer">
+            <p style={{ margin: 0 }}>SITTI · Panel de Gestión · Secretaría de Movilidad de Medellín</p>
+            <PieCopyright />
+          </div>
         </div>
       </div>
     </div>
