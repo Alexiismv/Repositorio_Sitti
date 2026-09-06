@@ -45,9 +45,9 @@ export default async function GerenciasPage() {
       <div className="panorama-grande">
         <KpiStrip
           kpis={[
-            { label: "Gerencias visibles", valor: numero(gerencias.length), color: "#33357E" },
+            { label: "Total de gerencias", valor: numero(gerencias.length), color: "#33357E" },
             {
-              label: "Gerencia líder",
+              label: "Gerencia líder en tickets",
               valor: lider?.nombre ?? "—",
               cap: lider ? `${numero(lider.total)} tickets · ${porcentaje((lider.total / total) * 100)} del total` : undefined,
               color: lider?.color ?? "#3FA9AC",
