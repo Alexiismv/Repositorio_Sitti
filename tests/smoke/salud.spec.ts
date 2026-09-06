@@ -14,7 +14,7 @@ test.describe("Smoke de producción — no destructivo, sin credenciales", () =>
   test("/login responde 200 y renderiza el formulario", async ({ page }) => {
     const respuesta = await page.goto("/login");
     expect(respuesta?.status()).toBe(200);
-    await expect(page.getByLabel("Usuario")).toBeVisible();
+    await expect(page.getByLabel("Usuario", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Ingresar" })).toBeVisible();
   });
 
@@ -40,9 +40,20 @@ test.describe("Smoke de producción — no destructivo, sin credenciales", () =>
   });
 
   test("no hay errores de consola al cargar /login (detecta bundles rotos post-deploy)", async ({ page }) => {
+    // Vercel inyecta su propio widget de feedback (vercel.live) en Preview y
+    // Production, ajeno al bundle de la app — dispara una violación de CSP
+    // report-only ("Framing '...vercel.live/'...") y, como consecuencia, un
+    // "Failed to load resource: ...400" genérico para ese mismo iframe
+    // bloqueado (Chrome no incluye la URL en este segundo mensaje). Ninguno
+    // de los dos tiene que ver con si el deploy de la app quedó roto.
+    // Confirmado en CI (run 33999851511, 5 sep 2026): sin este filtro, el
+    // smoke fallaba en un deploy sano.
+    const RUIDO_CONOCIDO = [/vercel\.live/i, /^Failed to load resource: the server responded with a status of \d+/];
     const errores: string[] = [];
     page.on("console", (msg) => {
-      if (msg.type() === "error") errores.push(msg.text());
+      if (msg.type() === "error" && !RUIDO_CONOCIDO.some((r) => r.test(msg.text()))) {
+        errores.push(msg.text());
+      }
     });
     await page.goto("/login");
     await page.waitForLoadState("networkidle");

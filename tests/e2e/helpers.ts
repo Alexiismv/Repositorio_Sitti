@@ -12,8 +12,11 @@ export type RolDemo = keyof typeof CUENTAS_DEMO;
 export async function loginComo(page: Page, rol: RolDemo) {
   const { usuario, password } = CUENTAS_DEMO[rol];
   await page.goto("/login");
-  await page.getByLabel("Usuario").fill(usuario);
-  await page.getByLabel("Contraseña").fill(password);
+  // exact:true es obligatorio acá: el botón de "Mostrar contraseña" también
+  // tiene "contraseña" en su aria-label, así que un match parcial trae 2
+  // elementos y Playwright lanza en modo estricto.
+  await page.getByLabel("Usuario", { exact: true }).fill(usuario);
+  await page.getByLabel("Contraseña", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Ingresar" }).click();
   await page.waitForURL((url) => url.pathname === "/");
 }
