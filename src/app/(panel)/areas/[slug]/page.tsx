@@ -51,6 +51,17 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
   const tickets = await obtenerTickets(sesion, { areas: [slug] });
   const r = resumen(tickets);
   const tablero = tableroEstados(tickets);
+  const resueltoCol = tablero.find((c) => c.categoria === "resuelto");
+  const canceladoCol = tablero.find((c) => c.categoria === "cancelado");
+  const columnasTablero = [
+    ...tablero.filter((c) => c.categoria !== "resuelto" && c.categoria !== "cancelado"),
+    {
+      categoria: "resueltos-cancelados",
+      label: "Resueltos/Cancelados",
+      color: resueltoCol?.color ?? "#3FA9AC",
+      tickets: [...(resueltoCol?.tickets ?? []), ...(canceladoCol?.tickets ?? [])],
+    },
+  ];
   const frenados = estancados(tickets, DIAS_ESTANCADO_DEFAULT);
   const complejos = masComentados(tickets, 6);
   const personas = porPersona(tickets);
@@ -121,9 +132,9 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
           </p>
 
           <div className="tablero">
-            {tablero.map((col) => (
+            {columnasTablero.map((col) => (
               <div className="tablero-col" key={col.categoria}>
-                <div className="tablero-head" style={{ ["--c" as string]: col.color }}>
+                <div className="tablero-head" data-categoria={col.categoria} style={{ ["--c" as string]: col.color }}>
                   <span className="tablero-titulo">{col.label}</span>
                   <span className="tablero-conteo mono">{numero(col.tickets.length)}</span>
                 </div>
