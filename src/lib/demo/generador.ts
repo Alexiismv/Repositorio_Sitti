@@ -226,6 +226,26 @@ export interface Ticket {
 // Generación
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * Probabilidad de que un ticket cerrado cumpla su meta de TTR (`rng() < p`).
+ * Antes era 0.72 fijo para las tres prioridades, lo que —por la forma de la
+ * distribución de abajo— hacía que el PROMEDIO de TTR quedara siempre ~34%
+ * por encima de la meta sin importar la prioridad, así que el semáforo de
+ * "Tiempo final de resolución" salía en rojo para Alta, Media y Baja por
+ * igual. Ajustado por prioridad (6 sep 2026, mockup a gerencias en
+ * Production — CLAUDE.md §7.5) para que el cumplimiento AGREGADO (todas las
+ * prioridades juntas, `resumen().cumplimientoTtr`) supere el 90% que pinta
+ * en verde la cajita "Tiempo final de resolución" del panel general. Alta
+ * queda apenas por debajo de su propia meta en promedio (~4,2h vs. 4h) para
+ * que siga viéndose como la más exigente de cumplir; Media y Baja quedan
+ * cómodamente dentro de meta (~5,9h y ~14,3h).
+ */
+const PROBABILIDAD_CUMPLE_TTR: Record<Prioridad, number> = {
+  Alta: 0.82,
+  Media: 0.92,
+  Baja: 0.96,
+};
+
 function generarTicketsDeArea(area: (typeof AREAS)[number]): Ticket[] {
   const rng = mulberry32(hashSemilla(`area:${area.slug}`));
   const equipo = equipoDeArea(area.slug);
@@ -283,8 +303,9 @@ function generarTicketsDeArea(area: (typeof AREAS)[number]): Ticket[] {
 
     // TTR: solo tiene valor si el ticket ya cerró.
     const metaTtr = META_TTR_HORAS[prioridad];
+    const probabilidadCumpleTtr = PROBABILIDAD_CUMPLE_TTR[prioridad];
     const ttrHoras = cerrado
-      ? Number((rng() < 0.72 ? rng() * metaTtr : metaTtr + rng() * metaTtr * 5).toFixed(2))
+      ? Number((rng() < probabilidadCumpleTtr ? rng() * metaTtr : metaTtr + rng() * metaTtr * 5).toFixed(2))
       : null;
 
     const fechaCierre = cerrado
