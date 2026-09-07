@@ -213,8 +213,28 @@ export const SEDES: Sede[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// PROYECTOS JSM (12 portales)
+// PROYECTOS JSM (12 portales) — también el eje del módulo "Aplicativos"
 // ─────────────────────────────────────────────────────────────
+//
+// Decisión de Alexis (7 sep 2026, Fase 1 del módulo Aplicativos): mientras no
+// exista un campo propio en Jira para "aplicativo", ese módulo reutiliza este
+// mismo catálogo de 12 proyectos JSM como su lista de "aplicativos" — por eso
+// "Audiencias Web" (clave TAW) ya aparece acá. `src/app/(panel)/aplicativos/`
+// filtra tickets con `obtenerTickets(sesion, { proyectos: [clave] })`, exactamente
+// igual que cualquier otro filtro por proyecto.
+//
+// Fase 2 (pendiente, cuando Alexis defina el nuevo JQL/custom field en Jira):
+// si "aplicativo" termina siendo un eje de negocio distinto de "proyecto" (p.
+// ej. una misma área usa varios aplicativos, o un aplicativo cruza varios
+// proyectos), la migración es: (1) agregar `aplicativo`/`aplicativoSlug` a
+// `Ticket` (`src/lib/demo/generador.ts` + `jira_cache.tickets_raw` +
+// `normalizar()` en `src/lib/etl/jira.ts`, leyendo el custom field nuevo),
+// (2) crear un catálogo `APLICATIVOS` propio en vez de reusar `PROYECTOS`,
+// (3) cambiar `porAplicativo()` (`src/lib/metricas.ts`) para agrupar por ese
+// campo nuevo en vez de `proyectoClave`, y (4) sumar `aplicativos?: string[]`
+// a `Filtros` (`src/lib/data/provider.ts`). Ninguna pantalla de
+// `src/app/(panel)/aplicativos/` necesita tocarse — todas piden los datos a
+// través de `porAplicativo()`/`obtenerTickets()`, igual que el resto de la app.
 
 export interface Proyecto {
   clave: string;
@@ -230,24 +250,29 @@ export interface Proyecto {
    */
   campoArea: "customfield_10506" | "customfield_11698";
   sedeFija?: string;
+  /**
+   * Color de acento — usado por el módulo "Aplicativos" (ver §11 más abajo).
+   * No afecta al ETL ni al switch de Área; es puramente de presentación.
+   */
+  color: string;
 }
 
 // Claves confirmadas por Alexis contra el Jira real (conexiondesoluciones.atlassian.net):
 // solo los 12 proyectos "* - Tickets" (se excluyen a propósito sus contrapartes
 // "* - Backlog", que son trabajo interno del equipo, no solicitudes de usuario).
 export const PROYECTOS: Proyecto[] = [
-  { clave: "TA", nombre: "Analítica", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TAW", nombre: "Audiencias Web", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TBACK", nombre: "BackOffice", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TCOBRO", nombre: "Cobro Coactivo", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TDEI", nombre: "DEI", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TFRONT", nombre: "FrontOffice", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TGA", nombre: "Gestión de la Atención", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TGIC", nombre: "GIC", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TMULTAS", nombre: "Multas", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TQX", nombre: "Qx Tránsito", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TMA", nombre: "Mesa de ayuda SITTI", vocabulario: "mesa", campoArea: "customfield_10506" },
-  { clave: "REQ", nombre: "Mesa de ayuda SMM", vocabulario: "mesa", campoArea: "customfield_11698", sedeFija: "Caribe" },
+  { clave: "TA", nombre: "Analítica", vocabulario: "estandar", campoArea: "customfield_10506", color: "#33357E" },
+  { clave: "TAW", nombre: "Audiencias Web", vocabulario: "estandar", campoArea: "customfield_10506", color: "#3FA9AC" },
+  { clave: "TBACK", nombre: "BackOffice", vocabulario: "estandar", campoArea: "customfield_10506", color: "#F7A82C" },
+  { clave: "TCOBRO", nombre: "Cobro Coactivo", vocabulario: "estandar", campoArea: "customfield_10506", color: "#EC623B" },
+  { clave: "TDEI", nombre: "DEI", vocabulario: "estandar", campoArea: "customfield_10506", color: "#8B8FBF" },
+  { clave: "TFRONT", nombre: "FrontOffice", vocabulario: "estandar", campoArea: "customfield_10506", color: "#6BBF59" },
+  { clave: "TGA", nombre: "Gestión de la Atención", vocabulario: "estandar", campoArea: "customfield_10506", color: "#7A5AC4" },
+  { clave: "TGIC", nombre: "GIC", vocabulario: "estandar", campoArea: "customfield_10506", color: "#961E65" },
+  { clave: "TMULTAS", nombre: "Multas", vocabulario: "estandar", campoArea: "customfield_10506", color: "#B7BAD6" },
+  { clave: "TQX", nombre: "Qx Tránsito", vocabulario: "estandar", campoArea: "customfield_10506", color: "#33357E" },
+  { clave: "TMA", nombre: "Mesa de ayuda SITTI", vocabulario: "mesa", campoArea: "customfield_10506", color: "#3FA9AC" },
+  { clave: "REQ", nombre: "Mesa de ayuda SMM", vocabulario: "mesa", campoArea: "customfield_11698", sedeFija: "Caribe", color: "#F7A82C" },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -344,6 +369,15 @@ export const gerenciaPorSlug = (slug: string) => GERENCIAS.find((g) => g.slug ==
 export const areaPorSlug = (slug: string) => AREAS.find((a) => a.slug === slug);
 export const sedePorSlug = (slug: string) => SEDES.find((s) => s.slug === slug);
 export const areasDeGerencia = (slug: string) => AREAS.filter((a) => a.gerencia === slug);
+
+/**
+ * Busca un proyecto por su clave, sin distinguir mayúsculas/minúsculas — el
+ * módulo "Aplicativos" usa `clave.toLowerCase()` como slug de ruta
+ * (`/aplicativos/taw`), así que hay que volver a subir el caso para comparar
+ * contra `Ticket.proyectoClave` y `Filtros.proyectos`.
+ */
+export const proyectoPorClave = (clave: string) =>
+  PROYECTOS.find((p) => p.clave.toLowerCase() === clave.toLowerCase());
 
 /** Volumen 2026 de una gerencia = suma de sus áreas. Nunca hardcodeamos el total. */
 export const volumenGerencia = (slug: string) =>

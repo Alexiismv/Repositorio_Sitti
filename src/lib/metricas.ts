@@ -18,6 +18,7 @@ import {
   GERENCIAS,
   META_TTFR_HORAS,
   META_TTR_HORAS,
+  PROYECTOS,
   SEDES,
   type CategoriaEstado,
   type Prioridad,
@@ -299,6 +300,20 @@ export function porProyecto(tickets: Ticket[]): FilaAgrupada[] {
   const grupos = agrupar(tickets, (t) => t.proyecto);
   return [...grupos.entries()]
     .map(([p, grupo]) => filaDe(p, p, grupo))
+    .sort((a, b) => b.total - a.total);
+}
+
+/**
+ * Nivel 1 del módulo "Aplicativos": ranking de proyectos JSM por volumen,
+ * agrupando por `proyectoClave` (no por el nombre) para que el slug de ruta
+ * salga siempre de `PROYECTOS.clave` — ver la nota de Fase 1/Fase 2 en
+ * `catalogo.ts` junto al array `PROYECTOS` sobre por qué "aplicativo" hoy
+ * reusa este catálogo en vez de tener uno propio.
+ */
+export function porAplicativo(tickets: Ticket[]): FilaAgrupada[] {
+  const grupos = agrupar(tickets, (t) => t.proyectoClave);
+  return PROYECTOS.map((p) => filaDe(p.clave.toLowerCase(), p.nombre, grupos.get(p.clave) ?? [], p.color))
+    .filter((f) => f.total > 0)
     .sort((a, b) => b.total - a.total);
 }
 

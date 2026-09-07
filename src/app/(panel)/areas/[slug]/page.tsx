@@ -3,21 +3,13 @@ import { notFound, redirect } from "next/navigation";
 
 import { GraficaCreadosVsResueltos } from "@/components/charts";
 import { TablaTickets } from "@/components/tabla-tickets";
+import { TableroKanban } from "@/components/tablero-kanban";
 import { EstadoVacio, ExportarEnlaces, KpiStrip, Ranking, SectionLabel } from "@/components/ui";
 import { leerSesion } from "@/lib/auth/sesion";
 import { DIAS_ESTANCADO_DEFAULT, areaPorSlug, gerenciaPorSlug } from "@/lib/catalogo";
 import { obtenerTickets } from "@/lib/data/provider";
 import { numero, porcentaje } from "@/lib/formato";
-import {
-  estancados,
-  masComentados,
-  modaDe,
-  porMes,
-  porPersona,
-  porSede,
-  resumen,
-  tableroEstados,
-} from "@/lib/metricas";
+import { estancados, masComentados, modaDe, porMes, porPersona, porSede, resumen } from "@/lib/metricas";
 
 /**
  * Renderizado dinámico obligatorio: lo que se muestra depende de la sesión y de
@@ -50,18 +42,6 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
   const gerencia = gerenciaPorSlug(area.gerencia);
   const tickets = await obtenerTickets(sesion, { areas: [slug] });
   const r = resumen(tickets);
-  const tablero = tableroEstados(tickets);
-  const resueltoCol = tablero.find((c) => c.categoria === "resuelto");
-  const canceladoCol = tablero.find((c) => c.categoria === "cancelado");
-  const columnasTablero = [
-    ...tablero.filter((c) => c.categoria !== "resuelto" && c.categoria !== "cancelado"),
-    {
-      categoria: "resueltos-cancelados",
-      label: "Resueltos/Cancelados",
-      color: resueltoCol?.color ?? "#3FA9AC",
-      tickets: [...(resueltoCol?.tickets ?? []), ...(canceladoCol?.tickets ?? [])],
-    },
-  ];
   const frenados = estancados(tickets, DIAS_ESTANCADO_DEFAULT);
   const complejos = masComentados(tickets, 6);
   const personas = porPersona(tickets);
@@ -134,38 +114,7 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
             vocabularios distintos de estado. El texto literal de Jira se conserva en cada ticket.
           </p>
 
-          <div className="tablero">
-            {columnasTablero.map((col) => (
-              <div className="tablero-col" key={col.categoria}>
-                <div className="tablero-head" data-categoria={col.categoria} style={{ ["--c" as string]: col.color }}>
-                  <span className="tablero-titulo">{col.label}</span>
-                  <span className="tablero-conteo mono">{numero(col.tickets.length)}</span>
-                </div>
-                {col.tickets.slice(0, 6).map((t) => (
-                  <div className="tablero-card" key={t.clave}>
-                    <div className="mono tablero-clave">{t.clave}</div>
-                    <div className="tablero-asunto" title={t.tituloTicket}>
-                      {t.tituloTicket}
-                    </div>
-                    <div className="tablero-pie mono">
-                      <span>{t.estadoTicket}</span>
-                      {t.categoriaEstado !== "resuelto" && t.categoriaEstado !== "cancelado" && (
-                        <span className={t.diasSinActualizar >= DIAS_ESTANCADO_DEFAULT ? "alerta" : ""}>
-                          {t.diasSinActualizar}d sin mover
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {col.tickets.length > 6 && (
-                  <Link href={hrefColumna(col.categoria)} className="tablero-mas mono">
-                    +{numero(col.tickets.length - 6)} más
-                  </Link>
-                )}
-                {col.tickets.length === 0 && <div className="tablero-vacio mono">Sin tickets</div>}
-              </div>
-            ))}
-          </div>
+          <TableroKanban tickets={tickets} hrefColumna={hrefColumna} />
 
           <SectionLabel>Lo que necesita atención</SectionLabel>
 
