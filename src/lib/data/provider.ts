@@ -36,8 +36,15 @@ export interface Filtros {
   proyectos?: string[];
   tiposRequerimiento?: string[];
   prioridades?: string[];
-  /** Único filtro de estado que pide el negocio para el eje "Área". */
-  estado?: "todos" | "pendientes" | "resueltos";
+  /**
+   * Filtro de estado. Además de los dos agregados históricos ("pendientes" =
+   * todo lo que no es resuelto ni cancelado, "resueltos" = solo resuelto),
+   * acepta cualquiera de las 5 categorías normalizadas de `CategoriaEstado`
+   * y "resueltos-cancelados" — el mismo agrupamiento que usa el tablero de
+   * Nivel 3 para su columna combinada — así el link "+N más" de cada columna
+   * del tablero puede pedir exactamente lo que esa columna está mostrando.
+   */
+  estado?: "todos" | "pendientes" | "resueltos" | "resueltos-cancelados" | CategoriaEstado;
   /** Solo tickets que ya incumplieron TTR o TTFR (el "en rojo"). */
   soloIncumplidos?: boolean;
   /** Solo tickets abiertos sin movimiento hace DIAS_ESTANCADO_DEFAULT+ días. */
@@ -91,6 +98,22 @@ function cumpleFiltros(t: Ticket, f: Filtros): boolean {
     return false;
   }
   if (f.estado === "resueltos" && t.categoriaEstado !== "resuelto") return false;
+  if (
+    f.estado === "resueltos-cancelados" &&
+    t.categoriaEstado !== "resuelto" &&
+    t.categoriaEstado !== "cancelado"
+  ) {
+    return false;
+  }
+  if (
+    (f.estado === "pendiente" ||
+      f.estado === "en-progreso" ||
+      f.estado === "esperando-terceros" ||
+      f.estado === "cancelado") &&
+    t.categoriaEstado !== f.estado
+  ) {
+    return false;
+  }
   if (f.soloIncumplidos && !(t.ttrIncumplido || t.ttfrIncumplido)) return false;
   if (f.soloEstancados) {
     const abierto = t.categoriaEstado !== "resuelto" && t.categoriaEstado !== "cancelado";

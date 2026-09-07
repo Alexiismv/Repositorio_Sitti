@@ -7,7 +7,7 @@
  * el otro haría que el archivo descargado no coincida con lo que hay en pantalla.
  */
 
-import { areaPorSlug, gerenciaPorSlug, sedePorSlug } from "@/lib/catalogo";
+import { areaPorSlug, CATEGORIAS_ESTADO, gerenciaPorSlug, sedePorSlug } from "@/lib/catalogo";
 import type { Filtros } from "@/lib/data/provider";
 
 export type ReportesSearchParams = Record<string, string | string[] | undefined>;
@@ -43,6 +43,20 @@ export function filtrosDesdeSearchParams(sp: ReportesSearchParams): Filtros {
   };
 }
 
+const ETIQUETAS_ESTADO_AGREGADO: Record<string, string> = {
+  pendientes: "Pendientes",
+  resueltos: "Resueltos",
+  "resueltos-cancelados": "Resueltos/Cancelados",
+};
+
+const ETIQUETAS_CATEGORIA_ESTADO: Record<string, string> = Object.fromEntries(
+  CATEGORIAS_ESTADO.map((c) => [c.key, c.label]),
+);
+
+function etiquetaEstado(estado: string): string {
+  return ETIQUETAS_ESTADO_AGREGADO[estado] ?? ETIQUETAS_CATEGORIA_ESTADO[estado] ?? estado;
+}
+
 /** Texto legible de los filtros activos, para el encabezado del PDF/Excel exportado. */
 export function describirFiltros(sp: ReportesSearchParams): string {
   const partes: string[] = [];
@@ -60,7 +74,7 @@ export function describirFiltros(sp: ReportesSearchParams): string {
   if (s) partes.push(`Sede: ${sedePorSlug(s)?.nombre ?? s}`);
   if (p) partes.push(`Persona: ${p}`);
   if (t) partes.push(`Tipo: ${t}`);
-  if (estado && estado !== "todos") partes.push(`Estado: ${estado === "pendientes" ? "Pendientes" : "Resueltos"}`);
+  if (estado && estado !== "todos") partes.push(`Estado: ${etiquetaEstado(estado)}`);
   if (desde) partes.push(`Desde ${desde}`);
   if (hasta) partes.push(`Hasta ${hasta}`);
   if (uno(sp.rojo) === "1") partes.push("Solo tickets en rojo");
