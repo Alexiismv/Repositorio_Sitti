@@ -61,12 +61,6 @@ export function ticketsAWorkbook(tickets: Ticket[], nombreHoja = "Tickets"): Exc
     { header: "Tipo de requerimiento", key: "tipo", width: 26 },
     { header: "Fecha creación", key: "creado", width: 14 },
     { header: "Fecha cierre", key: "cerrado", width: 14 },
-    { header: "TTFR (h)", key: "ttfr", width: 10 },
-    { header: "TTFR incumplido", key: "ttfrIncumplido", width: 14 },
-    { header: "TTR (h)", key: "ttr", width: 10 },
-    { header: "TTR incumplido", key: "ttrIncumplido", width: 14 },
-    { header: "Días sin actualizar", key: "diasSinActualizar", width: 16 },
-    { header: "Comentarios", key: "comentarios", width: 12 },
   ];
 
   for (const t of tickets) {
@@ -84,12 +78,6 @@ export function ticketsAWorkbook(tickets: Ticket[], nombreHoja = "Tickets"): Exc
       tipo: t.tipoRequerimiento,
       creado: new Date(t.fechaCreacion),
       cerrado: t.fechaCierre ? new Date(t.fechaCierre) : null,
-      ttfr: t.ttfrHoras,
-      ttfrIncumplido: t.ttfrIncumplido ? "Sí" : "No",
-      ttr: t.ttrHoras,
-      ttrIncumplido: t.ttrIncumplido ? "Sí" : "No",
-      diasSinActualizar: t.diasSinActualizar,
-      comentarios: t.comentarios,
     });
   }
 
