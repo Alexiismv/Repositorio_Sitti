@@ -259,7 +259,7 @@ export type CategoriaEstado = "pendiente" | "en-progreso" | "esperando-terceros"
 export const CATEGORIAS_ESTADO: { key: CategoriaEstado; label: string; color: string }[] = [
   { key: "pendiente", label: "Pendiente", color: "#EC623B" },
   { key: "en-progreso", label: "En progreso", color: "#33357E" },
-  { key: "esperando-terceros", label: "Esperando terceros", color: "#F7A82C" },
+  { key: "esperando-terceros", label: "En espera proveedor", color: "#F7A82C" },
   { key: "resuelto", label: "Resuelto", color: "#3FA9AC" },
   { key: "cancelado", label: "Cancelado", color: "#9AA0B5" },
 ];
