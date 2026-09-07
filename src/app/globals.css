@@ -718,6 +718,16 @@ body {
   text-align: center;
   padding: 6px 0 2px;
 }
+a.tablero-mas {
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
+}
+a.tablero-mas:hover,
+a.tablero-mas:focus-visible {
+  color: var(--navy);
+  text-decoration: underline;
+}
 
 @media (max-width: 1100px) {
   .tablero {

@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 
-import { AREAS, GERENCIAS, SEDES, TIPOS_REQUERIMIENTO } from "@/lib/catalogo";
+import { AREAS, CATEGORIAS_ESTADO, GERENCIAS, SEDES, TIPOS_REQUERIMIENTO } from "@/lib/catalogo";
 
 /**
  * Filtros dinámicos de reportes.
@@ -171,8 +171,16 @@ export function FiltrosReporte({ personas }: { personas: string[] }) {
           <label htmlFor="f-estado">Estado</label>
           <select id="f-estado" name="estado" defaultValue={valor("estado")}>
             <option value="">Todos</option>
-            <option value="pendientes">Pendientes</option>
+            <option value="pendientes">Pendientes (abiertos)</option>
             <option value="resueltos">Resueltos</option>
+            <optgroup label="Columna exacta del tablero">
+              {CATEGORIAS_ESTADO.map((c) => (
+                <option key={c.key} value={c.key}>
+                  {c.label}
+                </option>
+              ))}
+              <option value="resueltos-cancelados">Resueltos/Cancelados</option>
+            </optgroup>
           </select>
         </div>
 

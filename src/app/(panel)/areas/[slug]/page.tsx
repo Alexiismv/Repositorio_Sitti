@@ -66,6 +66,9 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
   const complejos = masComentados(tickets, 6);
   const personas = porPersona(tickets);
 
+  const hrefColumna = (categoria: string) =>
+    `/reportes?${new URLSearchParams({ gerencia: area.gerencia, area: slug, estado: categoria }).toString()}`;
+
   return (
     <>
       <div className="sh-breadcrumb">
@@ -155,7 +158,9 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
                   </div>
                 ))}
                 {col.tickets.length > 6 && (
-                  <div className="tablero-mas mono">+{numero(col.tickets.length - 6)} más</div>
+                  <Link href={hrefColumna(col.categoria)} className="tablero-mas mono">
+                    +{numero(col.tickets.length - 6)} más
+                  </Link>
                 )}
                 {col.tickets.length === 0 && <div className="tablero-vacio mono">Sin tickets</div>}
               </div>
