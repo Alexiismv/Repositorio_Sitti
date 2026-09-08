@@ -264,6 +264,16 @@ export interface Proyecto {
    * para todo lo demás (ETL, filtro "Aplicativo" de /reportes, Gerencias/Áreas).
    */
   ocultoEnAplicativos?: boolean;
+  /**
+   * Clave del proyecto JSM "* - Backlog" contraparte, confirmada por Alexis
+   * (8 sep 2026) contra el Jira real. Si no está presente, el aplicativo no
+   * tiene tablero de backlog — es el caso confirmado de Mesa de ayuda SITTI y
+   * Mesa de ayuda SMM (conservan solo el tablero operativo tradicional) y de
+   * Analítica/GIC (no tienen backlog propio). Fase 2 real: este campo es el
+   * que alimenta el JQL nuevo (`project IN (BAWS, BGBACK, ...)`) cuando se
+   * conecte el ETL — ver la nota junto a `CATEGORIAS_BACKLOG` más abajo.
+   */
+  claveBacklog?: string;
 }
 
 // Claves confirmadas por Alexis contra el Jira real (conexiondesoluciones.atlassian.net):
@@ -271,18 +281,65 @@ export interface Proyecto {
 // "* - Backlog", que son trabajo interno del equipo, no solicitudes de usuario).
 export const PROYECTOS: Proyecto[] = [
   { clave: "TA", nombre: "Analítica", vocabulario: "estandar", campoArea: "customfield_10506", color: "#33357E" },
-  { clave: "TAW", nombre: "Audiencias Web", vocabulario: "estandar", campoArea: "customfield_10506", color: "#3FA9AC" },
-  { clave: "TBACK", nombre: "BackOffice", vocabulario: "estandar", campoArea: "customfield_10506", color: "#F7A82C" },
-  { clave: "TCOBRO", nombre: "Cobro Coactivo", vocabulario: "estandar", campoArea: "customfield_10506", color: "#EC623B" },
-  { clave: "TDEI", nombre: "DEI", vocabulario: "estandar", campoArea: "customfield_10506", color: "#8B8FBF" },
-  { clave: "TFRONT", nombre: "FrontOffice", vocabulario: "estandar", campoArea: "customfield_10506", color: "#6BBF59" },
-  { clave: "TGA", nombre: "Gestión de la Atención", vocabulario: "estandar", campoArea: "customfield_10506", color: "#7A5AC4" },
+  { clave: "TAW", nombre: "Audiencias Web", vocabulario: "estandar", campoArea: "customfield_10506", color: "#3FA9AC", claveBacklog: "BAWS" },
+  { clave: "TBACK", nombre: "BackOffice", vocabulario: "estandar", campoArea: "customfield_10506", color: "#F7A82C", claveBacklog: "BGBACK" },
+  { clave: "TCOBRO", nombre: "Cobro Coactivo", vocabulario: "estandar", campoArea: "customfield_10506", color: "#EC623B", claveBacklog: "BCC" },
+  { clave: "TDEI", nombre: "DEI", vocabulario: "estandar", campoArea: "customfield_10506", color: "#8B8FBF", claveBacklog: "BKDEI" },
+  { clave: "TFRONT", nombre: "FrontOffice", vocabulario: "estandar", campoArea: "customfield_10506", color: "#6BBF59", claveBacklog: "BACKFRONT" },
+  { clave: "TGA", nombre: "Gestión de la Atención", vocabulario: "estandar", campoArea: "customfield_10506", color: "#7A5AC4", claveBacklog: "BKGA" },
   { clave: "TGIC", nombre: "GIC", vocabulario: "estandar", campoArea: "customfield_10506", color: "#961E65", ocultoEnAplicativos: true },
-  { clave: "TMULTAS", nombre: "Multas", vocabulario: "estandar", campoArea: "customfield_10506", color: "#B7BAD6" },
-  { clave: "TQX", nombre: "Qx Tránsito", vocabulario: "estandar", campoArea: "customfield_10506", color: "#33357E" },
+  { clave: "TMULTAS", nombre: "Multas", vocabulario: "estandar", campoArea: "customfield_10506", color: "#B7BAD6", claveBacklog: "BKMULTAS" },
+  { clave: "TQX", nombre: "Qx Tránsito", vocabulario: "estandar", campoArea: "customfield_10506", color: "#33357E", claveBacklog: "QXBK" },
   { clave: "TMA", nombre: "Mesa de ayuda SITTI", vocabulario: "mesa", campoArea: "customfield_10506", color: "#3FA9AC" },
   { clave: "REQ", nombre: "Mesa de ayuda SMM", vocabulario: "mesa", campoArea: "customfield_11698", sedeFija: "Caribe", color: "#F7A82C" },
 ];
+
+/**
+ * Aplicativos que SOLO tienen backlog de desarrollo — no tienen proyecto
+ * "* - Tickets" propio en Jira, así que NO van en `PROYECTOS` (agregar ahí
+ * una clave que no existe en Jira rompería el `project IN (...)` real del
+ * ETL operativo). Confirmado por Alexis (8 sep 2026).
+ */
+const APLICATIVOS_SOLO_BACKLOG: { clave: string; nombre: string; claveBacklog: string; color: string }[] = [
+  { clave: "logistica", nombre: "Logística", claveBacklog: "LOGISTICA", color: "#6BBF59" },
+  { clave: "mvi", nombre: "MVI", claveBacklog: "BACKLOGMVI", color: "#B7BAD6" },
+];
+
+/**
+ * Vista unificada del módulo Aplicativos — combina los proyectos operativos
+ * (con su proyecto de backlog, si lo tiene) y los aplicativos que solo
+ * existen como backlog. `src/app/(panel)/aplicativos/**` SIEMPRE recorre
+ * esta lista, nunca `PROYECTOS` directo, para no dejar fuera a Logística/MVI
+ * ni arriesgarse a que alguien agregue ahí una clave inventada.
+ */
+export interface Aplicativo {
+  /** Identificador de ruta, siempre en minúsculas (`/aplicativos/{clave}`). */
+  clave: string;
+  nombre: string;
+  color: string;
+  /** Proyecto JSM operativo ("* - Tickets"), si lo tiene. */
+  proyecto?: Proyecto;
+  /** Clave del proyecto JSM de backlog ("* - Backlog"), si lo tiene. */
+  claveBacklog?: string;
+}
+
+export const APLICATIVOS: Aplicativo[] = [
+  ...PROYECTOS.filter((p) => !p.ocultoEnAplicativos).map(
+    (p): Aplicativo => ({
+      clave: p.clave.toLowerCase(),
+      nombre: p.nombre,
+      color: p.color,
+      proyecto: p,
+      claveBacklog: p.claveBacklog,
+    }),
+  ),
+  ...APLICATIVOS_SOLO_BACKLOG.map(
+    (a): Aplicativo => ({ clave: a.clave, nombre: a.nombre, color: a.color, claveBacklog: a.claveBacklog }),
+  ),
+];
+
+export const aplicativoPorClave = (clave: string) =>
+  APLICATIVOS.find((a) => a.clave.toLowerCase() === clave.toLowerCase());
 
 // ─────────────────────────────────────────────────────────────
 // ESTADOS
@@ -321,28 +378,25 @@ export const ESTADO_A_CATEGORIA: Record<string, CategoriaEstado> = {
 // BACKLOG DE DESARROLLO (tablero secundario del módulo Aplicativos)
 // ─────────────────────────────────────────────────────────────
 //
-// Decisión de Alexis (7 sep 2026): cada aplicativo tiene, además de su
-// tablero operativo (arriba), un segundo tablero de backlog de desarrollo —
-// la fuente es el proyecto JSM "* - Backlog" contraparte de cada uno de los
-// 12 proyectos "* - Tickets" (ver la nota junto a `PROYECTOS` sobre por qué
-// esos proyectos "Backlog" se excluyen del ETL operativo: son trabajo interno
-// del equipo, no solicitudes de ciudadanos, y por eso nunca se sincronizaron).
+// Decisión de Alexis (7 sep 2026): cada aplicativo con proyecto de backlog
+// (`Proyecto.claveBacklog`) tiene, además de su tablero operativo, un
+// segundo tablero de backlog de desarrollo. Mesa de ayuda SITTI y Mesa de
+// ayuda SMM NO tienen backlog — conservan solo el tablero operativo
+// tradicional (confirmado por Alexis, 8 sep 2026).
 //
-// Fase 1 (esto): `CATEGORIAS_BACKLOG` + `src/lib/demo/generador-backlog.ts`
-// generan datos de DEMOSTRACIÓN para poder construir y ver la interfaz —
-// los títulos, cantidades y el mapa estado->categoría son inventados, no
-// vienen de Jira todavía.
+// El JQL/proyectos reales (confirmados por Alexis, 8 sep 2026, contra Jira):
+//   project IN (BAWS, BGBACK, BCC, BKDEI, BACKFRONT, BKGA, BKMULTAS, QXBK)
+// — más LOGISTICA y BACKLOGMVI, que no tienen contraparte operativa
+// conocida en `PROYECTOS` todavía (ver conversación de Fase 2, pendiente de
+// decidir cómo entran esos dos al módulo Aplicativos).
 //
-// Fase 2 (pendiente, cuando se confirme el proyecto y vocabulario real de
-// cada "* - Backlog" en Jira): (1) sumar los campos/JQL nuevos al ETL
-// (`src/lib/etl/jira.ts` + `src/lib/etl/sincronizar.ts`, disparado igual que
-// hoy por el botón "Refrescar"), (2) crear un `ESTADO_A_CATEGORIA_BACKLOG`
-// análogo a `ESTADO_A_CATEGORIA` que traduzca el vocabulario real de Jira a
-// estas 6 categorías (o ajustar las categorías si el vocabulario real no
-// calza), y (3) reemplazar `ticketsBacklogDemo()` por la lectura real en
-// `src/lib/data/provider.ts` (`obtenerBacklog()`). Ninguna pantalla de
-// `src/app/(panel)/aplicativos/` necesita tocarse — todas piden los datos a
-// través de `obtenerBacklog()`/`columnasBacklog()`, igual que el resto de la app.
+// `ESTADO_A_CATEGORIA_BACKLOG` de abajo es el vocabulario REAL de Jira para
+// esos proyectos, ya confirmado. Lo que sigue pendiente para la Fase 2 (ETL
+// real, disparado por el botón "Refrescar"): (1) sumar el JQL y los campos al
+// ETL (`src/lib/etl/jira.ts` + `src/lib/etl/sincronizar.ts` + tabla nueva en
+// `db/schema.sql`), y (2) reemplazar `ticketsBacklogDemo()` por la lectura
+// real en `obtenerBacklog()` (`src/lib/data/provider.ts`). Ninguna pantalla
+// de `src/app/(panel)/aplicativos/` necesita tocarse para eso.
 export type CategoriaBacklog =
   | "gestion-ca"
   | "alcance-cotizacion"
@@ -355,10 +409,36 @@ export const CATEGORIAS_BACKLOG: { key: CategoriaBacklog; label: string; color: 
   { key: "gestion-ca", label: "Gestión de CA", color: "#EC623B" },
   { key: "alcance-cotizacion", label: "Alcance/Cotización", color: "#F7A82C" },
   { key: "desarrollo-quipux", label: "Desarrollo Quipux", color: "#33357E" },
-  { key: "pruebas-sitti", label: "Pruebas Sitti", color: "#7A5AC4" },
+  { key: "pruebas-sitti", label: "Pruebas Sitti-QA", color: "#7A5AC4" },
   { key: "pruebas-smm-esu", label: "Pruebas SMM/ESU", color: "#8B8FBF" },
   { key: "produccion-cancelado", label: "Producción/Cancelado", color: "#3FA9AC" },
 ];
+
+/**
+ * Vocabulario REAL confirmado por Alexis (8 sep 2026) para los proyectos
+ * "* - Backlog". A diferencia de `ESTADO_A_CATEGORIA` (un solo vocabulario
+ * para 10 proyectos + otro para las 2 mesas de ayuda), acá varios estados
+ * literales distintos caen en la MISMA categoría a propósito: "PRUEBAS QA" y
+ * "ENTREGA QA - ADMIN" son las dos caras de "Pruebas Sitti-QA", y
+ * "CANCELADO"/"FINALIZADO"/"PRODUCCIÓN / SEGUIMIENTO" son las tres caras de
+ * "Producción/Cancelado" (mismo criterio que ya combina Resuelto+Cancelado
+ * en el tablero operativo — ver CLAUDE.md §2.1.3, mismo espíritu acá).
+ */
+export const ESTADO_A_CATEGORIA_BACKLOG: Record<string, CategoriaBacklog> = {
+  "GESTIONAR CA": "gestion-ca",
+  "ALCANCE / COTIZACIÓN": "alcance-cotizacion",
+  "DESARROLLO QUIPUX": "desarrollo-quipux",
+  "PRUEBAS QA": "pruebas-sitti",
+  "ENTREGA QA - ADMIN": "pruebas-sitti",
+  "PRUEBAS SMM": "pruebas-smm-esu",
+  CANCELADO: "produccion-cancelado",
+  FINALIZADO: "produccion-cancelado",
+  "PRODUCCIÓN / SEGUIMIENTO": "produccion-cancelado",
+};
+
+export function categoriaDeEstadoBacklog(estado: string): CategoriaBacklog {
+  return ESTADO_A_CATEGORIA_BACKLOG[estado] ?? "gestion-ca";
+}
 
 export const ESTADOS_POR_VOCABULARIO: Record<"estandar" | "mesa", string[]> = {
   estandar: [

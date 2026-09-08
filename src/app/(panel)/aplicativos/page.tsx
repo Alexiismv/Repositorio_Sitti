@@ -11,9 +11,10 @@ export const metadata = { title: "Aplicativos · SITTI" };
 
 /**
  * NIVEL 1 del módulo "Aplicativos": ranking de aplicativos por volumen,
- * mismo patrón que `gerencias/page.tsx`. Fase 1 usa el catálogo `PROYECTOS`
- * como lista de aplicativos — ver la nota junto a ese array en `catalogo.ts`
- * sobre el plan para cuando exista un campo propio en Jira.
+ * mismo patrón que `gerencias/page.tsx`. La lista sale de `APLICATIVOS`
+ * (catalogo.ts) — incluye tanto los proyectos JSM operativos como los que
+ * solo tienen backlog de desarrollo (Logística, MVI, con `total = 0`
+ * porque no tienen tickets que contar, pero sí aparecen en el ranking).
  */
 export default async function AplicativosPage() {
   const sesion = await leerSesion();

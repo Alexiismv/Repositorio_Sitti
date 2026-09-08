@@ -12,6 +12,7 @@
  */
 
 import {
+  APLICATIVOS,
   AREAS,
   CATEGORIAS_BACKLOG,
   CATEGORIAS_ESTADO,
@@ -19,7 +20,6 @@ import {
   GERENCIAS,
   META_TTFR_HORAS,
   META_TTR_HORAS,
-  PROYECTOS,
   SEDES,
   type CategoriaEstado,
   type Prioridad,
@@ -306,17 +306,19 @@ export function porProyecto(tickets: Ticket[]): FilaAgrupada[] {
 }
 
 /**
- * Nivel 1 del módulo "Aplicativos": ranking de proyectos JSM por volumen,
- * agrupando por `proyectoClave` (no por el nombre) para que el slug de ruta
- * salga siempre de `PROYECTOS.clave` — ver la nota de Fase 1/Fase 2 en
- * `catalogo.ts` junto al array `PROYECTOS` sobre por qué "aplicativo" hoy
- * reusa este catálogo en vez de tener uno propio.
+ * Nivel 1 del módulo "Aplicativos": ranking por volumen operativo, sobre
+ * `APLICATIVOS` (catalogo.ts) — no `PROYECTOS` directo, porque incluye
+ * aplicativos que solo tienen backlog (Logística, MVI) y no tienen tickets
+ * operativos que agrupar. Esos se conservan igual en la lista (`total = 0`)
+ * porque sí tienen backlog que mostrar — se filtran solo los que no tienen
+ * NI tickets NI backlog.
  */
 export function porAplicativo(tickets: Ticket[]): FilaAgrupada[] {
   const grupos = agrupar(tickets, (t) => t.proyectoClave);
-  return PROYECTOS.filter((p) => !p.ocultoEnAplicativos)
-    .map((p) => filaDe(p.clave.toLowerCase(), p.nombre, grupos.get(p.clave) ?? [], p.color))
-    .filter((f) => f.total > 0)
+  return APLICATIVOS.map((a) =>
+    filaDe(a.clave, a.nombre, a.proyecto ? (grupos.get(a.proyecto.clave) ?? []) : [], a.color),
+  )
+    .filter((f, i) => f.total > 0 || Boolean(APLICATIVOS[i].claveBacklog))
     .sort((a, b) => b.total - a.total);
 }
 
