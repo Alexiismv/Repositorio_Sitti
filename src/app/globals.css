@@ -411,6 +411,20 @@ body {
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
+.th-orden {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+.th-orden:hover,
+.th-orden:focus-visible {
+  color: var(--navy);
+}
 .tabla td {
   padding: 11px 12px;
   border-bottom: 1px solid var(--line);
@@ -724,13 +738,23 @@ body {
   text-align: center;
   padding: 6px 0 2px;
 }
-a.tablero-mas {
+a.tablero-mas,
+button.tablero-mas {
   display: block;
+  width: 100%;
   text-decoration: none;
   cursor: pointer;
 }
+button.tablero-mas {
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+}
 a.tablero-mas:hover,
-a.tablero-mas:focus-visible {
+a.tablero-mas:focus-visible,
+button.tablero-mas:hover,
+button.tablero-mas:focus-visible {
   color: var(--navy);
   text-decoration: underline;
 }

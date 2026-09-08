@@ -132,8 +132,10 @@ export default async function DetalleAplicativo({ params }: { params: Promise<{ 
               />
 
               <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "16px 0", lineHeight: 1.55 }}>
-                Las columnas son categorías normalizadas, porque los proyectos de JSM usan dos
-                vocabularios distintos de estado. El texto literal de Jira se conserva en cada ticket.
+                Las columnas son los estados normalizados dentro de cada uno de los tickets en Jira,
+                agrupados en estados orientados a lo pendiente, en espera de proveedor y lo que ya
+                está resuelto o cancelado. Cada ticket sigue conservando su estado original dentro
+                de Jira.
               </p>
 
               <TableroKanban columnas={columnasBacklog(backlog)} />
@@ -144,7 +146,7 @@ export default async function DetalleAplicativo({ params }: { params: Promise<{ 
 
       {tieneOperacion && (
         <>
-          <SectionLabel>Estado del aplicativo (operación)</SectionLabel>
+          <SectionLabel>Estado del aplicativo (Tickets de la operación)</SectionLabel>
 
           {r.total === 0 ? (
             <EstadoVacio
@@ -188,8 +190,10 @@ export default async function DetalleAplicativo({ params }: { params: Promise<{ 
               />
 
               <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "16px 0", lineHeight: 1.55 }}>
-                Las columnas son categorías normalizadas, porque los proyectos de JSM usan dos
-                vocabularios distintos de estado. El texto literal de Jira se conserva en cada ticket.
+                Las columnas son los estados normalizados dentro de cada uno de los tickets en Jira,
+                agrupados en estados orientados a lo pendiente, en espera de proveedor y lo que ya
+                está resuelto o cancelado. Cada ticket sigue conservando su estado original dentro
+                de Jira.
               </p>
 
               <TableroKanban columnas={columnasOperacion(tickets)} hrefColumna={hrefColumna} />

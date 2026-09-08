@@ -20,6 +20,8 @@ import {
   resumen,
 } from "@/lib/metricas";
 
+import { TablaEquipo } from "./tabla-equipo";
+
 /**
  * Renderizado dinámico obligatorio: lo que se muestra depende de la sesión y de
  * los permisos del usuario. Sin esto Next intentaría prerenderizar la ruta y
@@ -119,8 +121,9 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
 
           <SectionLabel>Tablero por estado</SectionLabel>
           <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "-6px 0 16px", lineHeight: 1.55 }}>
-            Las columnas son categorías normalizadas, porque los proyectos de JSM usan dos
-            vocabularios distintos de estado. El texto literal de Jira se conserva en cada ticket.
+            Las columnas son los estados normalizados dentro de cada uno de los tickets en Jira,
+            agrupados en estados orientados a lo pendiente, en espera de proveedor y lo que ya está
+            resuelto o cancelado. Cada ticket sigue conservando su estado original dentro de Jira.
           </p>
 
           <TableroKanban columnas={columnasOperacion(tickets)} hrefColumna={hrefColumna} />
@@ -217,41 +220,12 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
           <SectionLabel>Carga por persona</SectionLabel>
 
           <div className="panel">
-            <h4>Equipo del área</h4>
+            <h4>Carga individual de Conexión de Soluciones en el área</h4>
             <div className="panel-sub">
               Para apoyar a desbloquear, no para castigar: el dato útil es dónde se está acumulando
               lo estancado
             </div>
-            <div className="scroll-x">
-              <table className="tabla">
-                <thead>
-                  <tr>
-                    <th>Persona</th>
-                    <th className="num">Tickets</th>
-                    <th className="num">Pendientes</th>
-                    <th className="num">Estancados</th>
-                    <th className="num">TTR promedio</th>
-                    <th className="num">Cumplimiento</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {personas.map((p) => (
-                    <tr key={p.slug}>
-                      <td>{p.nombre}</td>
-                      <td className="num">{numero(p.total)}</td>
-                      <td className="num">{numero(p.pendientes)}</td>
-                      <td className="num" style={{ color: p.estancados ? "var(--red)" : undefined }}>
-                        {numero(p.estancados)}
-                      </td>
-                      <td className="num">{p.ttrPromedio.toLocaleString("es-CO")} h</td>
-                      <td className="num" style={{ color: p.cumplimientoTtr < 80 ? "var(--red)" : undefined }}>
-                        {porcentaje(p.cumplimientoTtr)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <TablaEquipo personas={personas} gerenciaSlug={area.gerencia} areaSlug={slug} />
           </div>
 
           <SectionLabel>Todos los tickets del área</SectionLabel>
