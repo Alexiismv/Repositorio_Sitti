@@ -6,7 +6,7 @@ import { EstadoVacio, KpiStrip, SectionLabel } from "@/components/ui";
 import { leerSesion } from "@/lib/auth/sesion";
 import { puedeVerPantalla } from "@/lib/auth/tipos";
 import { aplicativoPorClave, DIAS_ESTANCADO_DEFAULT } from "@/lib/catalogo";
-import { obtenerBacklog, obtenerTickets } from "@/lib/data/provider";
+import { DEMO_MODE, obtenerBacklog, obtenerTickets } from "@/lib/data/provider";
 import { numero, porcentaje } from "@/lib/formato";
 import { columnasBacklog, columnasOperacion, estancados, resumen, resumenBacklog } from "@/lib/metricas";
 
@@ -93,8 +93,9 @@ export default async function DetalleAplicativo({ params }: { params: Promise<{ 
         <>
           <SectionLabel>Backlog de desarrollo</SectionLabel>
           <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "-6px 0 16px", lineHeight: 1.55 }}>
-            Datos de demostración: todavía no está conectado el ETL real de backlog en Jira para
-            este aplicativo. El botón &quot;Refrescar&quot; no trae esta información aún.
+            {DEMO_MODE
+              ? "Datos de demostración: en modo demo el backlog no viene de Jira. El botón “Refrescar” lo trae en cuanto la app esté conectada."
+              : "Las columnas son categorías normalizadas del vocabulario real de Jira. El botón “Refrescar” actualiza esta información junto con los tickets de operación."}
           </p>
 
           {backlog.length === 0 ? (

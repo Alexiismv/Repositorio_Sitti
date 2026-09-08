@@ -223,18 +223,24 @@ export const SEDES: Sede[] = [
 // filtra tickets con `obtenerTickets(sesion, { proyectos: [clave] })`, exactamente
 // igual que cualquier otro filtro por proyecto.
 //
-// Fase 2 (pendiente, cuando Alexis defina el nuevo JQL/custom field en Jira):
-// si "aplicativo" termina siendo un eje de negocio distinto de "proyecto" (p.
-// ej. una misma área usa varios aplicativos, o un aplicativo cruza varios
+// Fase 2 del EJE OPERATIVO (pendiente, cuando Alexis defina el nuevo
+// JQL/custom field en Jira): si "aplicativo" termina siendo un eje de
+// negocio distinto de "proyecto" para los TICKETS de operación (p. ej. una
+// misma área usa varios aplicativos, o un aplicativo cruza varios
 // proyectos), la migración es: (1) agregar `aplicativo`/`aplicativoSlug` a
 // `Ticket` (`src/lib/demo/generador.ts` + `jira_cache.tickets_raw` +
 // `normalizar()` en `src/lib/etl/jira.ts`, leyendo el custom field nuevo),
-// (2) crear un catálogo `APLICATIVOS` propio en vez de reusar `PROYECTOS`,
-// (3) cambiar `porAplicativo()` (`src/lib/metricas.ts`) para agrupar por ese
-// campo nuevo en vez de `proyectoClave`, y (4) sumar `aplicativos?: string[]`
+// (2) cambiar `porAplicativo()` (`src/lib/metricas.ts`) para agrupar por ese
+// campo nuevo en vez de `proyectoClave`, y (3) sumar `aplicativos?: string[]`
 // a `Filtros` (`src/lib/data/provider.ts`). Ninguna pantalla de
 // `src/app/(panel)/aplicativos/` necesita tocarse — todas piden los datos a
 // través de `porAplicativo()`/`obtenerTickets()`, igual que el resto de la app.
+//
+// El catálogo `APLICATIVOS` ya existe (más abajo) — se creó por otra razón
+// (8 sep 2026, unificar proyectos operativos con Logística/MVI, que solo
+// tienen backlog), no por esta Fase 2. El backlog de desarrollo (§ más
+// abajo) YA está conectado de verdad desde el 8 sep 2026 — la Fase 2
+// pendiente de acá es solo sobre el eje operativo (Tickets), no el backlog.
 
 export interface Proyecto {
   clave: string;
@@ -404,12 +410,17 @@ export const ESTADO_A_CATEGORIA: Record<string, CategoriaEstado> = {
 // tickets de la operación).
 //
 // `ESTADO_A_CATEGORIA_BACKLOG` de abajo es el vocabulario REAL de Jira para
-// esos proyectos, ya confirmado. Lo que sigue pendiente para la Fase 2 (ETL
-// real, disparado por el botón "Refrescar"): (1) sumar el JQL y los campos al
-// ETL (`src/lib/etl/jira.ts` + `src/lib/etl/sincronizar.ts` + tabla nueva en
-// `db/schema.sql`), y (2) reemplazar `ticketsBacklogDemo()` por la lectura
-// real en `obtenerBacklog()` (`src/lib/data/provider.ts`). Ninguna pantalla
-// de `src/app/(panel)/aplicativos/` necesita tocarse para eso.
+// esos proyectos, verificado el 8 sep 2026 contra 699 issues reales (solo
+// lectura, sin escribir nada) — cobertura 100%.
+//
+// Fase 2 YA CONECTADA (8 sep 2026): el JQL/campos viven en
+// `src/lib/etl/jira.ts` (`jqlBacklogCompleto`/`jqlBacklogIncremental`/
+// `normalizarBacklog`), la sincronización real en
+// `src/lib/etl/sincronizar.ts` (mismo botón "Refrescar" que los tickets
+// operativos, misma transacción), las tablas en `db/schema.sql`
+// (`jira_cache.backlog_raw`/`backlog_staging`/`v_backlog`), y
+// `obtenerBacklog()` (`src/lib/data/provider.ts`) sigue a `DEMO_MODE` igual
+// que `obtenerTickets()` — demo en local, real donde ya hay ETL corriendo.
 export type CategoriaBacklog =
   | "gestion-ca"
   | "alcance-cotizacion"
