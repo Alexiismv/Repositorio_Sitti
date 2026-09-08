@@ -299,10 +299,22 @@ export const PROYECTOS: Proyecto[] = [
  * "* - Tickets" propio en Jira, así que NO van en `PROYECTOS` (agregar ahí
  * una clave que no existe en Jira rompería el `project IN (...)` real del
  * ETL operativo). Confirmado por Alexis (8 sep 2026).
+ *
+ * `ocultoEnAplicativos` (8 sep 2026, mismo día): Logística y MVI no reciben
+ * tickets de la operación, así que Alexis pidió ocultarlos del módulo
+ * Aplicativos — mismo tratamiento que GIC en `PROYECTOS` (se quedan en el
+ * catálogo con su `claveBacklog` por si se reactivan, pero no aparecen en
+ * `/aplicativos` ni tienen detalle: esa ruta da 404).
  */
-const APLICATIVOS_SOLO_BACKLOG: { clave: string; nombre: string; claveBacklog: string; color: string }[] = [
-  { clave: "logistica", nombre: "Logística", claveBacklog: "LOGISTICA", color: "#6BBF59" },
-  { clave: "mvi", nombre: "MVI", claveBacklog: "BACKLOGMVI", color: "#B7BAD6" },
+const APLICATIVOS_SOLO_BACKLOG: {
+  clave: string;
+  nombre: string;
+  claveBacklog: string;
+  color: string;
+  ocultoEnAplicativos?: boolean;
+}[] = [
+  { clave: "logistica", nombre: "Logística", claveBacklog: "LOGISTICA", color: "#6BBF59", ocultoEnAplicativos: true },
+  { clave: "mvi", nombre: "MVI", claveBacklog: "BACKLOGMVI", color: "#B7BAD6", ocultoEnAplicativos: true },
 ];
 
 /**
@@ -333,7 +345,7 @@ export const APLICATIVOS: Aplicativo[] = [
       claveBacklog: p.claveBacklog,
     }),
   ),
-  ...APLICATIVOS_SOLO_BACKLOG.map(
+  ...APLICATIVOS_SOLO_BACKLOG.filter((a) => !a.ocultoEnAplicativos).map(
     (a): Aplicativo => ({ clave: a.clave, nombre: a.nombre, color: a.color, claveBacklog: a.claveBacklog }),
   ),
 ];
