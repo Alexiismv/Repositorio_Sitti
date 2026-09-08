@@ -49,7 +49,7 @@ export default async function DetalleAplicativo({ params }: { params: Promise<{ 
   }
 
   const aplicativo = proyectoPorClave(slug);
-  if (!aplicativo) notFound();
+  if (!aplicativo || aplicativo.ocultoEnAplicativos) notFound();
 
   const [tickets, backlog] = await Promise.all([
     obtenerTickets(sesion, { proyectos: [aplicativo.clave] }),

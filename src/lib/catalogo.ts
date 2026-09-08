@@ -255,6 +255,15 @@ export interface Proyecto {
    * No afecta al ETL ni al switch de Área; es puramente de presentación.
    */
   color: string;
+  /**
+   * `true` = no aparece como tarjeta en `/aplicativos` ni tiene detalle en
+   * `/aplicativos/[slug]` (esa ruta devuelve 404). Decisión de Alexis (8 sep
+   * 2026): GIC ya no se usa en la compañía y solo tiene 1 ticket en todo
+   * 2026, así que no tiene sentido como aplicativo activo en ese módulo.
+   * Solo afecta la interfaz de Aplicativos — el proyecto sigue existiendo
+   * para todo lo demás (ETL, filtro "Aplicativo" de /reportes, Gerencias/Áreas).
+   */
+  ocultoEnAplicativos?: boolean;
 }
 
 // Claves confirmadas por Alexis contra el Jira real (conexiondesoluciones.atlassian.net):
@@ -268,7 +277,7 @@ export const PROYECTOS: Proyecto[] = [
   { clave: "TDEI", nombre: "DEI", vocabulario: "estandar", campoArea: "customfield_10506", color: "#8B8FBF" },
   { clave: "TFRONT", nombre: "FrontOffice", vocabulario: "estandar", campoArea: "customfield_10506", color: "#6BBF59" },
   { clave: "TGA", nombre: "Gestión de la Atención", vocabulario: "estandar", campoArea: "customfield_10506", color: "#7A5AC4" },
-  { clave: "TGIC", nombre: "GIC", vocabulario: "estandar", campoArea: "customfield_10506", color: "#961E65" },
+  { clave: "TGIC", nombre: "GIC", vocabulario: "estandar", campoArea: "customfield_10506", color: "#961E65", ocultoEnAplicativos: true },
   { clave: "TMULTAS", nombre: "Multas", vocabulario: "estandar", campoArea: "customfield_10506", color: "#B7BAD6" },
   { clave: "TQX", nombre: "Qx Tránsito", vocabulario: "estandar", campoArea: "customfield_10506", color: "#33357E" },
   { clave: "TMA", nombre: "Mesa de ayuda SITTI", vocabulario: "mesa", campoArea: "customfield_10506", color: "#3FA9AC" },

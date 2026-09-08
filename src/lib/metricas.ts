@@ -314,7 +314,8 @@ export function porProyecto(tickets: Ticket[]): FilaAgrupada[] {
  */
 export function porAplicativo(tickets: Ticket[]): FilaAgrupada[] {
   const grupos = agrupar(tickets, (t) => t.proyectoClave);
-  return PROYECTOS.map((p) => filaDe(p.clave.toLowerCase(), p.nombre, grupos.get(p.clave) ?? [], p.color))
+  return PROYECTOS.filter((p) => !p.ocultoEnAplicativos)
+    .map((p) => filaDe(p.clave.toLowerCase(), p.nombre, grupos.get(p.clave) ?? [], p.color))
     .filter((f) => f.total > 0)
     .sort((a, b) => b.total - a.total);
 }
