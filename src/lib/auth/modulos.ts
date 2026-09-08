@@ -27,6 +27,9 @@ export const PANTALLAS: Pantalla[] = [
   { slug: "reportes", nombre: "Reportes", orden: 5 },
   { slug: "admin-usuarios", nombre: "Administración de usuarios", orden: 6 },
   { slug: "admin-perfiles", nombre: "Gestión de perfiles", orden: 7 },
+  // Módulo nuevo (7 sep 2026): no se agrega a `ACCESO_POR_ROL` a propósito —
+  // Alexis quiere elegir a mano, desde /admin/perfiles, qué perfiles lo ven.
+  { slug: "aplicativos", nombre: "Aplicativos", orden: 8 },
 ];
 
 export interface Accion {
@@ -57,6 +60,7 @@ export const PANTALLA_ACCION: Record<string, string[]> = {
   reportes: ["ver", "exportar"],
   "admin-usuarios": ["ver", "crear", "editar", "restablecer_password"],
   "admin-perfiles": ["ver", "crear", "editar", "eliminar"],
+  aplicativos: ["ver"],
 };
 
 export interface Widget {

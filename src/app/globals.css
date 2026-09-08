@@ -645,9 +645,15 @@ body {
 
 /* ─────────────── Tablero de estados (Nivel 3) ─────────────── */
 
+/*
+ * grid-template-columns se fija inline por instancia (<TableroKanban>, según
+ * cuántas columnas traiga) porque hay dos tableros con distinto número de
+ * columnas (4 el operativo, 6 el de backlog). Los breakpoints de abajo llevan
+ * `!important` a propósito para poder ganarle a ese inline style en pantallas
+ * chicas — mismo patrón que `.kpi-strip` un poco más abajo en este archivo.
+ */
 .tablero {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   align-items: start;
 }
@@ -731,12 +737,12 @@ a.tablero-mas:focus-visible {
 
 @media (max-width: 1100px) {
   .tablero {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 @media (max-width: 700px) {
   .tablero {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -1071,7 +1077,8 @@ a.tablero-mas:focus-visible {
 [data-tema="oscuro"] .tablero-conteo {
   color: #0F1130;
 }
-[data-tema="oscuro"] .tablero-head[data-categoria="en-progreso"] .tablero-conteo {
+[data-tema="oscuro"] .tablero-head[data-categoria="en-progreso"] .tablero-conteo,
+[data-tema="oscuro"] .tablero-head[data-categoria="desarrollo-quipux"] .tablero-conteo {
   color: #fff;
 }
 [data-tema="oscuro"] .tablero-card {

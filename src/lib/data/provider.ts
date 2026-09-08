@@ -10,6 +10,7 @@
  * a un `WHERE` sobre `jira_cache.tickets_raw`.
  */
 
+import { ticketsBacklogDemo, type TicketBacklog } from "@/lib/demo/generador-backlog";
 import { ticketsDemo, type Ticket } from "@/lib/demo/generador";
 import { DEMO_MODE } from "@/lib/modo";
 import { puedeVer, type Sesion } from "@/lib/auth/tipos";
@@ -138,6 +139,25 @@ export async function obtenerTickets(sesion: Sesion, filtros: Filtros = {}): Pro
     if (!puedeVer(sesion, sedeSlug, t.areaSlug)) return false;
     return cumpleFiltros(t, filtros);
   });
+}
+
+/**
+ * Backlog de desarrollo de un aplicativo (tablero secundario del módulo
+ * Aplicativos). No pasa por `puedeVer()`: el backlog es trabajo interno del
+ * equipo, no tiene sede/área — el filtro real de acceso es la pantalla
+ * "aplicativos" (`puedeVerPantalla`), ya aplicado antes de llegar acá.
+ *
+ * A propósito NO depende de `DEMO_MODE`: ese flag decide si los TICKETS
+ * operativos son demo o reales (Jira/Postgres ya conectado), pero el backlog
+ * no tiene ninguna fuente real todavía — no existe el ETL ni la tabla (ver
+ * la nota de Fase 1/Fase 2 en `catalogo.ts` junto a `CATEGORIAS_BACKLOG`).
+ * Por eso muestra datos de demostración siempre, incluso con `DEMO_MODE=false`
+ * (como en `pruebas`/producción, que ya leen tickets reales de Postgres).
+ * Cuando exista el ETL real, este `ticketsBacklogDemo()` se reemplaza por una
+ * consulta a la tabla nueva — ninguna pantalla necesita cambiar.
+ */
+export async function obtenerBacklog(aplicativoClave: string): Promise<TicketBacklog[]> {
+  return ticketsBacklogDemo().filter((t) => t.aplicativoClave === aplicativoClave);
 }
 
 /** Metadatos del último sync, para el sello de "actualizado hace…" en la UI. */

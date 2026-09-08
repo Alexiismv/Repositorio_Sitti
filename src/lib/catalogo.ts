@@ -213,8 +213,28 @@ export const SEDES: Sede[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// PROYECTOS JSM (12 portales)
+// PROYECTOS JSM (12 portales) — también el eje del módulo "Aplicativos"
 // ─────────────────────────────────────────────────────────────
+//
+// Decisión de Alexis (7 sep 2026, Fase 1 del módulo Aplicativos): mientras no
+// exista un campo propio en Jira para "aplicativo", ese módulo reutiliza este
+// mismo catálogo de 12 proyectos JSM como su lista de "aplicativos" — por eso
+// "Audiencias Web" (clave TAW) ya aparece acá. `src/app/(panel)/aplicativos/`
+// filtra tickets con `obtenerTickets(sesion, { proyectos: [clave] })`, exactamente
+// igual que cualquier otro filtro por proyecto.
+//
+// Fase 2 (pendiente, cuando Alexis defina el nuevo JQL/custom field en Jira):
+// si "aplicativo" termina siendo un eje de negocio distinto de "proyecto" (p.
+// ej. una misma área usa varios aplicativos, o un aplicativo cruza varios
+// proyectos), la migración es: (1) agregar `aplicativo`/`aplicativoSlug` a
+// `Ticket` (`src/lib/demo/generador.ts` + `jira_cache.tickets_raw` +
+// `normalizar()` en `src/lib/etl/jira.ts`, leyendo el custom field nuevo),
+// (2) crear un catálogo `APLICATIVOS` propio en vez de reusar `PROYECTOS`,
+// (3) cambiar `porAplicativo()` (`src/lib/metricas.ts`) para agrupar por ese
+// campo nuevo en vez de `proyectoClave`, y (4) sumar `aplicativos?: string[]`
+// a `Filtros` (`src/lib/data/provider.ts`). Ninguna pantalla de
+// `src/app/(panel)/aplicativos/` necesita tocarse — todas piden los datos a
+// través de `porAplicativo()`/`obtenerTickets()`, igual que el resto de la app.
 
 export interface Proyecto {
   clave: string;
@@ -230,25 +250,108 @@ export interface Proyecto {
    */
   campoArea: "customfield_10506" | "customfield_11698";
   sedeFija?: string;
+  /**
+   * Color de acento — usado por el módulo "Aplicativos" (ver §11 más abajo).
+   * No afecta al ETL ni al switch de Área; es puramente de presentación.
+   */
+  color: string;
+  /**
+   * `true` = no aparece como tarjeta en `/aplicativos` ni tiene detalle en
+   * `/aplicativos/[slug]` (esa ruta devuelve 404). Decisión de Alexis (8 sep
+   * 2026): GIC ya no se usa en la compañía y solo tiene 1 ticket en todo
+   * 2026, así que no tiene sentido como aplicativo activo en ese módulo.
+   * Solo afecta la interfaz de Aplicativos — el proyecto sigue existiendo
+   * para todo lo demás (ETL, filtro "Aplicativo" de /reportes, Gerencias/Áreas).
+   */
+  ocultoEnAplicativos?: boolean;
+  /**
+   * Clave del proyecto JSM "* - Backlog" contraparte, confirmada por Alexis
+   * (8 sep 2026) contra el Jira real. Si no está presente, el aplicativo no
+   * tiene tablero de backlog — es el caso confirmado de Mesa de ayuda SITTI y
+   * Mesa de ayuda SMM (conservan solo el tablero operativo tradicional) y de
+   * Analítica/GIC (no tienen backlog propio). Fase 2 real: este campo es el
+   * que alimenta el JQL nuevo (`project IN (BAWS, BGBACK, ...)`) cuando se
+   * conecte el ETL — ver la nota junto a `CATEGORIAS_BACKLOG` más abajo.
+   */
+  claveBacklog?: string;
 }
 
 // Claves confirmadas por Alexis contra el Jira real (conexiondesoluciones.atlassian.net):
 // solo los 12 proyectos "* - Tickets" (se excluyen a propósito sus contrapartes
 // "* - Backlog", que son trabajo interno del equipo, no solicitudes de usuario).
 export const PROYECTOS: Proyecto[] = [
-  { clave: "TA", nombre: "Analítica", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TAW", nombre: "Audiencias Web", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TBACK", nombre: "BackOffice", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TCOBRO", nombre: "Cobro Coactivo", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TDEI", nombre: "DEI", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TFRONT", nombre: "FrontOffice", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TGA", nombre: "Gestión de la Atención", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TGIC", nombre: "GIC", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TMULTAS", nombre: "Multas", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TQX", nombre: "Qx Tránsito", vocabulario: "estandar", campoArea: "customfield_10506" },
-  { clave: "TMA", nombre: "Mesa de ayuda SITTI", vocabulario: "mesa", campoArea: "customfield_10506" },
-  { clave: "REQ", nombre: "Mesa de ayuda SMM", vocabulario: "mesa", campoArea: "customfield_11698", sedeFija: "Caribe" },
+  { clave: "TA", nombre: "Analítica", vocabulario: "estandar", campoArea: "customfield_10506", color: "#33357E" },
+  { clave: "TAW", nombre: "Audiencias Web", vocabulario: "estandar", campoArea: "customfield_10506", color: "#3FA9AC", claveBacklog: "BAWS" },
+  { clave: "TBACK", nombre: "BackOffice", vocabulario: "estandar", campoArea: "customfield_10506", color: "#F7A82C", claveBacklog: "BGBACK" },
+  { clave: "TCOBRO", nombre: "Cobro Coactivo", vocabulario: "estandar", campoArea: "customfield_10506", color: "#EC623B", claveBacklog: "BCC" },
+  { clave: "TDEI", nombre: "DEI", vocabulario: "estandar", campoArea: "customfield_10506", color: "#8B8FBF", claveBacklog: "BKDEI" },
+  { clave: "TFRONT", nombre: "FrontOffice", vocabulario: "estandar", campoArea: "customfield_10506", color: "#6BBF59", claveBacklog: "BACKFRONT" },
+  { clave: "TGA", nombre: "Gestión de la Atención", vocabulario: "estandar", campoArea: "customfield_10506", color: "#7A5AC4", claveBacklog: "BKGA" },
+  { clave: "TGIC", nombre: "GIC", vocabulario: "estandar", campoArea: "customfield_10506", color: "#961E65", ocultoEnAplicativos: true },
+  { clave: "TMULTAS", nombre: "Multas", vocabulario: "estandar", campoArea: "customfield_10506", color: "#B7BAD6", claveBacklog: "BKMULTAS" },
+  { clave: "TQX", nombre: "Qx Tránsito", vocabulario: "estandar", campoArea: "customfield_10506", color: "#33357E", claveBacklog: "QXBK" },
+  { clave: "TMA", nombre: "Mesa de ayuda SITTI", vocabulario: "mesa", campoArea: "customfield_10506", color: "#3FA9AC" },
+  { clave: "REQ", nombre: "Mesa de ayuda SMM", vocabulario: "mesa", campoArea: "customfield_11698", sedeFija: "Caribe", color: "#F7A82C" },
 ];
+
+/**
+ * Aplicativos que SOLO tienen backlog de desarrollo — no tienen proyecto
+ * "* - Tickets" propio en Jira, así que NO van en `PROYECTOS` (agregar ahí
+ * una clave que no existe en Jira rompería el `project IN (...)` real del
+ * ETL operativo). Confirmado por Alexis (8 sep 2026).
+ *
+ * `ocultoEnAplicativos` (8 sep 2026, mismo día): Logística y MVI no reciben
+ * tickets de la operación, así que Alexis pidió ocultarlos del módulo
+ * Aplicativos — mismo tratamiento que GIC en `PROYECTOS` (se quedan en el
+ * catálogo con su `claveBacklog` por si se reactivan, pero no aparecen en
+ * `/aplicativos` ni tienen detalle: esa ruta da 404).
+ */
+const APLICATIVOS_SOLO_BACKLOG: {
+  clave: string;
+  nombre: string;
+  claveBacklog: string;
+  color: string;
+  ocultoEnAplicativos?: boolean;
+}[] = [
+  { clave: "logistica", nombre: "Logística", claveBacklog: "LOGISTICA", color: "#6BBF59", ocultoEnAplicativos: true },
+  { clave: "mvi", nombre: "MVI", claveBacklog: "BACKLOGMVI", color: "#B7BAD6", ocultoEnAplicativos: true },
+];
+
+/**
+ * Vista unificada del módulo Aplicativos — combina los proyectos operativos
+ * (con su proyecto de backlog, si lo tiene) y los aplicativos que solo
+ * existen como backlog. `src/app/(panel)/aplicativos/**` SIEMPRE recorre
+ * esta lista, nunca `PROYECTOS` directo, para no dejar fuera a Logística/MVI
+ * ni arriesgarse a que alguien agregue ahí una clave inventada.
+ */
+export interface Aplicativo {
+  /** Identificador de ruta, siempre en minúsculas (`/aplicativos/{clave}`). */
+  clave: string;
+  nombre: string;
+  color: string;
+  /** Proyecto JSM operativo ("* - Tickets"), si lo tiene. */
+  proyecto?: Proyecto;
+  /** Clave del proyecto JSM de backlog ("* - Backlog"), si lo tiene. */
+  claveBacklog?: string;
+}
+
+export const APLICATIVOS: Aplicativo[] = [
+  ...PROYECTOS.filter((p) => !p.ocultoEnAplicativos).map(
+    (p): Aplicativo => ({
+      clave: p.clave.toLowerCase(),
+      nombre: p.nombre,
+      color: p.color,
+      proyecto: p,
+      claveBacklog: p.claveBacklog,
+    }),
+  ),
+  ...APLICATIVOS_SOLO_BACKLOG.filter((a) => !a.ocultoEnAplicativos).map(
+    (a): Aplicativo => ({ clave: a.clave, nombre: a.nombre, color: a.color, claveBacklog: a.claveBacklog }),
+  ),
+];
+
+export const aplicativoPorClave = (clave: string) =>
+  APLICATIVOS.find((a) => a.clave.toLowerCase() === clave.toLowerCase());
 
 // ─────────────────────────────────────────────────────────────
 // ESTADOS
@@ -282,6 +385,72 @@ export const ESTADO_A_CATEGORIA: Record<string, CategoriaEstado> = {
   "A LA ESPERA DEL PROVEEDOR": "esperando-terceros",
   "A LA ESPERA DE USUARIO": "esperando-terceros",
 };
+
+// ─────────────────────────────────────────────────────────────
+// BACKLOG DE DESARROLLO (tablero secundario del módulo Aplicativos)
+// ─────────────────────────────────────────────────────────────
+//
+// Decisión de Alexis (7 sep 2026): cada aplicativo con proyecto de backlog
+// (`Proyecto.claveBacklog`) tiene, además de su tablero operativo, un
+// segundo tablero de backlog de desarrollo. Mesa de ayuda SITTI y Mesa de
+// ayuda SMM NO tienen backlog — conservan solo el tablero operativo
+// tradicional (confirmado por Alexis, 8 sep 2026).
+//
+// El JQL/proyectos reales (confirmados por Alexis, 8 sep 2026, contra Jira):
+//   project IN (BAWS, BGBACK, BCC, BKDEI, BACKFRONT, BKGA, BKMULTAS, QXBK)
+// — más LOGISTICA y BACKLOGMVI, que no tienen contraparte operativa
+// conocida en `PROYECTOS` todavía (ver conversación de Fase 2, pendiente de
+// decidir cómo entran esos dos al módulo Aplicativos).
+//
+// `ESTADO_A_CATEGORIA_BACKLOG` de abajo es el vocabulario REAL de Jira para
+// esos proyectos, ya confirmado. Lo que sigue pendiente para la Fase 2 (ETL
+// real, disparado por el botón "Refrescar"): (1) sumar el JQL y los campos al
+// ETL (`src/lib/etl/jira.ts` + `src/lib/etl/sincronizar.ts` + tabla nueva en
+// `db/schema.sql`), y (2) reemplazar `ticketsBacklogDemo()` por la lectura
+// real en `obtenerBacklog()` (`src/lib/data/provider.ts`). Ninguna pantalla
+// de `src/app/(panel)/aplicativos/` necesita tocarse para eso.
+export type CategoriaBacklog =
+  | "gestion-ca"
+  | "alcance-cotizacion"
+  | "desarrollo-quipux"
+  | "pruebas-sitti"
+  | "pruebas-smm-esu"
+  | "produccion-cancelado";
+
+export const CATEGORIAS_BACKLOG: { key: CategoriaBacklog; label: string; color: string }[] = [
+  { key: "gestion-ca", label: "Gestión de CA", color: "#EC623B" },
+  { key: "alcance-cotizacion", label: "Alcance/Cotización", color: "#F7A82C" },
+  { key: "desarrollo-quipux", label: "Desarrollo Quipux", color: "#33357E" },
+  { key: "pruebas-sitti", label: "Pruebas Sitti-QA", color: "#7A5AC4" },
+  { key: "pruebas-smm-esu", label: "Pruebas SMM/ESU", color: "#8B8FBF" },
+  { key: "produccion-cancelado", label: "Producción/Cancelado", color: "#3FA9AC" },
+];
+
+/**
+ * Vocabulario REAL confirmado por Alexis (8 sep 2026) para los proyectos
+ * "* - Backlog". A diferencia de `ESTADO_A_CATEGORIA` (un solo vocabulario
+ * para 10 proyectos + otro para las 2 mesas de ayuda), acá varios estados
+ * literales distintos caen en la MISMA categoría a propósito: "PRUEBAS QA" y
+ * "ENTREGA QA - ADMIN" son las dos caras de "Pruebas Sitti-QA", y
+ * "CANCELADO"/"FINALIZADO"/"PRODUCCIÓN / SEGUIMIENTO" son las tres caras de
+ * "Producción/Cancelado" (mismo criterio que ya combina Resuelto+Cancelado
+ * en el tablero operativo — ver CLAUDE.md §2.1.3, mismo espíritu acá).
+ */
+export const ESTADO_A_CATEGORIA_BACKLOG: Record<string, CategoriaBacklog> = {
+  "GESTIONAR CA": "gestion-ca",
+  "ALCANCE / COTIZACIÓN": "alcance-cotizacion",
+  "DESARROLLO QUIPUX": "desarrollo-quipux",
+  "PRUEBAS QA": "pruebas-sitti",
+  "ENTREGA QA - ADMIN": "pruebas-sitti",
+  "PRUEBAS SMM": "pruebas-smm-esu",
+  CANCELADO: "produccion-cancelado",
+  FINALIZADO: "produccion-cancelado",
+  "PRODUCCIÓN / SEGUIMIENTO": "produccion-cancelado",
+};
+
+export function categoriaDeEstadoBacklog(estado: string): CategoriaBacklog {
+  return ESTADO_A_CATEGORIA_BACKLOG[estado] ?? "gestion-ca";
+}
 
 export const ESTADOS_POR_VOCABULARIO: Record<"estandar" | "mesa", string[]> = {
   estandar: [
@@ -344,6 +513,15 @@ export const gerenciaPorSlug = (slug: string) => GERENCIAS.find((g) => g.slug ==
 export const areaPorSlug = (slug: string) => AREAS.find((a) => a.slug === slug);
 export const sedePorSlug = (slug: string) => SEDES.find((s) => s.slug === slug);
 export const areasDeGerencia = (slug: string) => AREAS.filter((a) => a.gerencia === slug);
+
+/**
+ * Busca un proyecto por su clave, sin distinguir mayúsculas/minúsculas — el
+ * módulo "Aplicativos" usa `clave.toLowerCase()` como slug de ruta
+ * (`/aplicativos/taw`), así que hay que volver a subir el caso para comparar
+ * contra `Ticket.proyectoClave` y `Filtros.proyectos`.
+ */
+export const proyectoPorClave = (clave: string) =>
+  PROYECTOS.find((p) => p.clave.toLowerCase() === clave.toLowerCase());
 
 /** Volumen 2026 de una gerencia = suma de sus áreas. Nunca hardcodeamos el total. */
 export const volumenGerencia = (slug: string) =>

@@ -16,6 +16,8 @@ const ENLACES_BASE = [
 
 const ENLACE_PERSONAS = { href: "/personas", label: "Personas" };
 
+const ENLACE_APLICATIVOS = { href: "/aplicativos", label: "Aplicativos" };
+
 const ENLACE_REPORTES = { href: "/reportes", label: "Reportes" };
 
 export function Topbar({
@@ -62,6 +64,7 @@ export function Topbar({
 
   const enlaces = [
     ...ENLACES_BASE,
+    ...(puedeVerPantalla(sesion, "aplicativos") ? [ENLACE_APLICATIVOS] : []),
     ENLACE_REPORTES,
     ...(puedeVerPantalla(sesion, "personas") ? [ENLACE_PERSONAS] : []),
   ];

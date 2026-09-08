@@ -31,19 +31,27 @@ export interface Kpi {
 }
 
 /**
- * Franja de KPIs.
- *
- * Se fuerza a 4 columnas en escritorio y 2 en móvil porque los sets de KPIs de
- * este panel son de 4: cualquier otro número (5, 6) dejaría una fila huérfana
- * de 1 tarjeta, que se lee como error de maquetación y no como decisión.
- * Si algún día hacen falta 6, van 3x2 — no 4+2.
+ * Cuántas columnas usar en escritorio para no dejar nunca una fila huérfana de
+ * 1 sola tarjeta (se lee como error de maquetación, no como decisión). Hasta 5
+ * KPIs entran en una sola fila; de ahí para arriba se busca el divisor más
+ * parejo (6 -> 3x2), y si no hay uno exacto se reparte en dos filas lo más
+ * parejas posible. En móvil siempre gana el `!important` de 2 columnas de
+ * `globals.css`, así que esto solo importa en escritorio.
  */
+function columnasKpi(n: number): number {
+  if (n <= 5) return n || 1;
+  if (n % 3 === 0) return 3;
+  if (n % 4 === 0) return 4;
+  return Math.ceil(n / 2);
+}
+
+/** Franja de KPIs. */
 export function KpiStrip({ kpis }: { kpis: Kpi[] }) {
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: `repeat(${Math.min(kpis.length, 4)}, minmax(0, 1fr))`,
+        gridTemplateColumns: `repeat(${columnasKpi(kpis.length)}, minmax(0, 1fr))`,
         gap: 14,
       }}
       className="kpi-strip"

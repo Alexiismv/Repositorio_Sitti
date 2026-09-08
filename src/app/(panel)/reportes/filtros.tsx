@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 
-import { AREAS, CATEGORIAS_ESTADO, GERENCIAS, SEDES, TIPOS_REQUERIMIENTO } from "@/lib/catalogo";
+import { AREAS, CATEGORIAS_ESTADO, GERENCIAS, PROYECTOS, SEDES, TIPOS_REQUERIMIENTO } from "@/lib/catalogo";
 
 /**
  * Filtros dinámicos de reportes.
@@ -181,6 +181,18 @@ export function FiltrosReporte({ personas }: { personas: string[] }) {
               ))}
               <option value="resueltos-cancelados">Resueltos/Cancelados</option>
             </optgroup>
+          </select>
+        </div>
+
+        <div className="filtro-campo">
+          <label htmlFor="f-proyecto">Aplicativo</label>
+          <select id="f-proyecto" name="proyecto" defaultValue={valor("proyecto")}>
+            <option value="">Todos</option>
+            {PROYECTOS.map((p) => (
+              <option key={p.clave} value={p.clave}>
+                {p.nombre}
+              </option>
+            ))}
           </select>
         </div>
 

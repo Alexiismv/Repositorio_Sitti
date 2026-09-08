@@ -75,7 +75,7 @@ const MESES_TRANSCURRIDOS = 8;
 // PRNG determinístico (mulberry32)
 // ─────────────────────────────────────────────────────────────
 
-function mulberry32(seed: number) {
+export function mulberry32(seed: number) {
   let a = seed >>> 0;
   return function rng(): number {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -87,7 +87,7 @@ function mulberry32(seed: number) {
 }
 
 /** Hash estable de string -> entero, para semillar por área. */
-function hashSemilla(texto: string): number {
+export function hashSemilla(texto: string): number {
   let h = 2166136261;
   for (let i = 0; i < texto.length; i++) {
     h ^= texto.charCodeAt(i);
@@ -96,9 +96,9 @@ function hashSemilla(texto: string): number {
   return h >>> 0;
 }
 
-type Rng = () => number;
+export type Rng = () => number;
 
-function elegirPonderado<T>(rng: Rng, items: T[], pesos: number[]): T {
+export function elegirPonderado<T>(rng: Rng, items: T[], pesos: number[]): T {
   const total = pesos.reduce((a, b) => a + b, 0);
   let r = rng() * total;
   for (let i = 0; i < items.length; i++) {
@@ -108,7 +108,7 @@ function elegirPonderado<T>(rng: Rng, items: T[], pesos: number[]): T {
   return items[items.length - 1];
 }
 
-function enteroEntre(rng: Rng, min: number, max: number): number {
+export function enteroEntre(rng: Rng, min: number, max: number): number {
   return Math.floor(rng() * (max - min + 1)) + min;
 }
 

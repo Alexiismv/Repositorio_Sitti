@@ -12,7 +12,9 @@
  */
 
 import {
+  APLICATIVOS,
   AREAS,
+  CATEGORIAS_BACKLOG,
   CATEGORIAS_ESTADO,
   DIAS_ESTANCADO_DEFAULT,
   GERENCIAS,
@@ -22,6 +24,7 @@ import {
   type CategoriaEstado,
   type Prioridad,
 } from "@/lib/catalogo";
+import type { TicketBacklog } from "@/lib/demo/generador-backlog";
 import { fechaCorte, type Ticket } from "@/lib/demo/generador";
 
 export const MESES_CORTOS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
@@ -302,6 +305,23 @@ export function porProyecto(tickets: Ticket[]): FilaAgrupada[] {
     .sort((a, b) => b.total - a.total);
 }
 
+/**
+ * Nivel 1 del módulo "Aplicativos": ranking por volumen operativo, sobre
+ * `APLICATIVOS` (catalogo.ts) — no `PROYECTOS` directo, porque incluye
+ * aplicativos que solo tienen backlog (Logística, MVI) y no tienen tickets
+ * operativos que agrupar. Esos se conservan igual en la lista (`total = 0`)
+ * porque sí tienen backlog que mostrar — se filtran solo los que no tienen
+ * NI tickets NI backlog.
+ */
+export function porAplicativo(tickets: Ticket[]): FilaAgrupada[] {
+  const grupos = agrupar(tickets, (t) => t.proyectoClave);
+  return APLICATIVOS.map((a) =>
+    filaDe(a.clave, a.nombre, a.proyecto ? (grupos.get(a.proyecto.clave) ?? []) : [], a.color),
+  )
+    .filter((f, i) => f.total > 0 || Boolean(APLICATIVOS[i].claveBacklog))
+    .sort((a, b) => b.total - a.total);
+}
+
 // ─────────────────────────────────────────────────────────────
 // Listas operativas (Nivel 3 y detalle de sede)
 // ─────────────────────────────────────────────────────────────
@@ -341,6 +361,109 @@ export function tableroEstados(tickets: Ticket[]): { categoria: CategoriaEstado;
       .filter((t) => t.categoriaEstado === c.key)
       .sort((a, b) => b.diasSinActualizar - a.diasSinActualizar),
   }));
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tablero Kanban — forma genérica que consume <TableroKanban>
+// ─────────────────────────────────────────────────────────────
+
+/** Lo mínimo que necesita una tarjeta del tablero, sin importar si es un ticket operativo o un ítem de backlog. */
+export interface TicketTablero {
+  clave: string;
+  tituloTicket: string;
+  estadoTicket: string;
+  diasSinActualizar: number;
+  /** Estado final (no se muestra "Xd sin mover" — ya no aplica). */
+  terminal: boolean;
+}
+
+export interface ColumnaTablero {
+  categoria: string;
+  label: string;
+  color: string;
+  tickets: TicketTablero[];
+}
+
+function aTicketTablero(t: Ticket, terminal: boolean): TicketTablero {
+  return {
+    clave: t.clave,
+    tituloTicket: t.tituloTicket,
+    estadoTicket: t.estadoTicket,
+    diasSinActualizar: t.diasSinActualizar,
+    terminal,
+  };
+}
+
+/**
+ * Columnas del tablero operativo (Pendiente / En progreso / En espera
+ * proveedor / Resueltos-Cancelados) — 4 columnas de presentación sobre las 5
+ * categorías de `tableroEstados()`. Resuelto y Cancelado se combinan acá
+ * solo para mostrar, nunca en el modelo de datos (CLAUDE.md §2.1.3).
+ */
+export function columnasOperacion(tickets: Ticket[]): ColumnaTablero[] {
+  const tablero = tableroEstados(tickets);
+  const resueltoCol = tablero.find((c) => c.categoria === "resuelto");
+  const canceladoCol = tablero.find((c) => c.categoria === "cancelado");
+
+  const otras = tablero
+    .filter((c) => c.categoria !== "resuelto" && c.categoria !== "cancelado")
+    .map((c) => ({
+      categoria: c.categoria as string,
+      label: c.label,
+      color: c.color,
+      tickets: c.tickets.map((t) => aTicketTablero(t, false)),
+    }));
+
+  const combinada: ColumnaTablero = {
+    categoria: "resueltos-cancelados",
+    label: "Resueltos/Cancelados",
+    color: resueltoCol?.color ?? "#3FA9AC",
+    tickets: [...(resueltoCol?.tickets ?? []), ...(canceladoCol?.tickets ?? [])].map((t) =>
+      aTicketTablero(t, true),
+    ),
+  };
+
+  return [...otras, combinada];
+}
+
+/**
+ * Columnas del tablero de backlog de desarrollo (6 categorías, ver la nota
+ * de Fase 1/Fase 2 junto a `CATEGORIAS_BACKLOG` en `catalogo.ts`).
+ */
+export function columnasBacklog(items: TicketBacklog[]): ColumnaTablero[] {
+  return CATEGORIAS_BACKLOG.map((c) => ({
+    categoria: c.key,
+    label: c.label,
+    color: c.color,
+    tickets: items
+      .filter((i) => i.categoriaBacklog === c.key)
+      .sort((a, b) => b.diasSinActualizar - a.diasSinActualizar)
+      .map((i) => ({
+        clave: i.clave,
+        tituloTicket: i.tituloTicket,
+        estadoTicket: i.estadoTicket,
+        diasSinActualizar: i.diasSinActualizar,
+        terminal: c.key === "produccion-cancelado",
+      })),
+  }));
+}
+
+export interface ResumenBacklog {
+  total: number;
+  activos: number;
+  estancados: number;
+  enProduccion: number;
+}
+
+/** KPIs del panel de backlog — sin TTR/TTFR: esas metas de SLA son del tablero operativo, no aplican a trabajo interno de desarrollo. */
+export function resumenBacklog(items: TicketBacklog[], diasEstancado = DIAS_ESTANCADO_DEFAULT): ResumenBacklog {
+  const total = items.length;
+  const enProduccion = items.filter((i) => i.categoriaBacklog === "produccion-cancelado").length;
+  const estancados = items.filter(
+    (i) => i.categoriaBacklog !== "produccion-cancelado" && i.diasSinActualizar >= diasEstancado,
+  ).length;
+
+  return { total, activos: total - enProduccion, estancados, enProduccion };
 }
 
 /** El valor más frecuente de un campo — "tipo más solicitado", "portal más usado". */
