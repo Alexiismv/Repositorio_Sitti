@@ -306,11 +306,12 @@ export const PROYECTOS: Proyecto[] = [
  * una clave que no existe en Jira rompería el `project IN (...)` real del
  * ETL operativo). Confirmado por Alexis (8 sep 2026).
  *
- * `ocultoEnAplicativos` (8 sep 2026, mismo día): Logística y MVI no reciben
- * tickets de la operación, así que Alexis pidió ocultarlos del módulo
- * Aplicativos — mismo tratamiento que GIC en `PROYECTOS` (se quedan en el
- * catálogo con su `claveBacklog` por si se reactivan, pero no aparecen en
- * `/aplicativos` ni tienen detalle: esa ruta da 404).
+ * Estuvieron ocultas del módulo Aplicativos entre el 8 sep (mismo día que se
+ * agregaron) y el 8 sep (reactivadas) — Alexis las reactivó una vez
+ * confirmado que su backlog real (proyectos LOGISTICA/BACKLOGMVI) también
+ * quedó conectado en el ETL (`APLICATIVOS_CON_BACKLOG` en
+ * `src/lib/etl/jira.ts`, que arma el JQL sobre `APLICATIVOS`, no sobre
+ * `PROYECTOS` — así cubre también a estos dos).
  */
 const APLICATIVOS_SOLO_BACKLOG: {
   clave: string;
@@ -319,8 +320,8 @@ const APLICATIVOS_SOLO_BACKLOG: {
   color: string;
   ocultoEnAplicativos?: boolean;
 }[] = [
-  { clave: "logistica", nombre: "Logística", claveBacklog: "LOGISTICA", color: "#6BBF59", ocultoEnAplicativos: true },
-  { clave: "mvi", nombre: "MVI", claveBacklog: "BACKLOGMVI", color: "#B7BAD6", ocultoEnAplicativos: true },
+  { clave: "logistica", nombre: "Logística", claveBacklog: "LOGISTICA", color: "#6BBF59" },
+  { clave: "mvi", nombre: "MVI", claveBacklog: "BACKLOGMVI", color: "#B7BAD6" },
 ];
 
 /**

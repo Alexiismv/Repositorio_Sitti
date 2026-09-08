@@ -12,7 +12,7 @@
  * según por dónde se hubiera sincronizado.
  */
 
-import { META_TTFR_HORAS, META_TTR_HORAS, PROYECTOS, type Prioridad } from "@/lib/catalogo";
+import { APLICATIVOS, META_TTFR_HORAS, META_TTR_HORAS, PROYECTOS, type Prioridad } from "@/lib/catalogo";
 
 const CAMPOS = [
   "summary",
@@ -126,11 +126,18 @@ export const jqlIncremental = (dias: number): string =>
 // `CATEGORIAS_BACKLOG` para el contexto completo de este eje)
 // ─────────────────────────────────────────────────────────────
 
-/** Solo los proyectos que sí tienen backlog confirmado (`Proyecto.claveBacklog`). */
-const PROYECTOS_CON_BACKLOG = PROYECTOS.filter((p) => p.claveBacklog);
-const CLAVES_BACKLOG = PROYECTOS_CON_BACKLOG.map((p) => p.claveBacklog).join(", ");
+/**
+ * Solo los aplicativos VISIBLES que sí tienen backlog confirmado
+ * (`Aplicativo.claveBacklog`) — sobre `APLICATIVOS`, no `PROYECTOS`, para
+ * cubrir también a Logística/MVI (que no tienen proyecto operativo) y para
+ * que un aplicativo oculto (`ocultoEnAplicativos`, ej. si algún día se
+ * oculta otro) no siga gastando cuota de la API de Jira sincronizando datos
+ * que nadie ve.
+ */
+const APLICATIVOS_CON_BACKLOG = APLICATIVOS.filter((a) => a.claveBacklog);
+const CLAVES_BACKLOG = APLICATIVOS_CON_BACKLOG.map((a) => a.claveBacklog).join(", ");
 
-export const hayProyectosBacklog = (): boolean => PROYECTOS_CON_BACKLOG.length > 0;
+export const hayProyectosBacklog = (): boolean => APLICATIVOS_CON_BACKLOG.length > 0;
 
 /**
  * Sin filtro de año a propósito: el backlog de desarrollo no es un
@@ -381,7 +388,7 @@ export interface BacklogNormalizado {
 
 /** Clave del proyecto de backlog en Jira (ej. "BAWS") -> `Aplicativo.clave` (ej. "taw"). */
 const APLICATIVO_POR_CLAVE_BACKLOG = new Map(
-  PROYECTOS_CON_BACKLOG.map((p) => [p.claveBacklog as string, p.clave.toLowerCase()]),
+  APLICATIVOS_CON_BACKLOG.map((a) => [a.claveBacklog as string, a.clave]),
 );
 
 export function normalizarBacklog(issue: IssueJira): BacklogNormalizado {
