@@ -146,6 +146,30 @@ CREATE TABLE IF NOT EXISTS jira_cache.sync_log (
 
 CREATE INDEX IF NOT EXISTS ix_sync_log_fin ON jira_cache.sync_log (finalizado_en DESC);
 
+-- ═══════════════════════════════════════════════════════════════════
+-- BACKLOG DE DESARROLLO (Fase 2, 8 sep 2026) — tablero secundario del
+-- módulo Aplicativos. Espejo mucho más chico que tickets_raw: el backlog es
+-- trabajo interno del equipo (sin SLA, prioridad, ni switch de área), no
+-- solicitudes de ciudadanos. Ver la nota de Fase 1/Fase 2 junto a
+-- `CATEGORIAS_BACKLOG` en `src/lib/catalogo.ts` para el contexto completo, y
+-- `ESTADO_A_CATEGORIA_BACKLOG` ahí mismo para el vocabulario real de Jira
+-- (verificado el 8 sep 2026 contra los 8 proyectos "* - Backlog" confirmados).
+CREATE TABLE IF NOT EXISTS jira_cache.backlog_raw (
+  clave                text PRIMARY KEY,          -- ej. 'BAWS-1'
+  titulo_ticket        text,                      -- summary
+  aplicativo_clave     text NOT NULL,             -- Aplicativo.clave (catalogo.ts), ej. 'taw'
+  estado_ticket        text,                      -- status.name (literal de Jira, con su guion final si lo trae)
+  fecha_creacion       timestamptz,
+  fecha_actualizacion  timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS ix_backlog_aplicativo ON jira_cache.backlog_raw (aplicativo_clave);
+CREATE INDEX IF NOT EXISTS ix_backlog_estado     ON jira_cache.backlog_raw (estado_ticket);
+
+-- Staging para la carga completa — mismo patrón de swap atómico que tickets_staging.
+CREATE TABLE IF NOT EXISTS jira_cache.backlog_staging
+  (LIKE jira_cache.backlog_raw INCLUDING ALL);
+
 
 -- ═══════════════════════════════════════════════════════════════════
 -- AUTH — cuentas, permisos y bitácoras. Nunca se trunca.
@@ -399,3 +423,27 @@ SELECT
   -- exacto sin depender de cuándo corrió el último sync.
   EXTRACT(DAY FROM (now() - t.fecha_actualizacion))::int AS dias_sin_actualizar
 FROM jira_cache.tickets_raw t;
+
+-- Vista de backlog — mismo motivo que v_tickets (§ arriba): que nadie tenga
+-- que recordar a mano el mapa estado-literal -> categoría normalizada.
+-- Vocabulario verificado el 8 sep 2026 contra Jira real — ver la nota de
+-- `ESTADO_A_CATEGORIA_BACKLOG` en `src/lib/catalogo.ts`.
+DROP VIEW IF EXISTS jira_cache.v_backlog;
+CREATE VIEW jira_cache.v_backlog AS
+SELECT
+  b.*,
+  CASE b.estado_ticket
+    WHEN 'GESTIONAR CA -'             THEN 'gestion-ca'
+    WHEN 'ALCANCE / COTIZACIÓN -'     THEN 'alcance-cotizacion'
+    WHEN 'DESARROLLO QUIPUX -'        THEN 'desarrollo-quipux'
+    WHEN 'PRUEBAS QA -'               THEN 'pruebas-sitti'
+    WHEN 'ENTREGA QA - ADMIN -'       THEN 'pruebas-sitti'
+    WHEN 'PRUEBAS SMM -'              THEN 'pruebas-smm-esu'
+    WHEN 'CANCELADO'                  THEN 'produccion-cancelado'
+    WHEN 'CANCELADO -'                THEN 'produccion-cancelado'
+    WHEN 'FINALIZADO'                 THEN 'produccion-cancelado'
+    WHEN 'PRODUCCIÓN / SEGUIMIENTO -' THEN 'produccion-cancelado'
+    ELSE 'gestion-ca'
+  END AS categoria_backlog,
+  EXTRACT(DAY FROM (now() - b.fecha_actualizacion))::int AS dias_sin_actualizar
+FROM jira_cache.backlog_raw b;

@@ -398,9 +398,10 @@ export const ESTADO_A_CATEGORIA: Record<string, CategoriaEstado> = {
 //
 // El JQL/proyectos reales (confirmados por Alexis, 8 sep 2026, contra Jira):
 //   project IN (BAWS, BGBACK, BCC, BKDEI, BACKFRONT, BKGA, BKMULTAS, QXBK)
-// — más LOGISTICA y BACKLOGMVI, que no tienen contraparte operativa
-// conocida en `PROYECTOS` todavía (ver conversación de Fase 2, pendiente de
-// decidir cómo entran esos dos al módulo Aplicativos).
+// — más LOGISTICA y BACKLOGMVI, que no tienen contraparte operativa en
+// `PROYECTOS` (Logística/MVI, en `APLICATIVOS_SOLO_BACKLOG` más abajo, ocultas
+// del módulo Aplicativos por decisión de Alexis: esos proyectos no reciben
+// tickets de la operación).
 //
 // `ESTADO_A_CATEGORIA_BACKLOG` de abajo es el vocabulario REAL de Jira para
 // esos proyectos, ya confirmado. Lo que sigue pendiente para la Fase 2 (ETL
@@ -427,25 +428,36 @@ export const CATEGORIAS_BACKLOG: { key: CategoriaBacklog; label: string; color: 
 ];
 
 /**
- * Vocabulario REAL confirmado por Alexis (8 sep 2026) para los proyectos
- * "* - Backlog". A diferencia de `ESTADO_A_CATEGORIA` (un solo vocabulario
- * para 10 proyectos + otro para las 2 mesas de ayuda), acá varios estados
- * literales distintos caen en la MISMA categoría a propósito: "PRUEBAS QA" y
- * "ENTREGA QA - ADMIN" son las dos caras de "Pruebas Sitti-QA", y
- * "CANCELADO"/"FINALIZADO"/"PRODUCCIÓN / SEGUIMIENTO" son las tres caras de
- * "Producción/Cancelado" (mismo criterio que ya combina Resuelto+Cancelado
- * en el tablero operativo — ver CLAUDE.md §2.1.3, mismo espíritu acá).
+ * Vocabulario REAL de Jira, verificado el 8 sep 2026 contra los 8 proyectos
+ * de backlog confirmados por Alexis (699 issues reales, vía
+ * `POST /rest/api/3/search/jql` de solo lectura — no se escribió nada).
+ *
+ * Ojo con el guion final: la mayoría de los literales de Jira terminan en
+ * " -" (ej. "GESTIONAR CA -", no "GESTIONAR CA") — es así en la instancia
+ * real, no un error de tipeo. La única excepción real es "FINALIZADO", que
+ * nunca lleva el guion. "CANCELADO" existe en Jira en las DOS formas (con y
+ * sin guion, en proyectos distintos), así que ambas están mapeadas.
+ *
+ * A diferencia de `ESTADO_A_CATEGORIA` (un solo vocabulario para 10
+ * proyectos + otro para las 2 mesas de ayuda), acá varios estados literales
+ * distintos caen en la MISMA categoría a propósito: "PRUEBAS QA -" y
+ * "ENTREGA QA - ADMIN -" son las dos caras de "Pruebas Sitti-QA", y
+ * "CANCELADO"/"CANCELADO -"/"FINALIZADO"/"PRODUCCIÓN / SEGUIMIENTO -" son
+ * las cuatro caras de "Producción/Cancelado" (mismo criterio que ya combina
+ * Resuelto+Cancelado en el tablero operativo — ver CLAUDE.md §2.1.3, mismo
+ * espíritu acá).
  */
 export const ESTADO_A_CATEGORIA_BACKLOG: Record<string, CategoriaBacklog> = {
-  "GESTIONAR CA": "gestion-ca",
-  "ALCANCE / COTIZACIÓN": "alcance-cotizacion",
-  "DESARROLLO QUIPUX": "desarrollo-quipux",
-  "PRUEBAS QA": "pruebas-sitti",
-  "ENTREGA QA - ADMIN": "pruebas-sitti",
-  "PRUEBAS SMM": "pruebas-smm-esu",
+  "GESTIONAR CA -": "gestion-ca",
+  "ALCANCE / COTIZACIÓN -": "alcance-cotizacion",
+  "DESARROLLO QUIPUX -": "desarrollo-quipux",
+  "PRUEBAS QA -": "pruebas-sitti",
+  "ENTREGA QA - ADMIN -": "pruebas-sitti",
+  "PRUEBAS SMM -": "pruebas-smm-esu",
   CANCELADO: "produccion-cancelado",
+  "CANCELADO -": "produccion-cancelado",
   FINALIZADO: "produccion-cancelado",
-  "PRODUCCIÓN / SEGUIMIENTO": "produccion-cancelado",
+  "PRODUCCIÓN / SEGUIMIENTO -": "produccion-cancelado",
 };
 
 export function categoriaDeEstadoBacklog(estado: string): CategoriaBacklog {

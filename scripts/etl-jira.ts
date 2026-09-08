@@ -77,7 +77,7 @@ async function main() {
   process.stdout.write("\n");
   console.log(
     `\n✅ Listo en ${(r.duracionMs / 1000).toFixed(1)}s — ${r.totalTickets} tickets procesados, ` +
-      `${r.filasEnTabla} en la tabla.`,
+      `${r.filasEnTabla} en la tabla · ${r.totalBacklog} ítems de backlog.`,
   );
   if (process.env.DEMO_MODE !== "false") {
     console.log("   Recuerda poner DEMO_MODE=false para que la app lea de la base.");

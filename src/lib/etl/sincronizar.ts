@@ -2,10 +2,16 @@ import type { PoolClient } from "pg";
 
 import { conCliente } from "@/lib/db";
 import {
+  CAMPOS_BACKLOG,
+  hayProyectosBacklog,
+  jqlBacklogCompleto,
+  jqlBacklogIncremental,
   jqlCompleto,
   jqlIncremental,
   normalizar,
+  normalizarBacklog,
   traerIssues,
+  type BacklogNormalizado,
   type TicketNormalizado,
 } from "@/lib/etl/jira";
 
@@ -37,6 +43,8 @@ export type ModoSync = "completo" | "incremental";
 export interface ResultadoSync {
   modo: ModoSync;
   totalTickets: number;
+  /** Ítems de backlog sincronizados (Fase 2). 0 si no hay proyectos de backlog configurados. */
+  totalBacklog: number;
   duracionMs: number;
   /** Total de filas en la tabla al terminar. */
   filasEnTabla: number;
@@ -61,26 +69,37 @@ function valoresDe(t: TicketNormalizado): unknown[] {
   ];
 }
 
+const COLUMNAS_BACKLOG = [
+  "clave", "titulo_ticket", "aplicativo_clave", "estado_ticket", "fecha_creacion", "fecha_actualizacion",
+] as const;
+
+function valoresDeBacklog(b: BacklogNormalizado): unknown[] {
+  return [b.clave, b.tituloTicket, b.aplicativoClave, b.estadoTicket, b.fechaCreacion, b.fechaActualizacion];
+}
+
 /**
- * Inserta en lotes de 200.
+ * Inserta en lotes de 200 (genérico: sirve para tickets y para backlog).
  *
- * Una sentencia por ticket serían ~9.000 idas y vueltas a Neon: en la práctica
- * es la diferencia entre 20 segundos y varios minutos, y varios minutos no
- * caben en el límite de una función serverless.
+ * Una sentencia por fila serían miles de idas y vueltas a Neon: en la
+ * práctica es la diferencia entre segundos y varios minutos, y varios
+ * minutos no caben en el límite de una función serverless.
  */
-async function insertarLotes(
+async function insertarLotesGenerico<T>(
   cliente: PoolClient,
   tabla: string,
-  filas: TicketNormalizado[],
+  columnas: readonly string[],
+  valoresDeFila: (f: T) => unknown[],
+  filas: T[],
   modo: "insertar" | "upsert",
   alProgresar?: (n: number) => void,
 ): Promise<void> {
   const LOTE = 200;
-  const cols = COLUMNAS.join(", ");
+  const cols = columnas.join(", ");
 
   const conflicto =
     modo === "upsert"
-      ? `ON CONFLICT (clave) DO UPDATE SET ${COLUMNAS.filter((c) => c !== "clave")
+      ? `ON CONFLICT (clave) DO UPDATE SET ${columnas
+          .filter((c) => c !== "clave")
           .map((c) => `${c} = EXCLUDED.${c}`)
           .join(", ")}`
       : "ON CONFLICT (clave) DO NOTHING";
@@ -90,9 +109,9 @@ async function insertarLotes(
     const valores: unknown[] = [];
     const marcadores = lote
       .map((f, j) => {
-        const base = j * COLUMNAS.length;
-        valores.push(...valoresDe(f));
-        return `(${COLUMNAS.map((_, k) => `$${base + k + 1}`).join(",")})`;
+        const base = j * columnas.length;
+        valores.push(...valoresDeFila(f));
+        return `(${columnas.map((_, k) => `$${base + k + 1}`).join(",")})`;
       })
       .join(",");
 
@@ -100,6 +119,22 @@ async function insertarLotes(
     alProgresar?.(Math.min(i + LOTE, filas.length));
   }
 }
+
+const insertarLotes = (
+  cliente: PoolClient,
+  tabla: string,
+  filas: TicketNormalizado[],
+  modo: "insertar" | "upsert",
+  alProgresar?: (n: number) => void,
+) => insertarLotesGenerico(cliente, tabla, COLUMNAS, valoresDe, filas, modo, alProgresar);
+
+const insertarLotesBacklog = (
+  cliente: PoolClient,
+  tabla: string,
+  filas: BacklogNormalizado[],
+  modo: "insertar" | "upsert",
+  alProgresar?: (n: number) => void,
+) => insertarLotesGenerico(cliente, tabla, COLUMNAS_BACKLOG, valoresDeBacklog, filas, modo, alProgresar);
 
 /** `ttr_incumplido` se calcula en SQL: la meta depende de la prioridad de cada ticket. */
 async function marcarTtrIncumplido(cliente: PoolClient, tabla: string): Promise<void> {
@@ -160,6 +195,18 @@ export async function sincronizar(
   );
   const filas = issues.map(normalizar);
 
+  // Backlog (Fase 2): mismo botón, misma sincronización. `hayProyectosBacklog()`
+  // es false solo si algún día `PROYECTOS` se queda sin ningún `claveBacklog`
+  // — no debería pasar, pero así el sync no se rompe si pasa.
+  const filasBacklog = hayProyectosBacklog()
+    ? (
+        await traerIssues(modo === "completo" ? jqlBacklogCompleto() : jqlBacklogIncremental(DIAS_INCREMENTAL), {
+          campos: CAMPOS_BACKLOG,
+          alProgresar: (n, total) => opciones.alProgresar?.("descargando backlog", n, total),
+        })
+      ).map(normalizarBacklog)
+    : [];
+
   return conCliente(async (cliente) => {
     if (await syncEnCurso(cliente)) {
       throw new Error("Ya hay una sincronización en curso. Espera a que termine.");
@@ -187,6 +234,14 @@ export async function sincronizar(
         await cliente.query("ALTER TABLE jira_cache.tickets_raw RENAME TO tickets_anterior");
         await cliente.query("ALTER TABLE jira_cache.tickets_staging RENAME TO tickets_raw");
         await cliente.query("ALTER TABLE jira_cache.tickets_anterior RENAME TO tickets_staging");
+
+        await cliente.query("TRUNCATE jira_cache.backlog_staging");
+        await insertarLotesBacklog(cliente, "jira_cache.backlog_staging", filasBacklog, "insertar", (n) =>
+          opciones.alProgresar?.("cargando backlog", n, filasBacklog.length),
+        );
+        await cliente.query("ALTER TABLE jira_cache.backlog_raw RENAME TO backlog_anterior");
+        await cliente.query("ALTER TABLE jira_cache.backlog_staging RENAME TO backlog_raw");
+        await cliente.query("ALTER TABLE jira_cache.backlog_anterior RENAME TO backlog_staging");
       } else {
         // Incremental: upsert directo. No se trunca nada, así que no hay
         // ventana de datos vacíos ni hace falta el swap.
@@ -194,6 +249,10 @@ export async function sincronizar(
           opciones.alProgresar?.("cargando", n, filas.length),
         );
         await marcarTtrIncumplido(cliente, "jira_cache.tickets_raw");
+
+        await insertarLotesBacklog(cliente, "jira_cache.backlog_raw", filasBacklog, "upsert", (n) =>
+          opciones.alProgresar?.("cargando backlog", n, filasBacklog.length),
+        );
       }
 
       const conteo = await cliente.query<{ n: string }>(
@@ -205,12 +264,18 @@ export async function sincronizar(
         `UPDATE jira_cache.sync_log
          SET finalizado_en = now(), estado = 'exito', total_tickets = $1, detalle = $2
          WHERE id = $3`,
-        [filas.length, `modo=${modo} · tabla=${filasEnTabla}`, syncId],
+        [filas.length, `modo=${modo} · tabla=${filasEnTabla} · backlog=${filasBacklog.length}`, syncId],
       );
 
       await cliente.query("COMMIT");
 
-      return { modo, totalTickets: filas.length, duracionMs: Date.now() - inicio, filasEnTabla };
+      return {
+        modo,
+        totalTickets: filas.length,
+        totalBacklog: filasBacklog.length,
+        duracionMs: Date.now() - inicio,
+        filasEnTabla,
+      };
     } catch (e) {
       await cliente.query("ROLLBACK").catch(() => {});
       const mensaje = e instanceof Error ? e.message : String(e);

@@ -122,6 +122,30 @@ export const jqlIncremental = (dias: number): string =>
   `project in (${TODOS_LOS_PROYECTOS}) AND ${FILTRO_ANIO} AND updated >= "-${dias}d" ORDER BY updated ASC`;
 
 // ─────────────────────────────────────────────────────────────
+// JQL de backlog (Fase 2, 8 sep 2026 — ver la nota en catalogo.ts junto a
+// `CATEGORIAS_BACKLOG` para el contexto completo de este eje)
+// ─────────────────────────────────────────────────────────────
+
+/** Solo los proyectos que sí tienen backlog confirmado (`Proyecto.claveBacklog`). */
+const PROYECTOS_CON_BACKLOG = PROYECTOS.filter((p) => p.claveBacklog);
+const CLAVES_BACKLOG = PROYECTOS_CON_BACKLOG.map((p) => p.claveBacklog).join(", ");
+
+export const hayProyectosBacklog = (): boolean => PROYECTOS_CON_BACKLOG.length > 0;
+
+/**
+ * Sin filtro de año a propósito: el backlog de desarrollo no es un
+ * histórico "por año calendario" como los tickets de operación — un ítem
+ * en Gestión de CA puede llevar abierto desde antes de 2026.
+ */
+export const jqlBacklogCompleto = (): string => `project in (${CLAVES_BACKLOG}) ORDER BY created ASC`;
+
+export const jqlBacklogIncremental = (dias: number): string =>
+  `project in (${CLAVES_BACKLOG}) AND updated >= "-${dias}d" ORDER BY updated ASC`;
+
+/** Campos de backlog — mucho más chico que `CAMPOS`: no hay SLA, prioridad, ni switch de área. */
+export const CAMPOS_BACKLOG = ["summary", "project", "created", "updated", "status"];
+
+// ─────────────────────────────────────────────────────────────
 // Descarga
 // ─────────────────────────────────────────────────────────────
 
@@ -135,7 +159,12 @@ export const jqlIncremental = (dias: number): string =>
  */
 export async function traerIssues(
   jql: string,
-  opciones: { limite?: number; alProgresar?: (traidos: number, total: number | null) => void } = {},
+  opciones: {
+    limite?: number;
+    /** Campos a pedir a Jira. Default: `CAMPOS` (los del ETL operativo). */
+    campos?: string[];
+    alProgresar?: (traidos: number, total: number | null) => void;
+  } = {},
 ): Promise<IssueJira[]> {
   const { base, auth } = credencialesJira();
   const issues: IssueJira[] = [];
@@ -154,7 +183,7 @@ export async function traerIssues(
       },
       body: JSON.stringify({
         jql,
-        fields: CAMPOS,
+        fields: opciones.campos ?? CAMPOS,
         maxResults,
         ...(nextPageToken ? { nextPageToken } : {}),
       }),
@@ -333,5 +362,38 @@ export function normalizar(issue: IssueJira): TicketNormalizado {
     ttrHoras,
     ttfrIncumplido: ttfrHoras !== null ? ttfrHoras > META_TTFR_HORAS : null,
     ttrIncumplido: ttrHoras !== null ? ttrHoras > metaTtr : null,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Normalización de backlog (Fase 2)
+// ─────────────────────────────────────────────────────────────
+
+export interface BacklogNormalizado {
+  clave: string;
+  tituloTicket: string | null;
+  /** `Aplicativo.clave` (catalogo.ts, ej. "taw"), NO la clave del proyecto de Jira (ej. "BAWS"). */
+  aplicativoClave: string;
+  estadoTicket: string;
+  fechaCreacion: string | null;
+  fechaActualizacion: string | null;
+}
+
+/** Clave del proyecto de backlog en Jira (ej. "BAWS") -> `Aplicativo.clave` (ej. "taw"). */
+const APLICATIVO_POR_CLAVE_BACKLOG = new Map(
+  PROYECTOS_CON_BACKLOG.map((p) => [p.claveBacklog as string, p.clave.toLowerCase()]),
+);
+
+export function normalizarBacklog(issue: IssueJira): BacklogNormalizado {
+  const f = issue.fields ?? {};
+  const claveProyectoBacklog = claveProyecto(f.project) ?? "";
+
+  return {
+    clave: String(issue.key),
+    tituloTicket: texto(f.summary),
+    aplicativoClave: APLICATIVO_POR_CLAVE_BACKLOG.get(claveProyectoBacklog) ?? claveProyectoBacklog.toLowerCase(),
+    estadoTicket: (texto(f.status) ?? "").toUpperCase(),
+    fechaCreacion: texto(f.created),
+    fechaActualizacion: texto(f.updated),
   };
 }

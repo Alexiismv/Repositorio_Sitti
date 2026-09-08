@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     await registrarAuditoria({
       accion: "sync_manual",
       actor: sesion.email,
-      detalle: `modo=${r.modo} tickets=${r.totalTickets} ms=${r.duracionMs}`,
+      detalle: `modo=${r.modo} tickets=${r.totalTickets} backlog=${r.totalBacklog} ms=${r.duracionMs}`,
     });
 
     return NextResponse.json({
@@ -80,8 +80,8 @@ export async function POST(req: Request) {
       ...r,
       mensaje:
         r.modo === "incremental"
-          ? `${r.totalTickets} ticket(s) con cambios en los últimos ${DIAS_INCREMENTAL} días.`
-          : `Recarga completa: ${r.totalTickets} tickets.`,
+          ? `${r.totalTickets} ticket(s) y ${r.totalBacklog} ítem(s) de backlog con cambios en los últimos ${DIAS_INCREMENTAL} días.`
+          : `Recarga completa: ${r.totalTickets} tickets, ${r.totalBacklog} ítems de backlog.`,
     });
   } catch (e) {
     const crudo = e instanceof Error ? e.message : "Error desconocido";

@@ -20,6 +20,7 @@ import {
   DIAS_ESTANCADO_DEFAULT,
   PROYECTOS,
   SEDES,
+  type CategoriaBacklog,
   type CategoriaEstado,
   type Prioridad,
 } from "@/lib/catalogo";
@@ -147,17 +148,51 @@ export async function obtenerTickets(sesion: Sesion, filtros: Filtros = {}): Pro
  * equipo, no tiene sede/área — el filtro real de acceso es la pantalla
  * "aplicativos" (`puedeVerPantalla`), ya aplicado antes de llegar acá.
  *
- * A propósito NO depende de `DEMO_MODE`: ese flag decide si los TICKETS
- * operativos son demo o reales (Jira/Postgres ya conectado), pero el backlog
- * no tiene ninguna fuente real todavía — no existe el ETL ni la tabla (ver
- * la nota de Fase 1/Fase 2 en `catalogo.ts` junto a `CATEGORIAS_BACKLOG`).
- * Por eso muestra datos de demostración siempre, incluso con `DEMO_MODE=false`
- * (como en `pruebas`/producción, que ya leen tickets reales de Postgres).
- * Cuando exista el ETL real, este `ticketsBacklogDemo()` se reemplaza por una
- * consulta a la tabla nueva — ninguna pantalla necesita cambiar.
+ * Fase 2 (8 sep 2026): igual que `obtenerTickets()`, sigue a `DEMO_MODE` —
+ * demo en local/desarrollo, real (`jira_cache.v_backlog`) donde ya hay ETL
+ * corriendo. El ETL real se dispara con el mismo botón "Refrescar" que los
+ * tickets operativos (`src/lib/etl/sincronizar.ts`).
  */
 export async function obtenerBacklog(aplicativoClave: string): Promise<TicketBacklog[]> {
-  return ticketsBacklogDemo().filter((t) => t.aplicativoClave === aplicativoClave);
+  const todos = DEMO_MODE ? ticketsBacklogDemo() : await obtenerBacklogDesdeDB();
+  return todos.filter((t) => t.aplicativoClave === aplicativoClave);
+}
+
+interface FilaVBacklog {
+  clave: string;
+  titulo_ticket: string | null;
+  aplicativo_clave: string;
+  estado_ticket: string;
+  categoria_backlog: CategoriaBacklog;
+  fecha_creacion: Date | null;
+  fecha_actualizacion: Date | null;
+  dias_sin_actualizar: number | null;
+}
+
+function mapearFilaBacklog(f: FilaVBacklog): TicketBacklog {
+  return {
+    clave: f.clave,
+    tituloTicket: f.titulo_ticket ?? "",
+    aplicativoClave: f.aplicativo_clave,
+    estadoTicket: f.estado_ticket,
+    categoriaBacklog: f.categoria_backlog,
+    fechaCreacion: f.fecha_creacion?.toISOString() ?? new Date(0).toISOString(),
+    diasSinActualizar: f.dias_sin_actualizar ?? 0,
+  };
+}
+
+/** Lee `jira_cache.v_backlog` — nunca `backlog_raw` directo, mismo motivo que `v_tickets`. */
+async function obtenerBacklogDesdeDB(): Promise<TicketBacklog[]> {
+  return conCliente(async (cliente) => {
+    const r = await cliente.query<FilaVBacklog>(
+      `SELECT clave, titulo_ticket, aplicativo_clave, estado_ticket, categoria_backlog,
+              fecha_creacion, fecha_actualizacion, dias_sin_actualizar
+       FROM jira_cache.v_backlog
+       ORDER BY fecha_creacion ASC`,
+    );
+
+    return r.rows.map(mapearFilaBacklog);
+  });
 }
 
 /** Metadatos del último sync, para el sello de "actualizado hace…" en la UI. */
