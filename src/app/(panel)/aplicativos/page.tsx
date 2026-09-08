@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { GridTarjetas, KpiStrip, SectionLabel, TarjetaNivel } from "@/components/ui";
 import { leerSesion } from "@/lib/auth/sesion";
 import { puedeVerPantalla } from "@/lib/auth/tipos";
-import { obtenerTickets } from "@/lib/data/provider";
+import { obtenerBacklogCompleto, obtenerTickets } from "@/lib/data/provider";
 import { numero, porcentaje } from "@/lib/formato";
-import { porAplicativo, resumen } from "@/lib/metricas";
+import { backlogPorAplicativo, porAplicativo, resumen } from "@/lib/metricas";
 
 export const metadata = { title: "Aplicativos · SITTI" };
 
@@ -34,8 +34,9 @@ export default async function AplicativosPage() {
     );
   }
 
-  const tickets = await obtenerTickets(sesion);
+  const [tickets, backlog] = await Promise.all([obtenerTickets(sesion), obtenerBacklogCompleto()]);
   const aplicativos = porAplicativo(tickets);
+  const backlogPorClave = backlogPorAplicativo(backlog);
   const r = resumen(tickets);
   const total = aplicativos.reduce((a, ap) => a + ap.total, 0) || 1;
 
@@ -82,19 +83,43 @@ export default async function AplicativosPage() {
 
       <div className="ranking-impacto-grande">
         <GridTarjetas n={aplicativos.length}>
-          {aplicativos.map((ap, i) => (
-            <TarjetaNivel
-              key={ap.slug}
-              href={`/aplicativos/${ap.slug}`}
-              rank={i + 1}
-              titulo={ap.nombre}
-              total={ap.total}
-              proporcion={(ap.total / total) * 100}
-              color={ap.color ?? "#33357E"}
-              etiqueta={`${porcentaje((ap.total / total) * 100)} del total`}
-              pie={`${numero(ap.pendientes)} pendientes · ${porcentaje(ap.cumplimientoTtr)} cumplimiento TTR`}
-            />
-          ))}
+          {aplicativos.map((ap, i) => {
+            // Aplicativos sin ticket operativo propio (Logística, MVI): no
+            // tiene sentido mostrar "0 tickets" cuando sí tienen backlog —
+            // se usan los números de backlog en su lugar.
+            const rBacklog = ap.total === 0 ? backlogPorClave.get(ap.slug) : undefined;
+
+            if (rBacklog && rBacklog.total > 0) {
+              return (
+                <TarjetaNivel
+                  key={ap.slug}
+                  href={`/aplicativos/${ap.slug}`}
+                  rank={i + 1}
+                  titulo={ap.nombre}
+                  total={rBacklog.total}
+                  unidad="ítems de backlog"
+                  proporcion={0}
+                  color={ap.color ?? "#33357E"}
+                  etiqueta={`${porcentaje((rBacklog.enProduccion / rBacklog.total) * 100)} en producción`}
+                  pie={`${numero(rBacklog.activos)} activos de backlog · ${numero(rBacklog.estancados)} estancados`}
+                />
+              );
+            }
+
+            return (
+              <TarjetaNivel
+                key={ap.slug}
+                href={`/aplicativos/${ap.slug}`}
+                rank={i + 1}
+                titulo={ap.nombre}
+                total={ap.total}
+                proporcion={(ap.total / total) * 100}
+                color={ap.color ?? "#33357E"}
+                etiqueta={`${porcentaje((ap.total / total) * 100)} del total`}
+                pie={`${numero(ap.pendientes)} pendientes · ${porcentaje(ap.cumplimientoTtr)} cumplimiento TTR`}
+              />
+            );
+          })}
         </GridTarjetas>
       </div>
     </>

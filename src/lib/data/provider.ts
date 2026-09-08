@@ -143,18 +143,23 @@ export async function obtenerTickets(sesion: Sesion, filtros: Filtros = {}): Pro
 }
 
 /**
- * Backlog de desarrollo de un aplicativo (tablero secundario del módulo
- * Aplicativos). No pasa por `puedeVer()`: el backlog es trabajo interno del
- * equipo, no tiene sede/área — el filtro real de acceso es la pantalla
- * "aplicativos" (`puedeVerPantalla`), ya aplicado antes de llegar acá.
+ * Backlog de desarrollo de TODOS los aplicativos. No pasa por `puedeVer()`:
+ * el backlog es trabajo interno del equipo, no tiene sede/área — el filtro
+ * real de acceso es la pantalla "aplicativos" (`puedeVerPantalla`), ya
+ * aplicado antes de llegar acá.
  *
  * Fase 2 (8 sep 2026): igual que `obtenerTickets()`, sigue a `DEMO_MODE` —
  * demo en local/desarrollo, real (`jira_cache.v_backlog`) donde ya hay ETL
  * corriendo. El ETL real se dispara con el mismo botón "Refrescar" que los
  * tickets operativos (`src/lib/etl/sincronizar.ts`).
  */
+export async function obtenerBacklogCompleto(): Promise<TicketBacklog[]> {
+  return DEMO_MODE ? ticketsBacklogDemo() : obtenerBacklogDesdeDB();
+}
+
+/** Backlog de un solo aplicativo — usado por el detalle (Nivel 2). */
 export async function obtenerBacklog(aplicativoClave: string): Promise<TicketBacklog[]> {
-  const todos = DEMO_MODE ? ticketsBacklogDemo() : await obtenerBacklogDesdeDB();
+  const todos = await obtenerBacklogCompleto();
   return todos.filter((t) => t.aplicativoClave === aplicativoClave);
 }
 

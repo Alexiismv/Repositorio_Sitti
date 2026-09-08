@@ -466,6 +466,25 @@ export function resumenBacklog(items: TicketBacklog[], diasEstancado = DIAS_ESTA
   return { total, activos: total - enProduccion, estancados, enProduccion };
 }
 
+/**
+ * `resumenBacklog()` de cada aplicativo, agrupado — para el Nivel 1 de
+ * Aplicativos: los que no tienen ticket operativo propio (Logística, MVI)
+ * necesitan mostrar algo en su tarjeta de ranking, y lo único que tienen es
+ * backlog.
+ */
+export function backlogPorAplicativo(items: TicketBacklog[]): Map<string, ResumenBacklog> {
+  const grupos = new Map<string, TicketBacklog[]>();
+  for (const it of items) {
+    const arr = grupos.get(it.aplicativoClave);
+    if (arr) arr.push(it);
+    else grupos.set(it.aplicativoClave, [it]);
+  }
+
+  const resultado = new Map<string, ResumenBacklog>();
+  for (const [clave, grupo] of grupos) resultado.set(clave, resumenBacklog(grupo));
+  return resultado;
+}
+
 /** El valor más frecuente de un campo — "tipo más solicitado", "portal más usado". */
 export function modaDe(tickets: Ticket[], campo: (t: Ticket) => string): string {
   if (!tickets.length) return "—";

@@ -166,6 +166,7 @@ export function TarjetaNivel({
   pie,
   color,
   etiqueta,
+  unidad = "tickets",
 }: {
   href: string;
   rank: number;
@@ -175,6 +176,8 @@ export function TarjetaNivel({
   pie: string;
   color: string;
   etiqueta?: string;
+  /** Unidad de `total` — por defecto "tickets". Un aplicativo sin tickets propios (solo backlog) usa "ítems de backlog". */
+  unidad?: string;
 }) {
   return (
     <Link href={href} className="tarjeta-nivel" style={{ ["--accent" as string]: color }}>
@@ -187,7 +190,7 @@ export function TarjetaNivel({
       </h3>
       <div className="tn-metric">
         <span className="tn-num">{numero(total)}</span>
-        <span className="tn-unit">tickets</span>
+        <span className="tn-unit">{unidad}</span>
       </div>
       <div className="tn-bar">
         <div className="tn-fill" style={{ width: `${Math.max(proporcion, 2)}%` }} />
