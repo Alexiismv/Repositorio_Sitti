@@ -97,6 +97,10 @@ export default async function DetalleAplicativo({ params }: { params: Promise<{ 
               ? "Datos de demostración: en modo demo el backlog no viene de Jira. El botón “Refrescar” lo trae en cuanto la app esté conectada."
               : "Las columnas son categorías normalizadas del vocabulario real de Jira. El botón “Refrescar” actualiza esta información junto con los tickets de operación."}
           </p>
+          <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "-6px 0 16px", lineHeight: 1.55 }}>
+            Las columnas son categorías normalizadas, porque los proyectos de JSM usan dos
+            vocabularios distintos de estado. El texto literal de Jira se conserva en cada ticket.
+          </p>
 
           {backlog.length === 0 ? (
             <EstadoVacio
