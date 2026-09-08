@@ -162,6 +162,31 @@ Estas reglas existen porque romperlas ya costaría retrabajo o daño real.
     filas, proyectos, ramas, deployments. Si algo hay que borrar, que lo haga
     Alexis o pide permiso explícito diciendo exactamente qué se destruye.
 19. **No instales dependencias nuevas sin avisar** y sin decir para qué.
+20. **No hace falta pedir confirmación antes de cada `git push`.** Alexis
+    autorizó (8 sep 2026) que el agente suba cambios sin detenerse a
+    preguntar primero, en los dos flujos de este repo:
+    - **`feature/*` → `pruebas`**: crear la rama, hacer push, fusionarla en
+      `pruebas` y hacer push de `pruebas` — de corrido, sin pausas para
+      confirmar. `pruebas` es el entorno de prueba (§7.4): el costo de un
+      cambio de más ahí es bajo y se revierte fácil.
+    - **`main` (producción)**: igual, sin pausas para confirmar. La regla 16
+      sigue en pie tal cual — `main` sigue protegida, se sigue trabajando en
+      `feature/*` y abriendo PR — lo único que se retira es el paso de
+      "preguntarle a Alexis antes de subir".
+
+    Requisito fijo antes de subir cualquiera de los dos: `npm run build`,
+    `npm run lint` y `npm run test:unit` en verde. Si algo falla, no se sube
+    — se avisa qué falló y se corrige primero.
+
+    Esto no toca ninguna otra regla de seguridad de git: nunca `--force`,
+    nunca `--no-verify`, nunca `git add .` (regla 17), nunca borrar nada sin
+    permiso (regla 18). Esas acciones siguen necesitando confirmación
+    explícita siempre, sin excepción — esta regla 20 es solo sobre el push
+    normal de cambios ya verificados.
+
+    Después de subir, el agente avisa qué se desplegó y dónde verificarlo
+    (la URL fija correspondiente, ver `sitti-panel-urls-verificacion` en
+    memoria) — deja de preguntar "¿subo?", pero no deja de informar.
 
 ---
 
