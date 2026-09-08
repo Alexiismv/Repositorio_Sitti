@@ -143,7 +143,7 @@ export function Topbar({
 
       <div className="sh-sync" title="Última sincronización con Jira (el ETL corre 2 veces al día)">
         <span className="pulso" />
-        Sync {ultimaSync}
+        Última vez {ultimaSync}
       </div>
 
       <BotonRefrescar puedeSincronizar={puedeUsarAccion(sesion, "panel-general", "sincronizar")} />
