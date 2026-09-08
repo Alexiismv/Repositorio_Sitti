@@ -147,14 +147,17 @@ export async function obtenerTickets(sesion: Sesion, filtros: Filtros = {}): Pro
  * equipo, no tiene sede/área — el filtro real de acceso es la pantalla
  * "aplicativos" (`puedeVerPantalla`), ya aplicado antes de llegar acá.
  *
- * Fase 1: solo `DEMO_MODE`. Fase 2 (pendiente): cuando exista el ETL de
- * backlog (ver la nota en `catalogo.ts` junto a `CATEGORIAS_BACKLOG`), este
- * `[]` se reemplaza por una consulta a la tabla nueva — ninguna pantalla
- * necesita cambiar.
+ * A propósito NO depende de `DEMO_MODE`: ese flag decide si los TICKETS
+ * operativos son demo o reales (Jira/Postgres ya conectado), pero el backlog
+ * no tiene ninguna fuente real todavía — no existe el ETL ni la tabla (ver
+ * la nota de Fase 1/Fase 2 en `catalogo.ts` junto a `CATEGORIAS_BACKLOG`).
+ * Por eso muestra datos de demostración siempre, incluso con `DEMO_MODE=false`
+ * (como en `pruebas`/producción, que ya leen tickets reales de Postgres).
+ * Cuando exista el ETL real, este `ticketsBacklogDemo()` se reemplaza por una
+ * consulta a la tabla nueva — ninguna pantalla necesita cambiar.
  */
 export async function obtenerBacklog(aplicativoClave: string): Promise<TicketBacklog[]> {
-  const todos = DEMO_MODE ? ticketsBacklogDemo() : [];
-  return todos.filter((t) => t.aplicativoClave === aplicativoClave);
+  return ticketsBacklogDemo().filter((t) => t.aplicativoClave === aplicativoClave);
 }
 
 /** Metadatos del último sync, para el sello de "actualizado hace…" en la UI. */
