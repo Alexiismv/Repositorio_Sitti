@@ -161,6 +161,70 @@ export async function syncEnCurso(cliente: PoolClient): Promise<boolean> {
   return Number(r.rows[0]?.n ?? 0) > 0;
 }
 
+/**
+ * Bug encontrado y corregido (8 sep 2026): una vista de Postgres queda ligada
+ * al objeto físico de la tabla que tenía ese nombre cuando la vista se creó,
+ * no al nombre en sí. El swap de "modo completo" (§ arriba) renombra
+ * `tickets_raw`/`backlog_raw` para no dejar una ventana con la tabla vacía,
+ * pero eso significa que después del swap el NOMBRE `tickets_raw` apunta a
+ * un objeto físico distinto del que `v_tickets` sigue mirando — la vista
+ * queda mostrando la sincronización COMPLETA anterior, no la de recién,
+ * hasta que algo la recree. Antes de este fix, eso solo se disimulaba porque
+ * alguien solía correr `npm run db:schema` (que sí recrea las vistas) poco
+ * después de una sincronización completa manual.
+ *
+ * El fix: recrear las dos vistas DENTRO de la misma transacción, justo
+ * después del swap, cada vez que corre el modo completo. El SQL de acá
+ * tiene que ser un espejo exacto de las vistas en `db/schema.sql` — si
+ * cambias una vista ahí, cambia también acá.
+ */
+async function recrearVistas(cliente: PoolClient): Promise<void> {
+  await cliente.query("DROP VIEW IF EXISTS jira_cache.v_tickets");
+  await cliente.query(`
+    CREATE VIEW jira_cache.v_tickets AS
+    SELECT
+      t.*,
+      CASE
+        WHEN t.proyecto = 'Mesa de ayuda SMM' THEN t.dependencia_smm
+        ELSE t.area
+      END AS area_efectiva,
+      CASE
+        WHEN t.estado_ticket IN ('ABIERTO', 'EN ESPERA DE SOPORTE')            THEN 'pendiente'
+        WHEN t.estado_ticket = 'EN PROGRESO'                                    THEN 'en-progreso'
+        WHEN t.estado_ticket IN ('SOLICITADO A QUIPUX', 'A LA ESPERA DE CLIENTE',
+                                 'A LA ESPERA DEL PROVEEDOR', 'A LA ESPERA DE USUARIO')
+                                                                                THEN 'esperando-terceros'
+        WHEN t.estado_ticket = 'RESUELTO'                                       THEN 'resuelto'
+        WHEN t.estado_ticket = 'CANCELADO'                                      THEN 'cancelado'
+        ELSE 'pendiente'
+      END AS categoria_estado,
+      EXTRACT(DAY FROM (now() - t.fecha_actualizacion))::int AS dias_sin_actualizar
+    FROM jira_cache.tickets_raw t
+  `);
+
+  await cliente.query("DROP VIEW IF EXISTS jira_cache.v_backlog");
+  await cliente.query(`
+    CREATE VIEW jira_cache.v_backlog AS
+    SELECT
+      b.*,
+      CASE b.estado_ticket
+        WHEN 'GESTIONAR CA -'             THEN 'gestion-ca'
+        WHEN 'ALCANCE / COTIZACIÓN -'     THEN 'alcance-cotizacion'
+        WHEN 'DESARROLLO QUIPUX -'        THEN 'desarrollo-quipux'
+        WHEN 'PRUEBAS QA -'               THEN 'pruebas-sitti'
+        WHEN 'ENTREGA QA - ADMIN -'       THEN 'pruebas-sitti'
+        WHEN 'PRUEBAS SMM -'              THEN 'pruebas-smm-esu'
+        WHEN 'CANCELADO'                  THEN 'produccion-cancelado'
+        WHEN 'CANCELADO -'                THEN 'produccion-cancelado'
+        WHEN 'FINALIZADO'                 THEN 'produccion-cancelado'
+        WHEN 'PRODUCCIÓN / SEGUIMIENTO -' THEN 'produccion-cancelado'
+        ELSE 'gestion-ca'
+      END AS categoria_backlog,
+      EXTRACT(DAY FROM (now() - b.fecha_actualizacion))::int AS dias_sin_actualizar
+    FROM jira_cache.backlog_raw b
+  `);
+}
+
 export async function sincronizar(
   opciones: {
     modo?: ModoSync;
@@ -242,6 +306,11 @@ export async function sincronizar(
         await cliente.query("ALTER TABLE jira_cache.backlog_raw RENAME TO backlog_anterior");
         await cliente.query("ALTER TABLE jira_cache.backlog_staging RENAME TO backlog_raw");
         await cliente.query("ALTER TABLE jira_cache.backlog_anterior RENAME TO backlog_staging");
+
+        // Ver `recrearVistas()`: sin esto, v_tickets/v_backlog quedan mirando
+        // el objeto físico de ANTES del swap — la sincronización anterior,
+        // no esta.
+        await recrearVistas(cliente);
       } else {
         // Incremental: upsert directo. No se trunca nada, así que no hay
         // ventana de datos vacíos ni hace falta el swap.
