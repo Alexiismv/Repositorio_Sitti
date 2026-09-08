@@ -308,6 +308,49 @@ export const ESTADO_A_CATEGORIA: Record<string, CategoriaEstado> = {
   "A LA ESPERA DE USUARIO": "esperando-terceros",
 };
 
+// ─────────────────────────────────────────────────────────────
+// BACKLOG DE DESARROLLO (tablero secundario del módulo Aplicativos)
+// ─────────────────────────────────────────────────────────────
+//
+// Decisión de Alexis (7 sep 2026): cada aplicativo tiene, además de su
+// tablero operativo (arriba), un segundo tablero de backlog de desarrollo —
+// la fuente es el proyecto JSM "* - Backlog" contraparte de cada uno de los
+// 12 proyectos "* - Tickets" (ver la nota junto a `PROYECTOS` sobre por qué
+// esos proyectos "Backlog" se excluyen del ETL operativo: son trabajo interno
+// del equipo, no solicitudes de ciudadanos, y por eso nunca se sincronizaron).
+//
+// Fase 1 (esto): `CATEGORIAS_BACKLOG` + `src/lib/demo/generador-backlog.ts`
+// generan datos de DEMOSTRACIÓN para poder construir y ver la interfaz —
+// los títulos, cantidades y el mapa estado->categoría son inventados, no
+// vienen de Jira todavía.
+//
+// Fase 2 (pendiente, cuando se confirme el proyecto y vocabulario real de
+// cada "* - Backlog" en Jira): (1) sumar los campos/JQL nuevos al ETL
+// (`src/lib/etl/jira.ts` + `src/lib/etl/sincronizar.ts`, disparado igual que
+// hoy por el botón "Refrescar"), (2) crear un `ESTADO_A_CATEGORIA_BACKLOG`
+// análogo a `ESTADO_A_CATEGORIA` que traduzca el vocabulario real de Jira a
+// estas 6 categorías (o ajustar las categorías si el vocabulario real no
+// calza), y (3) reemplazar `ticketsBacklogDemo()` por la lectura real en
+// `src/lib/data/provider.ts` (`obtenerBacklog()`). Ninguna pantalla de
+// `src/app/(panel)/aplicativos/` necesita tocarse — todas piden los datos a
+// través de `obtenerBacklog()`/`columnasBacklog()`, igual que el resto de la app.
+export type CategoriaBacklog =
+  | "gestion-ca"
+  | "alcance-cotizacion"
+  | "desarrollo-quipux"
+  | "pruebas-sitti"
+  | "pruebas-smm-esu"
+  | "produccion-cancelado";
+
+export const CATEGORIAS_BACKLOG: { key: CategoriaBacklog; label: string; color: string }[] = [
+  { key: "gestion-ca", label: "Gestión de CA", color: "#EC623B" },
+  { key: "alcance-cotizacion", label: "Alcance/Cotización", color: "#F7A82C" },
+  { key: "desarrollo-quipux", label: "Desarrollo Quipux", color: "#33357E" },
+  { key: "pruebas-sitti", label: "Pruebas Sitti", color: "#7A5AC4" },
+  { key: "pruebas-smm-esu", label: "Pruebas SMM/ESU", color: "#8B8FBF" },
+  { key: "produccion-cancelado", label: "Producción/Cancelado", color: "#3FA9AC" },
+];
+
 export const ESTADOS_POR_VOCABULARIO: Record<"estandar" | "mesa", string[]> = {
   estandar: [
     "EN ESPERA DE SOPORTE",

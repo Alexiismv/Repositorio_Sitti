@@ -10,6 +10,7 @@
  * a un `WHERE` sobre `jira_cache.tickets_raw`.
  */
 
+import { ticketsBacklogDemo, type TicketBacklog } from "@/lib/demo/generador-backlog";
 import { ticketsDemo, type Ticket } from "@/lib/demo/generador";
 import { DEMO_MODE } from "@/lib/modo";
 import { puedeVer, type Sesion } from "@/lib/auth/tipos";
@@ -138,6 +139,22 @@ export async function obtenerTickets(sesion: Sesion, filtros: Filtros = {}): Pro
     if (!puedeVer(sesion, sedeSlug, t.areaSlug)) return false;
     return cumpleFiltros(t, filtros);
   });
+}
+
+/**
+ * Backlog de desarrollo de un aplicativo (tablero secundario del módulo
+ * Aplicativos). No pasa por `puedeVer()`: el backlog es trabajo interno del
+ * equipo, no tiene sede/área — el filtro real de acceso es la pantalla
+ * "aplicativos" (`puedeVerPantalla`), ya aplicado antes de llegar acá.
+ *
+ * Fase 1: solo `DEMO_MODE`. Fase 2 (pendiente): cuando exista el ETL de
+ * backlog (ver la nota en `catalogo.ts` junto a `CATEGORIAS_BACKLOG`), este
+ * `[]` se reemplaza por una consulta a la tabla nueva — ninguna pantalla
+ * necesita cambiar.
+ */
+export async function obtenerBacklog(aplicativoClave: string): Promise<TicketBacklog[]> {
+  const todos = DEMO_MODE ? ticketsBacklogDemo() : [];
+  return todos.filter((t) => t.aplicativoClave === aplicativoClave);
 }
 
 /** Metadatos del último sync, para el sello de "actualizado hace…" en la UI. */

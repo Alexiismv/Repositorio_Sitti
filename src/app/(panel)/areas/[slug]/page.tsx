@@ -9,7 +9,16 @@ import { leerSesion } from "@/lib/auth/sesion";
 import { DIAS_ESTANCADO_DEFAULT, areaPorSlug, gerenciaPorSlug } from "@/lib/catalogo";
 import { obtenerTickets } from "@/lib/data/provider";
 import { numero, porcentaje } from "@/lib/formato";
-import { estancados, masComentados, modaDe, porMes, porPersona, porSede, resumen } from "@/lib/metricas";
+import {
+  columnasOperacion,
+  estancados,
+  masComentados,
+  modaDe,
+  porMes,
+  porPersona,
+  porSede,
+  resumen,
+} from "@/lib/metricas";
 
 /**
  * Renderizado dinámico obligatorio: lo que se muestra depende de la sesión y de
@@ -114,7 +123,7 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
             vocabularios distintos de estado. El texto literal de Jira se conserva en cada ticket.
           </p>
 
-          <TableroKanban tickets={tickets} hrefColumna={hrefColumna} />
+          <TableroKanban columnas={columnasOperacion(tickets)} hrefColumna={hrefColumna} />
 
           <SectionLabel>Lo que necesita atención</SectionLabel>
 
