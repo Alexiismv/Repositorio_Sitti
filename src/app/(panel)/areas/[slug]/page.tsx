@@ -57,8 +57,7 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
   const complejos = masComentados(tickets, 6);
   const personas = porPersona(tickets);
 
-  const hrefColumna = (categoria: string) =>
-    `/reportes?${new URLSearchParams({ gerencia: area.gerencia, area: slug, estado: categoria }).toString()}`;
+  const filtroReportes = { gerencia: area.gerencia, area: slug };
 
   return (
     <>
@@ -126,7 +125,7 @@ export default async function DetalleArea({ params }: { params: Promise<{ slug: 
             resuelto o cancelado. Cada ticket sigue conservando su estado original dentro de Jira.
           </p>
 
-          <TableroKanban columnas={columnasOperacion(tickets)} hrefColumna={hrefColumna} />
+          <TableroKanban columnas={columnasOperacion(tickets)} filtroReportes={filtroReportes} />
 
           <SectionLabel>Lo que necesita atención</SectionLabel>
 

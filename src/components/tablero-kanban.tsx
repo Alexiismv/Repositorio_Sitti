@@ -18,18 +18,27 @@ const VISIBLES = 6;
  */
 export function TableroKanban({
   columnas,
-  hrefColumna,
+  filtroReportes,
 }: {
   columnas: ColumnaTablero[];
   /**
-   * Arma el link "+N más" de cada columna hacia /reportes. Si se omite, el
-   * "+N más" despliega el resto de tarjetas dentro de la misma columna —
-   * caso del tablero de backlog, que /reportes no sabe consultar porque sus
-   * ítems no son tickets de operación.
+   * Filtros base de /reportes (gerencia+área, o proyecto) a los que se les
+   * suma `estado=<categoría>` para armar el link "+N más" de cada columna.
+   *
+   * Son datos y no una función a propósito: este componente es cliente (el
+   * "+N más" del backlog despliega la columna en el sitio), y React no puede
+   * serializar una función que cruza del servidor al cliente.
+   *
+   * Si se omite, el "+N más" despliega el resto de tarjetas dentro de la
+   * misma columna — caso del tablero de backlog, que /reportes no sabe
+   * consultar porque sus ítems no son tickets de operación.
    */
-  hrefColumna?: (categoria: string) => string;
+  filtroReportes?: Record<string, string>;
 }) {
   const [expandidas, setExpandidas] = useState<string[]>([]);
+
+  const hrefColumna = (categoria: string) =>
+    `/reportes?${new URLSearchParams({ ...filtroReportes, estado: categoria }).toString()}`;
 
   const alternar = (categoria: string) =>
     setExpandidas((previas) =>
@@ -68,7 +77,7 @@ export function TableroKanban({
               </div>
             ))}
             {ocultos > 0 &&
-              (hrefColumna ? (
+              (filtroReportes ? (
                 <Link href={hrefColumna(col.categoria)} className="tablero-mas mono">
                   +{numero(ocultos)} más
                 </Link>

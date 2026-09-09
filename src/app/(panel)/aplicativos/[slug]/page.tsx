@@ -62,8 +62,7 @@ export default async function DetalleAplicativo({ params }: { params: Promise<{ 
   const frenados = estancados(tickets, DIAS_ESTANCADO_DEFAULT);
   const rBacklog = resumenBacklog(backlog);
 
-  const hrefColumna = (categoria: string) =>
-    `/reportes?${new URLSearchParams({ proyecto: aplicativo.proyecto!.clave, estado: categoria }).toString()}`;
+  const filtroReportes = tieneOperacion ? { proyecto: aplicativo.proyecto!.clave } : undefined;
 
   return (
     <>
@@ -196,7 +195,7 @@ export default async function DetalleAplicativo({ params }: { params: Promise<{ 
                 de Jira.
               </p>
 
-              <TableroKanban columnas={columnasOperacion(tickets)} hrefColumna={hrefColumna} />
+              <TableroKanban columnas={columnasOperacion(tickets)} filtroReportes={filtroReportes} />
             </>
           )}
         </>
