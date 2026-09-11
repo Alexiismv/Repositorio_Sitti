@@ -13,6 +13,12 @@ import "./login.css";
 
 export const metadata = { title: "Ingresar · SITTI" };
 
+// Portal de Jira Service Management donde SITTI recibe las solicitudes de
+// soporte del panel. Es el mismo formulario que usa la operación, así que el
+// ticket entra por el canal de siempre y no por un correo suelto.
+const URL_MESA_AYUDA =
+  "https://conexiondesoluciones.atlassian.net/servicedesk/customer/portal/92/group/130/create/791";
+
 /*
  * Las cuentas de prueba se arman EN EL SERVIDOR y solo si el modo demo está
  * activo. Antes el formulario las importaba directamente y, por ser un
@@ -87,7 +93,11 @@ export default async function LoginPage() {
           <FormularioLogin cuentasDemo={cuentasDemo()} />
 
           <p className="lg-helper">
-            ¿Problemas para entrar? <a href="#">Contacta a Mesa de Ayuda SITTI</a>.
+            ¿Problemas para entrar?{" "}
+            <a href={URL_MESA_AYUDA} target="_blank" rel="noopener noreferrer">
+              Contacta a Mesa de Ayuda SITTI
+            </a>
+            .
           </p>
 
           <div className="lg-footer">
